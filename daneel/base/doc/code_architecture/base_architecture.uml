@@ -1,0 +1,22 @@
+@startuml
+
+interface Control
+Control : setSpeed(Speed3D speed)
+
+interface Odometry
+Odometry : void setPosition(Point3D position)
+Odometry : Point3D getPosition()
+
+interface Navigation
+
+Control <|.. HolonomicControl
+Odometry <|.. HolonomicOdometry
+Navigation <|.. MyAwesomeNavigation
+MyAwesomeNavigation o-- HolonomicControl
+MyAwesomeNavigation o-- HolonomicOdometry
+
+Navigation <|.. MyBasicNavigation
+MyBasicNavigation o-- HolonomicControl
+MyBasicNavigation : forwardSpeed(Spedd3D speed)
+
+@enduml
