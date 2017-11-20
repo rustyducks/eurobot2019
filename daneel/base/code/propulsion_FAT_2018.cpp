@@ -1,15 +1,25 @@
 // Do not remove the include below
 #include "propulsion_FAT_2018.h"
+#include "Odometry.h"
+#include "MotorControl.h"
+#include "Metro.h"
+#include "params.h"
+
+Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 
 
-//The setup function is called once at startup of the sketch
 void setup()
 {
-// Add your initialization code here
+	initOdometry();
+	controlTime.reset();
 }
 
 // The loop function is called in an endless loop
 void loop()
 {
-//Add your repeated code here
+	if(controlTime.check()) {
+		odometry.update();
+		motorControl.control();
+	}
+
 }
