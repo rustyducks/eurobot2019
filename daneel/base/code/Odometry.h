@@ -45,7 +45,7 @@ public:
 	/**
 	 * \brief return robot speed in the table reference system
 	 */
-	const Speed3D& getSpeed() const {
+	Speed3D& getSpeed() {
 		return _speed;
 	}
 

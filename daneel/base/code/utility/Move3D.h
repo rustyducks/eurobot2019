@@ -7,6 +7,7 @@
 
 #ifndef UTILITY_Move3D_H_
 #define UTILITY_Move3D_H_
+#include "Speed3D.h"
 
 class Move3D {
 public:
@@ -14,6 +15,8 @@ public:
 	virtual ~Move3D();
 
 	Move3D(float x, float y, float theta);
+
+	Speed3D toSpeed3D(float time);
 
 	float getTheta() const {
 		return _theta;

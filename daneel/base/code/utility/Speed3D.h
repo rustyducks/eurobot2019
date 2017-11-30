@@ -8,6 +8,8 @@
 #ifndef UTILITY_SPEED3D_H_
 #define UTILITY_SPEED3D_H_
 
+#include <Arduino.h>
+
 class Speed3D {
 public:
 	Speed3D();
@@ -53,6 +55,13 @@ public:
 		return result;
 	}
 
+	Speed3D operator*(float k) {
+		Speed3D result(k * getVx(),
+				       k * getVy(),
+		       		   k * getOmega());
+		return result;
+	}
+
 	int getId() const {
 		return _id;
 	}
@@ -60,6 +69,8 @@ public:
 	void setId(int id) {
 		_id = id;
 	}
+
+	void print(const char* text);
 
 private:
 	int _id;
@@ -71,6 +82,15 @@ private:
 
 inline float Speed3D::getOmega() const {
 	return _omega;
+}
+
+inline void Speed3D::print(const char* text) {
+	Serial.print(text);
+	Serial.print(getVx());
+	Serial.print("\t");
+	Serial.print(getVy());
+	Serial.print("\t");
+	Serial.print(getOmega());
 }
 
 #endif /* UTILITY_SPEED3D_H_ */

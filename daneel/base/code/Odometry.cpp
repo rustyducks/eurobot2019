@@ -63,27 +63,6 @@ void Odometry::init() {
 }
 
 void Odometry::updateTrike() {
-	float angle = Dynamixel.readPosition(STEER_DYNA_ID);	//TODO convert dynamixel angle in radians
-
-	int inc1 = _inc1;	//work on copy : interrupts are dangerous !
-	_inc1 = 0;			//reset the increment number
-
-	float length = float(inc1) * WHEEL_PERIMETER / INCREMENTS_PER_ROTATION;
-
-	float rotation;
-	if(angle > MINIMUM_ANGLE) {
-		float radius = WHEELBASE / tan(angle);	//radius of the circle made by the robot
-		rotation = length / radius;
-	}
-	else {
-		rotation = 0;
-	}
-
-	Move3D move = Move3D(length, 0, rotation);	//TODO do better estimation (refine x and y)
-	addMove(move);
-
-	Speed3D speed = Speed3D(length/CONTROL_PERIOD, 0, rotation / CONTROL_PERIOD);
-	setSpeed(speed);
 
 }
 
@@ -92,15 +71,74 @@ void Odometry::updateDifferential() {
 }
 
 void Odometry::updateHolonomic() {
+	cli();				//disable interrupts to copy and reset the counters
+	int inc1 = _inc1;
+	int inc2 = _inc2;
+	int inc3 = _inc3;
+	_inc1 = 0;
+	_inc2 = 0;
+	_inc3 = 0;
+	sei();				//enable interrupts
+
+	//tangential distance traveled by each wheel
+	float32_t m_data[] =
+	       {(float)inc1 / INC_PER_MM,
+            (float)inc2 / INC_PER_MM,
+            (float)inc3 / INC_PER_MM};
+
+	arm_matrix_instance_f32 m = {
+			.numRows = 3,
+			.numCols = 1,
+			.pData = m_data
+	};
+
+	float32_t* v_data = NULL;
+	v_data = (float32_t*) malloc(3*sizeof(float32_t));
+
+	if(v_data == NULL) {
+		Serial.println("[ERROR] updateHolonomic: v_data malloc failed");
+	}
+
+	arm_matrix_instance_f32 v = {
+				.numRows = 3,
+				.numCols = 1,
+				.pData = v_data
+		};
+
+	arm_status status = arm_mat_mult_f32(&Dplus, &m, &v );
+	if(status != ARM_MATH_SUCCESS) {
+		Serial.print("[ERROR] updateHolonomic: matrix multiplication error : ");
+		Serial.println(status);
+	}
+
+//	Serial.print(inc1);
+//	Serial.print("\t");
+//	Serial.print(inc2);
+//	Serial.print("\t");
+//	Serial.println(inc3);
+
+//	Serial.print("x=");
+//	Serial.print(v.pData[0]);
+//	Serial.print("\ty=");
+//	Serial.print(v.pData[1]);
+//	Serial.print("\tR*theta=");
+//	Serial.println(v.pData[2]/ROBOT_RADIUS);
+
+	Move3D move = Move3D(v.pData[0], v.pData[1], v.pData[2]/ROBOT_RADIUS);
+	_previousSpeed = _speed;
+	_speed = move.toSpeed3D(CONTROL_PERIOD);
+	addMove(move);
+
 
 }
 
 void Odometry::setSpeed(const Speed3D& speed) {
-	float theta = _thetaAI + getDeltaTheta();
+	/*float theta = _thetaAI + getDeltaTheta();
 	float vx = speed.getVx() * cos(theta) - speed.getVy() * sin(theta);
 	float vy = speed.getVy() * cos(theta) + speed.getVx() * sin(theta);
 	_speed.setVx(vx);
-	_speed.setVy(vy);
+	_speed.setVy(vy);*/
+	_speed = speed;
 }
 
 void Odometry::addMove(Move3D move) {
@@ -114,8 +152,19 @@ void Odometry::addMove(Move3D move) {
 	move.setX(x);
 	move.setY(y);
 
+	//TODO erase it
+	move.setTheta(0);
+
 	//Add this move to the other
 	_moveDelta[_readIndex] = _moveDelta[_readIndex] + move;	//TODO Use += operator
+
+
+//		Serial.print("x=");
+//		Serial.print(_moveDelta[_readIndex].getX());
+//		Serial.print("\ty=");
+//		Serial.print(_moveDelta[_readIndex].getY());
+//		Serial.print("\ttheta=");
+//		Serial.println(_moveDelta[_readIndex].getTheta());
 }
 
 void initOdometry() {
@@ -128,6 +177,12 @@ void initOdometry() {
 	attachInterrupt(MOT2_ENCA, ISR2, RISING);
 	attachInterrupt(MOT2_ENCB, ISR22, RISING);
 #elif defined(HOLONOMIC)
+	pinMode(MOT1_ENCA, INPUT);
+	pinMode(MOT1_ENCB, INPUT);
+	pinMode(MOT2_ENCA, INPUT);
+	pinMode(MOT2_ENCB, INPUT);
+	pinMode(MOT3_ENCA, INPUT);
+	pinMode(MOT3_ENCB, INPUT);
 	attachInterrupt(MOT1_ENCA, ISR1, RISING);
 	attachInterrupt(MOT1_ENCB, ISR11, RISING);
 	attachInterrupt(MOT2_ENCA, ISR2, RISING);
@@ -167,48 +222,48 @@ void ISR33() {
 
 void Odometry::isr1() {
 	if(digitalRead(MOT1_ENCB)) {
-		_inc1++;
-	} else {
 		_inc1--;
+	} else {
+		_inc1++;
 	}
 }
 
 void Odometry::isr11() {
 	if(digitalRead(MOT1_ENCA)) {
-		_inc1--;
-	} else {
 		_inc1++;
+	} else {
+		_inc1--;
 	}
 }
 
 void Odometry::isr2() {
 	if(digitalRead(MOT2_ENCB)) {
-		_inc2++;
-	} else {
 		_inc2--;
+	} else {
+		_inc2++;
 	}
 }
 
 void Odometry::isr22() {
 	if(digitalRead(MOT2_ENCA)) {
-		_inc2--;
-	} else {
 		_inc2++;
+	} else {
+		_inc2--;
 	}
 }
 
 void Odometry::isr3() {
 	if(digitalRead(MOT3_ENCB)) {
-		_inc3++;
-	} else {
 		_inc3--;
+	} else {
+		_inc3++;
 	}
 }
 
 void Odometry::isr33() {
 	if(digitalRead(MOT3_ENCA)) {
-		_inc3--;
-	} else {
 		_inc3++;
+	} else {
+		_inc3--;
 	}
 }

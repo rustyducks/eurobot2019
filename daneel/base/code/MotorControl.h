@@ -62,8 +62,10 @@ protected:
 	//! Target speed : the speed at which the robot must be in m/s, in the table reference.
 	Speed3D _targetSpeed;
 
-	float _intSpeedError;
+	Speed3D _intSpeedError;
+	Speed3D _previousSpeedError;
 	float _intHeadingError;
+	int _lastMotorCmd;
 
 };
 
