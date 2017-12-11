@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Odometry.h>
 #include "params.h"
-#include <DynamixelSerial5.h>
+//#include <DynamixelSerial5.h>
 
 
 Odometry odometry = Odometry();

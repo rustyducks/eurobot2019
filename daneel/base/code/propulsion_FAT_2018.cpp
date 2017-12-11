@@ -4,7 +4,7 @@
 #include "MotorControl.h"
 #include "Metro.h"
 #include "params.h"
-#include "DynamixelSerial5.h"
+//#include "DynamixelSerial5.h"
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 

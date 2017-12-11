@@ -9,7 +9,7 @@
 #include <MotorControl.h>
 #include "params.h"
 #include "utilities.h"
-#include <DynamixelSerial5.h>
+//#include <DynamixelSerial5.h>
 
 #define sig(x) (x) > 0 ? 1 : 0
 

@@ -1,9 +1,8 @@
+/communication/
 /core/
+/libraries/
 /makefile
-/motors_contol/
 /objects.mk
-/odometry/
 /sources.mk
 /subdir.mk
 /utility/
-/libraries/
