@@ -31,7 +31,7 @@ const int MOT3_CURRENT = A21;
 const int MOT3_ENCA = 27;
 const int MOT3_ENCB = 26;
 
-const float PWM_FREQUENCY = 58593.75;
+const float PWM_FREQUENCY = 915.527;
 const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
@@ -63,6 +63,8 @@ const float KD = 0.0;
 const float ROBOT_RADIUS = 170.0;
 
 const float INC_PER_MM = 8.488263631567753;
+
+const int MAX_CONS_DIFF = 50;
 
 extern arm_matrix_instance_f32 Dplus;
 extern arm_matrix_instance_f32 D;

@@ -17,6 +17,11 @@ Odometry::Odometry() {
 	_readIndex = 0;
 	_thetaAI = 0;
 	_inc1 = _inc2 = _inc3 = 0;
+	float32_t* m_data = (float32_t*)malloc(3*sizeof(float32_t));
+	m_data[0] = m_data[1] = m_data[2] = 0;
+	_motorSpeeds.numCols = 1;
+	_motorSpeeds.numRows = 3;
+	_motorSpeeds.pData = m_data;
 }
 
 Odometry::~Odometry() {
@@ -81,16 +86,10 @@ void Odometry::updateHolonomic() {
 	sei();				//enable interrupts
 
 	//tangential distance traveled by each wheel
-	float32_t m_data[] =
-	       {(float)inc1 / INC_PER_MM,
-            (float)inc2 / INC_PER_MM,
-            (float)inc3 / INC_PER_MM};
+	_motorSpeeds.pData[0] = (float)inc1 / INC_PER_MM / CONTROL_PERIOD;
+	_motorSpeeds.pData[1] = (float)inc2 / INC_PER_MM / CONTROL_PERIOD;
+	_motorSpeeds.pData[2] = (float)inc3 / INC_PER_MM / CONTROL_PERIOD;
 
-	arm_matrix_instance_f32 m = {
-			.numRows = 3,
-			.numCols = 1,
-			.pData = m_data
-	};
 
 	float32_t* v_data = NULL;
 	v_data = (float32_t*) malloc(3*sizeof(float32_t));
@@ -105,14 +104,18 @@ void Odometry::updateHolonomic() {
 				.pData = v_data
 		};
 
-	arm_status status = arm_mat_mult_f32(&Dplus, &m, &v );
+	arm_status status = arm_mat_mult_f32(&Dplus, &_motorSpeeds, &v );
 	if(status != ARM_MATH_SUCCESS) {
 		Serial.print("[ERROR] updateHolonomic: matrix multiplication error : ");
 		Serial.println(status);
 	}
 
-//	Serial.print(inc1);
-//	Serial.print("\t");
+	Serial.print(inc1);
+	Serial.print(";");
+//	Serial.print(inc2);
+//	Serial.print(";");
+//	Serial.println(inc3);
+//	Serial.print(";");
 //	Serial.print(inc2);
 //	Serial.print("\t");
 //	Serial.println(inc3);
@@ -151,9 +154,6 @@ void Odometry::addMove(Move3D move) {
 	//modify the object rather than create a new one
 	move.setX(x);
 	move.setY(y);
-
-	//TODO erase it
-	move.setTheta(0);
 
 	//Add this move to the other
 	_moveDelta[_readIndex] = _moveDelta[_readIndex] + move;	//TODO Use += operator

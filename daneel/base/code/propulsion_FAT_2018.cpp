@@ -10,9 +10,10 @@ Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 
 Metro testTime = Metro(4000);
 Speed3D testCommands[] = {
-		Speed3D(100, 0, 0),
-		Speed3D(0, 100, 0),
-		Speed3D(0, 0, 0.1),
+		Speed3D(0, 0, 600),
+		Speed3D(0, 0, 0),
+		Speed3D(0, 0, -600),
+		Speed3D(0, 0, 0),
 
 		Speed3D(200, 0, 0),
 		Speed3D(250, 0, 0),
@@ -58,7 +59,7 @@ void loop()
 
 	if(testTime.check()) {
 		motorControl.setTargetSpeed(testCommands[i]);
-		i = (i+1) % 3;
+		i = (i+1) % 4;
 	}
 
 //	if(Serial.available()) {

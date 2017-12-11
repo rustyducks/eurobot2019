@@ -9,6 +9,7 @@
 #define ODOMETRY_ODOMETRY_H_
 #include <Speed3D.h>
 #include <Move3D.h>
+#include "arm_math.h"
 
 const int MOVE_HISTORY_LENGHT = 10;
 
@@ -80,6 +81,10 @@ public:
 		return _previousSpeed;
 	}
 
+	const arm_matrix_instance_f32& getMotorSpeeds() const {
+		return _motorSpeeds;
+	}
+
 protected:
 
 	/**
@@ -114,6 +119,8 @@ protected:
 	float _thetaAI;
 
 	int _inc1, _inc2, _inc3;
+
+	arm_matrix_instance_f32 _motorSpeeds;
 
 };
 
