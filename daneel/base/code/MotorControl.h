@@ -54,7 +54,7 @@ public:
 
 	/**
 	 * \brief Set target speed
-	 * \param targetSpeed The target speed in m/s, in the table reference.
+	 * \param targetSpeed The target speed in mm/s, in the table reference.
 	 */
 	void setTargetSpeed(arm_matrix_instance_f32* targetSpeed) {
 		_targetSpeed = targetSpeed;

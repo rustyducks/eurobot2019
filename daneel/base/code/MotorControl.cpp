@@ -18,8 +18,8 @@ MotorControl motorControl = MotorControl();
 MotorControl::MotorControl() {
 	_intSpeedError = makeSpeed(0,0,0);
 	_targetSpeed = makeSpeed(0,0,0);
-	prev_cons[0] = prev_cons[1] = prev_cons[2] = 0;
-	_intError[0] = _intError[1] = _intError[2] = 0;
+	 prev_cons[0] =  prev_cons[1] =  prev_cons[2] = 0;
+	 _intError[0] =  _intError[1] =  _intError[2] = 0;
 	_prevError[0] = _prevError[1] = _prevError[2] = 0;
 	KP[0] = KP[1] = KP[2] = 0.3;			//0.4
 	KI[0] = KI[1] = KI[2] = 0.2;
