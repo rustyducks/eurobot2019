@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <Odometry.h>
 #include "params.h"
+#include "utilities.h"
 //#include <DynamixelSerial5.h>
 
 
@@ -17,11 +18,10 @@ Odometry::Odometry() {
 	_readIndex = 0;
 	_thetaAI = 0;
 	_inc1 = _inc2 = _inc3 = 0;
+	_speed = makeSpeed(0,0,0);
+	_motorSpeeds = makeSpeed(0,0,0);
 	float32_t* m_data = (float32_t*)malloc(3*sizeof(float32_t));
 	m_data[0] = m_data[1] = m_data[2] = 0;
-	_motorSpeeds.numCols = 1;
-	_motorSpeeds.numRows = 3;
-	_motorSpeeds.pData = m_data;
 }
 
 Odometry::~Odometry() {
@@ -48,11 +48,6 @@ float Odometry::getDeltaTheta() {
 }
 
 void Odometry::update() {
-	//Don't know the behavior of `_previousSpeed = _speed`
-	_previousSpeed.setVx(_speed.getVx());
-	_previousSpeed.setVy(_speed.getVy());
-	_previousSpeed.setOmega(_speed.getOmega());
-
 #if defined(TRIKE)
 	updateTrike();
 #elif defined(DIFFERENTIAL)
@@ -86,25 +81,13 @@ void Odometry::updateHolonomic() {
 	sei();				//enable interrupts
 
 	//tangential distance traveled by each wheel
-	_motorSpeeds.pData[0] = (float)inc1 / INC_PER_MM / CONTROL_PERIOD;
-	_motorSpeeds.pData[1] = (float)inc2 / INC_PER_MM / CONTROL_PERIOD;
-	_motorSpeeds.pData[2] = (float)inc3 / INC_PER_MM / CONTROL_PERIOD;
+	_motorSpeeds->pData[0] = (float)inc1 / INC_PER_MM / CONTROL_PERIOD;
+	_motorSpeeds->pData[1] = (float)inc2 / INC_PER_MM / CONTROL_PERIOD;
+	_motorSpeeds->pData[2] = (float)inc3 / INC_PER_MM / CONTROL_PERIOD;
 
+	arm_matrix_instance_f32* currentSpeed = makeSpeed(0,0,0);
 
-	float32_t* v_data = NULL;
-	v_data = (float32_t*) malloc(3*sizeof(float32_t));
-
-	if(v_data == NULL) {
-		Serial.println("[ERROR] updateHolonomic: v_data malloc failed");
-	}
-
-	arm_matrix_instance_f32 v = {
-				.numRows = 3,
-				.numCols = 1,
-				.pData = v_data
-		};
-
-	arm_status status = arm_mat_mult_f32(&Dplus, &_motorSpeeds, &v );
+	arm_status status = arm_mat_mult_f32(&Dplus, _motorSpeeds, currentSpeed);
 	if(status != ARM_MATH_SUCCESS) {
 		Serial.print("[ERROR] updateHolonomic: matrix multiplication error : ");
 		Serial.println(status);
@@ -127,21 +110,15 @@ void Odometry::updateHolonomic() {
 //	Serial.print("\tR*theta=");
 //	Serial.println(v.pData[2]/ROBOT_RADIUS);
 
-	Move3D move = Move3D(v.pData[0], v.pData[1], v.pData[2]/ROBOT_RADIUS);
-	_previousSpeed = _speed;
-	_speed = move.toSpeed3D(CONTROL_PERIOD);
+	Move3D move = Move3D(currentSpeed->pData[0], currentSpeed->pData[1], currentSpeed->pData[2]/ROBOT_RADIUS);
 	addMove(move);
 
+	//speed is created by malloc as currentSpeed, then passed to _speed, then free.
+	freeSpeed(_speed);
+	_speed = currentSpeed;
 
-}
 
-void Odometry::setSpeed(const Speed3D& speed) {
-	/*float theta = _thetaAI + getDeltaTheta();
-	float vx = speed.getVx() * cos(theta) - speed.getVy() * sin(theta);
-	float vy = speed.getVy() * cos(theta) + speed.getVx() * sin(theta);
-	_speed.setVx(vx);
-	_speed.setVy(vy);*/
-	_speed = speed;
+
 }
 
 void Odometry::addMove(Move3D move) {

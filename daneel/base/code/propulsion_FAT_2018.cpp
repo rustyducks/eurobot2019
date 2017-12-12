@@ -4,32 +4,19 @@
 #include "MotorControl.h"
 #include "Metro.h"
 #include "params.h"
+#include "utilities.h"
 //#include "DynamixelSerial5.h"
+
+
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 
 Metro testTime = Metro(4000);
-Speed3D testCommands[] = {
-		Speed3D(0, 0, 600),
-		Speed3D(0, 0, 0),
-		Speed3D(0, 0, -600),
-		Speed3D(0, 0, 0),
-
-		Speed3D(200, 0, 0),
-		Speed3D(250, 0, 0),
-		Speed3D(200, 0, 0),
-		Speed3D(100, 0, 0),
-		Speed3D(50, 0, 0),
-		Speed3D(0.2, 0, 0.2),
-		Speed3D(-50.2, 0, 0),
-		Speed3D(-100, 0, -0.2),
-		Speed3D(-150, 0, 0),
-		Speed3D(-200, 0, 0),
-		Speed3D(-250, 0, 0),
-		Speed3D(-200, 0, 0),
-		Speed3D(-100, 0, 0),
-		Speed3D(-50, 0, 0),
-		Speed3D(0, 0, 0),
+arm_matrix_instance_f32* testCommands[] = {
+		makeSpeed(0, 0, W_to_RW(600)),
+		makeSpeed(0, 0, W_to_RW(0)),
+		makeSpeed(0, 0, W_to_RW(-600)),
+		makeSpeed(0, 0, W_to_RW(0))
 };
 int i = 0;
 

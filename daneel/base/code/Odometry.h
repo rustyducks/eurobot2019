@@ -7,7 +7,6 @@
 
 #ifndef ODOMETRY_ODOMETRY_H_
 #define ODOMETRY_ODOMETRY_H_
-#include <Speed3D.h>
 #include <Move3D.h>
 #include "arm_math.h"
 
@@ -46,7 +45,7 @@ public:
 	/**
 	 * \brief return robot speed in the table reference system
 	 */
-	Speed3D& getSpeed() {
+	arm_matrix_instance_f32* getSpeed() {
 		return _speed;
 	}
 
@@ -54,7 +53,7 @@ public:
 	 * \brief Set robot speed from robot to table reference system
 	 * \param speed Robot speed in the robot reference system
 	 */
-	void setSpeed(const Speed3D& speed);
+	void setSpeed(arm_matrix_instance_f32* speed);
 
 	/**
 	 * \return the sum of the moves from id originId to the most recent
@@ -77,11 +76,7 @@ public:
 	void isr3();
 	void isr33();
 
-	const Speed3D& getPreviousSpeed() const {
-		return _previousSpeed;
-	}
-
-	const arm_matrix_instance_f32& getMotorSpeeds() const {
+	arm_matrix_instance_f32* getMotorSpeeds() {
 		return _motorSpeeds;
 	}
 
@@ -109,18 +104,20 @@ protected:
 
 	int _readIndex;
 
-	//! Last computed speed of the robot
-	Speed3D _speed;
+	/**
+	 *  Last computed speed of the robot
+	 *  defined by (vx, vy, Rw)
+	 */
 
-	//! Previous robot speed
-	Speed3D _previousSpeed;
+	arm_matrix_instance_f32* _speed;
+	//Speed3D _speed;
 
 	//! Last theta from AI
 	float _thetaAI;
 
 	int _inc1, _inc2, _inc3;
 
-	arm_matrix_instance_f32 _motorSpeeds;
+	arm_matrix_instance_f32* _motorSpeeds;
 
 };
 

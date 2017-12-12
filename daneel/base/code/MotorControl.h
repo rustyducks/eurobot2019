@@ -8,7 +8,6 @@
 #ifndef MOTORS_CONTOL_MOTORCONTROL_H_
 #define MOTORS_CONTOL_MOTORCONTROL_H_
 #include <Odometry.h>
-#include <Speed3D.h>
 
 #define INT_CLAMP 2000
 
@@ -49,7 +48,7 @@ public:
 	 */
 	void controlHolonomic();
 
-	const Speed3D& getTargetSpeed() const {
+	const arm_matrix_instance_f32* getTargetSpeed() const {
 		return _targetSpeed;
 	}
 
@@ -57,33 +56,24 @@ public:
 	 * \brief Set target speed
 	 * \param targetSpeed The target speed in m/s, in the table reference.
 	 */
-	void setTargetSpeed(const Speed3D& targetSpeed) {
+	void setTargetSpeed(arm_matrix_instance_f32* targetSpeed) {
 		_targetSpeed = targetSpeed;
 	}
 
 protected:
 
 	//! Target speed : the speed at which the robot must be in m/s, in the table reference.
-	Speed3D _targetSpeed;
-	float32_t _intError1;
-	float32_t _intError2;
-	float32_t _intError3;
-	float32_t _prevError1;
-	float32_t _prevError2;
-	float32_t _prevError3;
+	arm_matrix_instance_f32* _targetSpeed;
+	float32_t _intError[3];
+	float32_t _prevError[3];
 
 	float32_t KP[3];
 	float32_t KI[3];
 	float32_t KD[3];
 
-	int prev_cons1;
-	int prev_cons2;
-	int prev_cons3;
+	int prev_cons[3];
 
-	Speed3D _intSpeedError;
-
-	float _intHeadingError;
-	int _lastMotorCmd;
+	arm_matrix_instance_f32* _intSpeedError;
 
 };
 

@@ -16,12 +16,11 @@
 MotorControl motorControl = MotorControl();
 
 MotorControl::MotorControl() {
-	_intSpeedError = Speed3D();
-	_intHeadingError = 0;
-	_lastMotorCmd = 0;
-	prev_cons1 = prev_cons2 = prev_cons3 = 0;
-	_intError1 = _intError2 = _intError3 = 0;
-	_prevError1 = _prevError2 = _prevError3 = 0;
+	_intSpeedError = makeSpeed(0,0,0);
+	_targetSpeed = makeSpeed(0,0,0);
+	prev_cons[0] = prev_cons[1] = prev_cons[2] = 0;
+	_intError[0] = _intError[1] = _intError[2] = 0;
+	_prevError[0] = _prevError[1] = _prevError[2] = 0;
 	KP[0] = KP[1] = KP[2] = 0.3;			//0.4
 	KI[0] = KI[1] = KI[2] = 0.2;
 	KD[0] = KD[1] = KD[2] = 0.1;
@@ -96,27 +95,12 @@ void MotorControl::controlDifferential() {
 
 void MotorControl::controlHolonomic() {
 
-//	digitalWrite(MOT1_DIR, sig(50));
-//	analogWrite(MOT1_PWM, 50);
-//	return;
-
-	if(_targetSpeed.getVx() == 0){
-		digitalWrite(2, HIGH);
-	}
-	else {
-		digitalWrite(2, LOW);
-	}
-
-	float32_t targetSpeed_data[] =
-		       {_targetSpeed.getVx(),
-			    _targetSpeed.getVy(),
-			    _targetSpeed.getOmega()};
-
-	arm_matrix_instance_f32 targetSpeed = {
-			.numRows = 3,
-			.numCols = 1,
-			.pData = targetSpeed_data
-	};
+//	if(_targetSpeed.getVx() == 0){
+//		digitalWrite(2, HIGH);
+//	}
+//	else {
+//		digitalWrite(2, LOW);
+//	}
 
 
 	float32_t m_data[] =
@@ -130,7 +114,7 @@ void MotorControl::controlHolonomic() {
 			.pData = m_data
 	};
 
-	arm_status status = arm_mat_mult_f32(&D, &targetSpeed, &m);
+	arm_status status = arm_mat_mult_f32(&D, _targetSpeed, &m);
 
 	if(status != ARM_MATH_SUCCESS) {
 		Serial.print("[ERROR] controlHolonomic: matrix multiplication error : ");
@@ -138,32 +122,32 @@ void MotorControl::controlHolonomic() {
 	}
 
 
-	arm_matrix_instance_f32 speed = odometry.getMotorSpeeds();	//get current speed
+	arm_matrix_instance_f32* speed = odometry.getMotorSpeeds();	//get current speed
 
 	//compute error
-	float32_t error1 = m.pData[0] - speed.pData[0];
-	float32_t error2 = m.pData[1] - speed.pData[1];
-	float32_t error3 = m.pData[2] - speed.pData[2];
+	float32_t error1 = m.pData[0] - speed->pData[0];
+	float32_t error2 = m.pData[1] - speed->pData[1];
+	float32_t error3 = m.pData[2] - speed->pData[2];
 
 	//update integral error
-	_intError1 = clamp((float32_t)-INT_CLAMP, _intError1 + error1, (float32_t)INT_CLAMP);
-	_intError2 = clamp((float32_t)-INT_CLAMP, _intError2 + error2, (float32_t)INT_CLAMP);
-	_intError3 = clamp((float32_t)-INT_CLAMP, _intError3 + error3, (float32_t)INT_CLAMP);
+	_intError[0] = clamp((float32_t)-INT_CLAMP, _intError[0] + error1, (float32_t)INT_CLAMP);
+	_intError[1] = clamp((float32_t)-INT_CLAMP, _intError[1] + error2, (float32_t)INT_CLAMP);
+	_intError[2] = clamp((float32_t)-INT_CLAMP, _intError[2] + error3, (float32_t)INT_CLAMP);
 
 	//compute deriv error
-	float32_t derivError1 = error1 - _prevError1;
-	float32_t derivError2 = error2 - _prevError2;
-	float32_t derivError3 = error3 - _prevError3;
+	float32_t derivError1 = error1 - _prevError[0];
+	float32_t derivError2 = error2 - _prevError[1];
+	float32_t derivError3 = error3 - _prevError[2];
 
 	//store error for future use
-	_prevError1 = error1;
-	_prevError2 = error2;
-	_prevError3 = error3;
+	_prevError[0] = error1;
+	_prevError[1] = error2;
+	_prevError[2] = error3;
 
 	//compute command
-	float32_t cmd1 = KP[0] * error1 + KI[0] * _intError1 + KD[0] * derivError1;
-	float32_t cmd2 = KP[1] * error2 + KI[1] * _intError2 + KD[1] * derivError2;
-	float32_t cmd3 = KP[2] * error3 + KI[2] * _intError3 + KD[2] * derivError3;
+	float32_t cmd1 = KP[0] * error1 + KI[0] * _intError[0] + KD[0] * derivError1;
+	float32_t cmd2 = KP[1] * error2 + KI[1] * _intError[1] + KD[1] * derivError2;
+	float32_t cmd3 = KP[2] * error3 + KI[2] * _intError[2] + KD[2] * derivError3;
 
 
 	//set motors directions
@@ -177,14 +161,14 @@ void MotorControl::controlHolonomic() {
 	int cons3 = clamp(0, (int)abs(cmd3), 255);
 
 	//clamp it to avoid brutal commands
-//	cons1 = clamp(prev_cons1 - MAX_CONS_DIFF, cons1, prev_cons1 + MAX_CONS_DIFF);
-//	cons2 = clamp(prev_cons2 - MAX_CONS_DIFF, cons2, prev_cons2 + MAX_CONS_DIFF);
-//	cons3 = clamp(prev_cons3 - MAX_CONS_DIFF, cons3, prev_cons3 + MAX_CONS_DIFF);
+//	cons1 = clamp(prev_cons[0] - MAX_CONS_DIFF, cons1, prev_cons[0] + MAX_CONS_DIFF);
+//	cons2 = clamp(prev_cons[1] - MAX_CONS_DIFF, cons2, prev_cons[1] + MAX_CONS_DIFF);
+//	cons3 = clamp(prev_cons[2] - MAX_CONS_DIFF, cons3, prev_cons[2] + MAX_CONS_DIFF);
 
 
 Serial.print(m.pData[0]);
 Serial.print(";");
-Serial.print(speed.pData[0]);
+Serial.print(speed->pData[0]);
 Serial.print(";");
 Serial.print(error1);
 Serial.print(";");
@@ -196,8 +180,8 @@ Serial.println(cons1);
 	analogWrite(MOT2_PWM, cons2);
 	analogWrite(MOT3_PWM, cons3);
 
-//	prev_cons1 = cons1;
-//	prev_cons2 = cons2;
-//	prev_cons3 = cons3;
+	prev_cons[0] = cons1;
+	prev_cons[1] = cons2;
+	prev_cons[2] = cons3;
 
 }

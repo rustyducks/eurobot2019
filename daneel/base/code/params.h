@@ -60,7 +60,7 @@ const float KD = 0.0;
 	//plop
 #elif defined(HOLONOMIC)
 
-const float ROBOT_RADIUS = 170.0;
+const float32_t ROBOT_RADIUS = 170.0;
 
 const float INC_PER_MM = 8.488263631567753;
 
