@@ -56,8 +56,8 @@ public:
 	 * \brief Set target speed
 	 * \param targetSpeed The target speed in mm/s, in the table reference.
 	 */
-	void setTargetSpeed(arm_matrix_instance_f32* targetSpeed) {
-		_targetSpeed = targetSpeed;
+	void setTargetSpeed(arm_matrix_instance_f32* speed) {
+		memcpy(_targetSpeed->pData, speed->pData, 3*sizeof(float32_t));
 	}
 
 protected:
