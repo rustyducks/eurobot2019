@@ -56,9 +56,13 @@ public:
 	void setSpeed(arm_matrix_instance_f32* speed);
 
 	/**
-	 * \return the sum of the moves from id originId to the most recent
+	 * \return the sum of the moves from id originId to the most recent (ie moveDeltaId)
+	 * you should call this method, then getNincMoveDeltaId :
+	 * move = getMoveDelta(from);
+	 * id = getNincMoveDeltaId;
+	 * sendMessage(move, id)
 	 */
-	Move3D getMoveDelta(int originId);
+	arm_matrix_instance_f32* getMoveDelta(int originId);
 
 	/**
 	 * \brief rotate one step ahead the circular buffer
@@ -80,6 +84,14 @@ public:
 		return _motorSpeeds;
 	}
 
+	int getMoveDeltaId() const {
+		return _moveDeltaId;
+	}
+
+	int getNincMoveDeltaId() {
+			return _moveDeltaId++;
+		}
+
 protected:
 
 	/**
@@ -91,7 +103,7 @@ protected:
 	/**
 	 * \brief Adds move to the last move of _moveDelta (the current one)
 	 */
-	void addMove(Move3D move);
+	void updatePosition();
 
 	/**
 	 * \brief Moves between RAZ
@@ -100,7 +112,13 @@ protected:
 	 * The move at the current index is refined at each odometry update (high frequency).
 	 * At low frequency, this move is sent to the AI
 	 */
-	Move3D _moveDelta[];
+	arm_matrix_instance_f32 _moveDelta[];
+
+	/**
+	 * id of the current moveDelta
+	 * See getMoveDelta for further details
+	 */
+	int _moveDeltaId;
 
 	int _readIndex;
 

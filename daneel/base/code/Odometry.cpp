@@ -18,6 +18,7 @@ Odometry::Odometry() {
 	_readIndex = 0;
 	_thetaAI = 0;
 	_inc1 = _inc2 = _inc3 = 0;
+	_moveDeltaId = 1;
 	_speed = makeSpeed(0,0,0);
 	_motorSpeeds = makeSpeed(0,0,0);
 	float32_t* m_data = (float32_t*)malloc(3*sizeof(float32_t));
@@ -27,24 +28,20 @@ Odometry::Odometry() {
 Odometry::~Odometry() {
 }
 
-Move3D Odometry::getMoveDelta(int originId) {
-	Move3D move;
-	int currentIndex = _readIndex;
-
-	//TODO correct potential bug : if originId < lastId - MOVE_HISTORY_LENGHT, it will loop forever !
-	//Add a counter or whatever to protect against this bug.
-
-	//sum the moves from id originId to the most recent (in reverse order because it's easier)
-	do {
-		move = move + _moveDelta[currentIndex];		//TODO : use += operator
-		currentIndex--;
-	} while(_moveDelta[currentIndex].getId()>originId);
-
+arm_matrix_instance_f32* Odometry::getMoveDelta(int originId) {
+	arm_matrix_instance_f32* move = makeSpeed(0,0,0);		//speed, move... Ok, I know what I'm doing. Trust me.
+	int nb_moves = _moveDeltaId - originId;
+	for(int i = 0; i< nb_moves; i++) {
+		int index = (_readIndex - i + MOVE_HISTORY_LENGHT)%MOVE_HISTORY_LENGHT;
+		move->pData[0] += _moveDelta[index].pData[0];
+		move->pData[1] += _moveDelta[index].pData[1];
+		move->pData[2] += _moveDelta[index].pData[2];
+	}
 	return move;
 }
 
 float Odometry::getDeltaTheta() {
-	return _moveDelta[_readIndex].getTheta();
+	return _moveDelta[_readIndex].pData[3];
 }
 
 void Odometry::update() {
@@ -110,38 +107,26 @@ void Odometry::updateHolonomic() {
 //	Serial.print("\tR*theta=");
 //	Serial.println(v.pData[2]/ROBOT_RADIUS);
 
-	Move3D move = Move3D(currentSpeed->pData[0], currentSpeed->pData[1], currentSpeed->pData[2]/ROBOT_RADIUS);
-	addMove(move);
-
 	//speed is created by malloc as currentSpeed, then passed to _speed, then free.
 	freeSpeed(_speed);
 	_speed = currentSpeed;
 
-
+	updatePosition();
 
 }
 
-void Odometry::addMove(Move3D move) {
+void Odometry::updatePosition() {
 	float theta = _thetaAI + getDeltaTheta();
 
 	//change reference system
-	float x = move.getX() * cos(theta) - move.getY() * sin(theta);
-	float y = move.getY() * cos(theta) + move.getX() * sin(theta);
-
-	//modify the object rather than create a new one
-	move.setX(x);
-	move.setY(y);
+	float32_t vx0 = _speed->pData[0] * cos(theta) - _speed->pData[1] * sin(theta);
+	float32_t vy0 = _speed->pData[1] * cos(theta) + _speed->pData[0] * sin(theta);
 
 	//Add this move to the other
-	_moveDelta[_readIndex] = _moveDelta[_readIndex] + move;	//TODO Use += operator
+	_moveDelta[_readIndex].pData[0]+= vx0 * CONTROL_PERIOD;
+	_moveDelta[_readIndex].pData[1]+= vy0  * CONTROL_PERIOD;
+	_moveDelta[_readIndex].pData[2]+= RW_to_W(_speed->pData[3])  * CONTROL_PERIOD;
 
-
-//		Serial.print("x=");
-//		Serial.print(_moveDelta[_readIndex].getX());
-//		Serial.print("\ty=");
-//		Serial.print(_moveDelta[_readIndex].getY());
-//		Serial.print("\ttheta=");
-//		Serial.println(_moveDelta[_readIndex].getTheta());
 }
 
 void initOdometry() {
