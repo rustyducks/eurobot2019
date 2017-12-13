@@ -92,13 +92,13 @@ public:
 			return _moveDeltaId++;
 		}
 
-protected:
-
 	/**
 	 * \return delta theta since last time moveDelta was reset.
 	 * useful for estimating the current theta, in combination with _thetaAI
 	 */
 	float getDeltaTheta();
+
+protected:
 
 	/**
 	 * \brief Adds move to the last move of _moveDelta (the current one)

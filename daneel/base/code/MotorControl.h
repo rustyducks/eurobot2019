@@ -60,6 +60,12 @@ public:
 		memcpy(_targetSpeed->pData, speed->pData, 3*sizeof(float32_t));
 	}
 
+	void setTargetSpeed(float32_t vx, float32_t vy, float32_t w) {
+		_targetSpeed->pData[0] = vx;
+		_targetSpeed->pData[1] = vy;
+		_targetSpeed->pData[2] = w;
+	}
+
 protected:
 
 	//! Target speed : the speed at which the robot must be in m/s, in the table reference.
