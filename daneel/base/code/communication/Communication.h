@@ -10,12 +10,40 @@
 
 #include <cstdint>
 #include <math.h>
+#include <unordered_map>
+#include <vector>
+#include <functional>
+#include <map>
+#include <memory>
+#include <Arduino.h>
 #include <HardwareSerial.h>
 
-namespace std {
+namespace fat{
 
 class Communication {
 public:
+	struct SpeedCommand{
+	public:
+		double vx;
+		double vy;
+		double vtheta;
+	};
+
+	struct ActuatorCommand{
+		int actuatorId;
+		int actuatorCommand;
+	};
+
+	struct HMICommand{
+		bool redLedCommand;
+		bool greenLedCommand;
+		bool blueLedCommand;
+	};
+
+	struct Repositionning{
+		double theta;
+	};
+
 	Communication(HardwareSerial serial, uint32_t baudrate);
 	virtual ~Communication();
 
@@ -24,12 +52,23 @@ public:
 	int sendActuatorState(const int actuatorId, const int actuatorState);
 	int sendOdometryReport(const int dx, const int dy, const double dtheta);
 
+	void registerRecieveSpeedCommandCallback(std::function<void (const SpeedCommand&)>);
+	void registerRecieveActuatorCommandCallback(std::function<void (const ActuatorCommand&)>);
+	void registerRecieveHMICommandCallback(std::function<void (const HMICommand&)>);
+
+	void checkMessages();
+
 private:
 	static constexpr int linearOdomToMsgAdder = 32768;
 	static constexpr double radianToMsgFactor = 10430.378350470453;
 	static constexpr double radianToMsgAdder = M_PI;
 	static constexpr int upMsgMaxSize = 11;
 	static constexpr int upMsgHeaderSize = 3;  // Number of bytes discarded for checksum computation
+	static constexpr int downMsgMaxSize = 9;
+	static constexpr int downMsgHeaderSize = 3; // Number of bytes discarded for checksum computation
+	static constexpr unsigned char hmiCommandRedMask = 1 << 7;
+	static constexpr unsigned char hmiCommandGreenMask = 1 << 6;
+	static constexpr unsigned char hmiCommandBlueMask = 1 << 5;
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
@@ -113,21 +152,37 @@ private:
 		uint8_t checksum;
 		uMessageDownData downData;
 	}sMessageDown;
+
+	typedef union __attribute__((packed)){
+		sMessageDown messageDown;
+		char bytes[downMsgMaxSize];
+	}uRawMessageDown;
 	//========End Down Messages definitions==========
 
+	HardwareSerial serial;
 	int odomReportIndex;
 	int lastOdomReportIndexAcknowledged;
 	int upMessageIndex;
 	int cumulateddx;
 	int cumulateddy;
 	double cumulateddtheta;
-	HardwareSerial serial;
+	uint8_t lastIdDownMessageRecieved;
+	bool isFirstMessage;
+
+	//Todo : Maybe an "unordered_map<downMsgType, vector<function<void (const DownMessage&)>>>
+	// callbacks; With DownMessage super class of all user exposed messages data (SpeedCommand, ...)
+	std::vector<std::function<void (const SpeedCommand&)> > speedMsgCallbacks;
+	std::vector<std::function<void (const ActuatorCommand&)> > actuatorMsgCallbacks;
+	std::vector<std::function<void (const HMICommand&)> > HMIMsgCallbacks;
+	std::vector<std::function<void (const Repositionning&)> > repositioningCallbacks;
 
 	int sendUpMessage(const sMessageUp& msg);
-	int recieveMessage(sMessageDown* msg);
+	void recieveMessage(const sMessageDown& msg);
 	uint8_t computeUpChecksum(const sMessageUp& msg);
+	uint8_t computeDownChecksum(const sMessageDown& msg);
+	std::map<const unsigned long, uRawMessageUp> toBeAcknowledged;
+	std::vector<sOdomReportMsg> nonAcknowledgedOdomReport;
 };
-
-} /* namespace std */
+}//namespace fat
 
 #endif /* COMMUNICATION_COMMUNICATION_H_ */

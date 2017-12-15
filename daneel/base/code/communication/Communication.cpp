@@ -7,10 +7,13 @@
 
 #include "Communication.h"
 
-namespace std {
+using namespace std;
+namespace fat {
 
-Communication::Communication(HardwareSerial serial, uint32_t baudrate): odomReportIndex(0), lastOdomReportIndexAcknowledged(0), cumulateddx(0),
-		cumulateddy(0), cumulateddtheta(0), serial(serial){
+Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
+		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), cumulateddx(0),
+		cumulateddy(0), cumulateddtheta(0), lastIdDownMessageRecieved(0),
+		isFirstMessage(true){
 	this->serial.begin(baudrate);
 
 }
@@ -22,8 +25,8 @@ Communication::~Communication() {
 int Communication::sendIHMState(const bool cordState, const bool button1State, const bool button2State,
 		const bool redLedState, const bool greenLedState, const bool blueLedState){
 	sMessageUp msg;
-	uint8_t hmiState = cordState << 8 | button1State << 7 | button2State << 6 | redLedState << 5 | greenLedState << 4 |
-			blueLedState << 3;
+	uint8_t hmiState = cordState << 7 | button1State << 6 | button2State << 5 | redLedState << 4 | greenLedState << 3 |
+			blueLedState << 2;
 	msg.upMsgType = Communication::HMI_STATE;
 	msg.upData.hmiStateMsg.HMIState = hmiState;
 
@@ -84,6 +87,8 @@ int Communication::sendUpMessage(const sMessageUp& msg){
 	rawMessage.messageUp.upMsgId = upMessageIndex;
 	upMessageIndex++;
 	serial.write(rawMessage.bytes, upMsgMaxSize);
+	toBeAcknowledged[millis()] = rawMessage;
+	// Todo : Handle resend on timeout if ack is not recieved -> Delete stored message on ack recieve and update send time on resend.
 	return 0;
 }
 
@@ -95,9 +100,122 @@ uint8_t Communication::computeUpChecksum(const sMessageUp& msg){
 	}
 	rawMessage.messageUp = msg;
 	for (int i = upMsgHeaderSize; i < upMsgMaxSize; i++){
-		checksum = checksum ^ rawMessage.bytes[i];
+		checksum = (checksum ^ rawMessage.bytes[i]) % 256;
 	}
 	return checksum;
+}
+
+uint8_t Communication::computeDownChecksum(const sMessageDown& msg){
+	uRawMessageDown rawMessage;
+	unsigned char checksum = 0;
+	for (int i = 0; i < downMsgMaxSize; i++){
+		rawMessage.bytes[i] = 0;
+	}
+	rawMessage.messageDown = msg;
+	for (int i = downMsgHeaderSize; i < downMsgMaxSize; i++){
+		checksum = (checksum ^ rawMessage.bytes[i]) % 256;
+	}
+	return checksum;
+}
+
+void Communication::registerRecieveActuatorCommandCallback(std::function<void
+		(const ActuatorCommand &)> callback){
+	actuatorMsgCallbacks.push_back(callback);
+}
+
+void Communication::registerRecieveHMICommandCallback(std::function<void
+		(const HMICommand &)> callback){
+	HMIMsgCallbacks.push_back(callback);
+}
+
+void Communication::registerRecieveSpeedCommandCallback(std::function<void
+		(const SpeedCommand &)> callback){
+	speedMsgCallbacks.push_back(callback);
+}
+
+void Communication::recieveMessage(const sMessageDown& msg){
+
+	std::map<const unsigned long, uRawMessageUp>::iterator nonAckMessageItr;
+	SpeedCommand speedCommand;
+	ActuatorCommand actuatorCommand;
+	HMICommand hmiCommand;
+
+	switch(msg.downMsgType){
+	case ACK_DOWN:
+		nonAckMessageItr = toBeAcknowledged.begin();
+		while (nonAckMessageItr != toBeAcknowledged.end()){
+			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downMsgId){
+				nonAckMessageItr = toBeAcknowledged.erase(nonAckMessageItr);
+			}else{
+				nonAckMessageItr++;
+			}
+		}
+		break;
+	case ACK_ODOM_REPORT:
+		cumulateddx = 0;
+		cumulateddy = 0;
+		cumulateddtheta = 0;
+		break;
+	case SPEED_CMD:
+		speedCommand.vx = msg.downData.speedCmdMsg.vx; //Todo : Maybe do a transformation
+ 		speedCommand.vy = msg.downData.speedCmdMsg.vy;
+ 		speedCommand.vtheta = msg.downData.speedCmdMsg.vtheta / radianToMsgFactor - radianToMsgAdder;
+ 		for (auto const &callback: speedMsgCallbacks){
+			callback(speedCommand);
+		}
+		break;
+	case ACTUATOR_CMD:
+		actuatorCommand.actuatorId = msg.downData.actuatorCmdMsg.actuatorId;
+		actuatorCommand.actuatorCommand = msg.downData.actuatorCmdMsg.actuatorCmd;
+		for (auto const &callback: actuatorMsgCallbacks){
+			callback(actuatorCommand);
+		}
+		break;
+	case HMI_CMD:
+		hmiCommand.redLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask;
+		hmiCommand.greenLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask;
+		hmiCommand.blueLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask;
+		for (auto const &callback: HMIMsgCallbacks){
+			callback(hmiCommand);
+		}
+		break;
+	}
+}
+
+void Communication::checkMessages(){
+	uRawMessageDown rawDataDown;
+	uRawMessageUp rawUpAckMessage;
+
+	if (serial.available()) { //If there is some data waiting in the buffer
+
+		if (serial.available() >= downMsgMaxSize) { //Read all the data in the buffer (asserting raspi is sending at max one message per teensy loop)
+			for (int i = 0; i < downMsgMaxSize; i++){
+				rawDataDown.bytes[i] = serial.read();
+			}
+			if (computeDownChecksum(rawDataDown.messageDown) == rawDataDown.messageDown.checksum){
+				rawUpAckMessage.messageUp.upMsgType = ACK_UP;
+				rawUpAckMessage.messageUp.upData.ackMsg.ackDownMsgId = rawDataDown.messageDown.downMsgId;
+				serial.write(rawUpAckMessage.bytes, upMsgMaxSize);
+
+
+				if (isFirstMessage || //If it is the first message, accept it
+						/*raw_data_down.msg.type == RESET ||*/
+						((rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256>0
+								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
+					isFirstMessage = false;
+					lastIdDownMessageRecieved = rawDataDown.messageDown.downMsgId;
+
+				}
+			}/* else {
+				raw_ack_message.msg.type = NON_ACK;
+				raw_ack_message.msg.down_id = raw_data_down.msg.id;
+				HWSERIAL.write(raw_ack_message.data, MSG_UP_MAX_SIZE);
+				return 0;*/
+
+		}
+	} /*else {
+		return 0; //Serial is empty :'(
+	}*/
 }
 
 } /* namespace std */
