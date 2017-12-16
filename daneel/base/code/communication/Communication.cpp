@@ -11,8 +11,7 @@ using namespace std;
 namespace fat {
 
 Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
-		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), cumulateddx(0),
-		cumulateddy(0), cumulateddtheta(0), lastIdDownMessageRecieved(0),
+		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
 		isFirstMessage(true){
 	this->serial.begin(baudrate);
 
@@ -51,20 +50,35 @@ int Communication::sendActuatorState(const int actuatorId, const int actuatorSta
 
 int Communication::sendOdometryReport(const int dx, const int dy, const double dtheta){
 	sMessageUp msg;
-	cumulateddx += dx;
-	cumulateddy += dy;
-	cumulateddtheta += dtheta;
-	odomReportIndex = (odomReportIndex + 1) % 256;
-	int msgdx = cumulateddx + linearOdomToMsgAdder, msgdy = cumulateddy + linearOdomToMsgAdder;
-	int msgdtheta = (cumulateddtheta + radianToMsgAdder) * radianToMsgFactor;
+	sOdomReportStorage odomReport;
+	int cumuleddx = dx, cumuleddy = dy;
+	double cumuleddtheta = dtheta;
 
-	if (cumulateddx < 0 || cumulateddx > 65535){
+	odomReportIndex = (odomReportIndex + 1) % 256;
+	odomReport = {(uint8_t)odomReportIndex, (double)dx, (double)dy, (double)dtheta};
+
+	nonAcknowledgedOdomReport.push_back(odomReport);
+
+	for (sOdomReportStorage odom: nonAcknowledgedOdomReport){
+		if ((odom.odomId - lastOdomReportIndexAcknowledged) % 256 > 0 &&
+				(odomReportIndex - odom.odomId) % 256 > 0){
+			// we must have lastOdomAck < odomId < odomReportIndex to add it in the report (but maybe check if the mod. is correct)
+			cumuleddx += odom.dx;
+			cumuleddy += odom.dy;
+			cumuleddtheta += odom.dtheta;
+		}
+	}
+
+	int msgdx = cumuleddx + linearOdomToMsgAdder, msgdy = cumuleddy + linearOdomToMsgAdder;
+	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
+
+	if (cumuleddx < 0 || cumuleddx > 65535){
 		return -10;
 	}
-	if (cumulateddy < 0 || cumulateddy > 65535){
+	if (cumuleddy < 0 || cumuleddy > 65535){
 		return -11;
 	}
-	if (cumulateddtheta < 0 || cumulateddtheta > 65535){
+	if (cumuleddtheta < 0 || cumuleddtheta > 65535){
 		return -12;
 	}
 	msg.upMsgType = Communication::ODOM_REPORT;
@@ -136,6 +150,7 @@ void Communication::registerRecieveSpeedCommandCallback(std::function<void
 void Communication::recieveMessage(const sMessageDown& msg){
 
 	std::map<const unsigned long, uRawMessageUp>::iterator nonAckMessageItr;
+	vector<sOdomReportStorage>::iterator nonAckOdomReportItr;
 	SpeedCommand speedCommand;
 	ActuatorCommand actuatorCommand;
 	HMICommand hmiCommand;
@@ -144,7 +159,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 	case ACK_DOWN:
 		nonAckMessageItr = toBeAcknowledged.begin();
 		while (nonAckMessageItr != toBeAcknowledged.end()){
-			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downMsgId){
+			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downData.ackMsg.ackUpMsgId){
 				nonAckMessageItr = toBeAcknowledged.erase(nonAckMessageItr);
 			}else{
 				nonAckMessageItr++;
@@ -152,9 +167,24 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		}
 		break;
 	case ACK_ODOM_REPORT:
-		cumulateddx = 0;
-		cumulateddy = 0;
-		cumulateddtheta = 0;
+		nonAckMessageItr = toBeAcknowledged.begin();
+		while (nonAckMessageItr != toBeAcknowledged.end()){
+			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downData.ackMsg.ackUpMsgId){
+				nonAckMessageItr = toBeAcknowledged.erase(nonAckMessageItr);
+			}else{
+				nonAckMessageItr++;
+			}
+		}
+		nonAckOdomReportItr = nonAcknowledgedOdomReport.begin();
+		while(nonAckOdomReportItr != nonAcknowledgedOdomReport.end()){
+			if ((nonAckOdomReportItr->odomId -
+					msg.downData.ackOdomReportMsg.ackOdomReportId) % 256 < 0){
+				nonAckOdomReportItr = nonAcknowledgedOdomReport.erase(nonAckOdomReportItr);
+			}else{
+				nonAckOdomReportItr++;
+			}
+		}
+
 		break;
 	case SPEED_CMD:
 		speedCommand.vx = msg.downData.speedCmdMsg.vx; //Todo : Maybe do a transformation
@@ -204,6 +234,7 @@ void Communication::checkMessages(){
 								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
 					isFirstMessage = false;
 					lastIdDownMessageRecieved = rawDataDown.messageDown.downMsgId;
+					recieveMessage(rawDataDown.messageDown);
 
 				}
 			}/* else {

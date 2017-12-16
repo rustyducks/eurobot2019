@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <Arduino.h>
+#include <iterator>
 #include <HardwareSerial.h>
 
 namespace fat{
@@ -159,13 +160,17 @@ private:
 	}uRawMessageDown;
 	//========End Down Messages definitions==========
 
+	struct sOdomReportStorage{
+		uint8_t odomId;
+		double dx;
+		double dy;
+		double dtheta;
+	};
+
 	HardwareSerial serial;
 	int odomReportIndex;
 	int lastOdomReportIndexAcknowledged;
 	int upMessageIndex;
-	int cumulateddx;
-	int cumulateddy;
-	double cumulateddtheta;
 	uint8_t lastIdDownMessageRecieved;
 	bool isFirstMessage;
 
@@ -181,7 +186,7 @@ private:
 	uint8_t computeUpChecksum(const sMessageUp& msg);
 	uint8_t computeDownChecksum(const sMessageDown& msg);
 	std::map<const unsigned long, uRawMessageUp> toBeAcknowledged;
-	std::vector<sOdomReportMsg> nonAcknowledgedOdomReport;
+	std::vector<sOdomReportStorage> nonAcknowledgedOdomReport;
 };
 }//namespace fat
 
