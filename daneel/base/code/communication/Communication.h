@@ -52,6 +52,11 @@ public:
 	Communication(HardwareSerial serial, uint32_t baudrate);
 	virtual ~Communication();
 
+	/**
+	 * Functions used to send messages
+	 * \return 0: message sent
+	 * 1: message sent, but not stored. Won't be resend if ack non recieved...
+	 */
 	int sendIHMState(const bool cordState, const bool button1State, const bool button2State, const bool redLedState,
 			const bool greenLedState, const bool blueLedState);
 	int sendActuatorState(const int actuatorId, const int actuatorState);
@@ -82,7 +87,8 @@ private:
 	static constexpr unsigned char hmiCommandRedMask = 1 << 7;
 	static constexpr unsigned char hmiCommandGreenMask = 1 << 6;
 	static constexpr unsigned char hmiCommandBlueMask = 1 << 5;
-	static constexpr int maxCallbackPerMessageType = 10;
+	static constexpr unsigned int maxCallbackPerMessageType = 10;
+	static constexpr unsigned int maxNonAckMessageStored = 50;
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
@@ -202,6 +208,16 @@ private:
 	}RepositionningMessageCallbackRegister;
 
 
+	/**
+	 * sentTime == 0 means this structure is empty. Thus, if valid data is holded by the
+	 * struct, sentTime must be different to 0;
+	 */
+	struct sUpMessageStorage{
+		unsigned long sendTime;
+		uRawMessageUp message;
+	};
+
+
 	HardwareSerial serial;
 	int odomReportIndex;
 	int lastOdomReportIndexAcknowledged;
@@ -218,7 +234,9 @@ private:
 	void recieveMessage(const sMessageDown& msg);
 	uint8_t computeUpChecksum(const sMessageUp& msg);
 	uint8_t computeDownChecksum(const sMessageDown& msg);
-	std::map<const unsigned long, uRawMessageUp> toBeAcknowledged;
+	int storeNewSentMessage(unsigned long time, const uRawMessageUp msg);
+	int removeAcknowledgedMessage(uint8_t acknowledgedId);
+	sUpMessageStorage toBeAcknowledged[maxNonAckMessageStored];
 	std::vector<sOdomReportStorage> nonAcknowledgedOdomReport;
 };
 }//namespace fat

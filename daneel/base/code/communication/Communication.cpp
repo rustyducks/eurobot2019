@@ -14,6 +14,9 @@ Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(se
 		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
 		isFirstMessage(true){
 	this->serial.begin(baudrate);
+	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
+		toBeAcknowledged[i].sendTime = 0;
+	}
 
 }
 
@@ -91,8 +94,36 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 	return sendUpMessage(msg);
 }
 
+int Communication::storeNewSentMessage(unsigned long time, const uRawMessageUp msg){
+	bool stored = false;
+	sUpMessageStorage toStore = {time, msg};
+	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
+		if (toBeAcknowledged[i].sendTime == 0){
+			toBeAcknowledged[i] = toStore;
+			stored = true;
+			break;
+		}
+	}
+	if (stored){
+		return 0;
+	}
+	return 1;
+}
+
+int Communication::removeAcknowledgedMessage(uint8_t acknowledgedId){
+	bool isRemoved = false;
+	for (unsigned int i=0; i < maxNonAckMessageStored; i++){
+		if (toBeAcknowledged[i].message.messageUp.upMsgId == acknowledgedId){
+			toBeAcknowledged[i].sendTime = 0;
+			isRemoved = true;
+		}
+	}
+	return isRemoved;
+}
+
 int Communication::sendUpMessage(const sMessageUp& msg){
 	uRawMessageUp rawMessage;
+	int storageSuccess;
 	for (int i = 0; i < upMsgMaxSize; i++){
 		rawMessage.bytes[i] = 0;
 	}
@@ -101,9 +132,9 @@ int Communication::sendUpMessage(const sMessageUp& msg){
 	rawMessage.messageUp.upMsgId = upMessageIndex;
 	upMessageIndex++;
 	serial.write(rawMessage.bytes, upMsgMaxSize);
-	toBeAcknowledged[millis()] = rawMessage;
+	storageSuccess = storeNewSentMessage(millis(), rawMessage);
 	// Todo : Handle resend on timeout if ack is not recieved -> Delete stored message on ack recieve and update send time on resend.
-	return 0;
+	return storageSuccess;
 }
 
 uint8_t Communication::computeUpChecksum(const sMessageUp& msg){
@@ -169,8 +200,6 @@ int Communication::registerRepositionningCallback(RepositionningCallback callbac
 }
 
 void Communication::recieveMessage(const sMessageDown& msg){
-
-	std::map<const unsigned long, uRawMessageUp>::iterator nonAckMessageItr;
 	vector<sOdomReportStorage>::iterator nonAckOdomReportItr;
 	SpeedCommand speedCommand;
 	ActuatorCommand actuatorCommand;
@@ -178,24 +207,11 @@ void Communication::recieveMessage(const sMessageDown& msg){
 
 	switch(msg.downMsgType){
 	case ACK_DOWN:
-		nonAckMessageItr = toBeAcknowledged.begin();
-		while (nonAckMessageItr != toBeAcknowledged.end()){
-			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downData.ackMsg.ackUpMsgId){
-				nonAckMessageItr = toBeAcknowledged.erase(nonAckMessageItr);
-			}else{
-				nonAckMessageItr++;
-			}
-		}
+		removeAcknowledgedMessage(msg.downData.ackMsg.ackUpMsgId);
 		break;
 	case ACK_ODOM_REPORT:
-		nonAckMessageItr = toBeAcknowledged.begin();
-		while (nonAckMessageItr != toBeAcknowledged.end()){
-			if (nonAckMessageItr->second.messageUp.upMsgId == msg.downData.ackMsg.ackUpMsgId){
-				nonAckMessageItr = toBeAcknowledged.erase(nonAckMessageItr);
-			}else{
-				nonAckMessageItr++;
-			}
-		}
+		removeAcknowledgedMessage(msg.downData.ackOdomReportMsg.ackUpMsgId);
+
 		nonAckOdomReportItr = nonAcknowledgedOdomReport.begin();
 		while(nonAckOdomReportItr != nonAcknowledgedOdomReport.end()){
 			if ((nonAckOdomReportItr->odomId -
