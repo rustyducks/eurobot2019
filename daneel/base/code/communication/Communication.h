@@ -10,9 +10,7 @@
 
 #include <cstdint>
 #include <math.h>
-#include <unordered_map>
 #include <vector>
-#include <functional>
 #include <map>
 #include <memory>
 #include <Arduino.h>
@@ -23,6 +21,7 @@ namespace fat{
 
 class Communication {
 public:
+
 	struct SpeedCommand{
 	public:
 		double vx;
@@ -45,6 +44,11 @@ public:
 		double theta;
 	};
 
+	typedef void (*SpeedCommandCallback)(SpeedCommand); // Pointer to function, callback types, on per message type
+	typedef void (*ActuatorCommandCallback)(ActuatorCommand);
+	typedef void (*HMICommandCallback)(HMICommand);
+	typedef void (*RepositionningCallback)(Repositionning);
+
 	Communication(HardwareSerial serial, uint32_t baudrate);
 	virtual ~Communication();
 
@@ -53,9 +57,17 @@ public:
 	int sendActuatorState(const int actuatorId, const int actuatorState);
 	int sendOdometryReport(const int dx, const int dy, const double dtheta);
 
-	void registerRecieveSpeedCommandCallback(std::function<void (const SpeedCommand&)>);
-	void registerRecieveActuatorCommandCallback(std::function<void (const ActuatorCommand&)>);
-	void registerRecieveHMICommandCallback(std::function<void (const HMICommand&)>);
+	/*
+	 * Callback registering function. Fonctions registered will be called when the appropriate
+	 * message type is recieved and checkMessages is called.
+	 * Callback will be called with the appropriate arguments.
+	 * \return : int : 0 : callback is registered
+	 *                 -1: callback register full, callback not registered
+	 */
+	int registerSpeedCommandCallback(SpeedCommandCallback callback);
+	int registerActuatorCommandCallback(ActuatorCommandCallback callback);
+	int registerHMICommandCallback(HMICommandCallback callback);
+	int registerRepositionningCallback(RepositionningCallback callback);
 
 	void checkMessages();
 
@@ -70,6 +82,7 @@ private:
 	static constexpr unsigned char hmiCommandRedMask = 1 << 7;
 	static constexpr unsigned char hmiCommandGreenMask = 1 << 6;
 	static constexpr unsigned char hmiCommandBlueMask = 1 << 5;
+	static constexpr int maxCallbackPerMessageType = 10;
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
@@ -160,12 +173,34 @@ private:
 	}uRawMessageDown;
 	//========End Down Messages definitions==========
 
+
 	struct sOdomReportStorage{
 		uint8_t odomId;
 		double dx;
 		double dy;
 		double dtheta;
 	};
+
+	typedef struct{
+		SpeedCommandCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}SpeedMessageCallbackRegister;  // Buffer for callbacks registering, one per message type
+
+	typedef struct{
+		ActuatorCommandCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}ActuatorMessageCallbackRegister;
+
+	typedef struct{
+		HMICommandCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}HMIMessageCallbackRegister;
+
+	typedef struct{
+		RepositionningCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}RepositionningMessageCallbackRegister;
+
 
 	HardwareSerial serial;
 	int odomReportIndex;
@@ -174,12 +209,10 @@ private:
 	uint8_t lastIdDownMessageRecieved;
 	bool isFirstMessage;
 
-	//Todo : Maybe an "unordered_map<downMsgType, vector<function<void (const DownMessage&)>>>
-	// callbacks; With DownMessage super class of all user exposed messages data (SpeedCommand, ...)
-	std::vector<std::function<void (const SpeedCommand&)> > speedMsgCallbacks;
-	std::vector<std::function<void (const ActuatorCommand&)> > actuatorMsgCallbacks;
-	std::vector<std::function<void (const HMICommand&)> > HMIMsgCallbacks;
-	std::vector<std::function<void (const Repositionning&)> > repositioningCallbacks;
+	SpeedMessageCallbackRegister speedMsgCallbacks;
+	ActuatorMessageCallbackRegister actuatorMsgCallbacks;
+	HMIMessageCallbackRegister HMIMsgCallbacks;
+	RepositionningMessageCallbackRegister repositioningCallbacks;
 
 	int sendUpMessage(const sMessageUp& msg);
 	void recieveMessage(const sMessageDown& msg);

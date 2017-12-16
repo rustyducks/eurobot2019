@@ -132,19 +132,40 @@ uint8_t Communication::computeDownChecksum(const sMessageDown& msg){
 	return checksum;
 }
 
-void Communication::registerRecieveActuatorCommandCallback(std::function<void
-		(const ActuatorCommand &)> callback){
-	actuatorMsgCallbacks.push_back(callback);
+int Communication::registerActuatorCommandCallback(ActuatorCommandCallback callback){
+	if (actuatorMsgCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	actuatorMsgCallbacks.cb[actuatorMsgCallbacks.index] = callback;
+	actuatorMsgCallbacks.index++;
+	return 0;
 }
 
-void Communication::registerRecieveHMICommandCallback(std::function<void
-		(const HMICommand &)> callback){
-	HMIMsgCallbacks.push_back(callback);
+int Communication::registerHMICommandCallback(HMICommandCallback callback){
+	if (HMIMsgCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	HMIMsgCallbacks.cb[HMIMsgCallbacks.index] = callback;
+	HMIMsgCallbacks.index++;
+	return 0;
 }
 
-void Communication::registerRecieveSpeedCommandCallback(std::function<void
-		(const SpeedCommand &)> callback){
-	speedMsgCallbacks.push_back(callback);
+int Communication::registerSpeedCommandCallback(SpeedCommandCallback callback){
+	if (speedMsgCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	speedMsgCallbacks.cb[speedMsgCallbacks.index] = callback;
+	speedMsgCallbacks.index++;
+	return 0;
+}
+
+int Communication::registerRepositionningCallback(RepositionningCallback callback){
+	if (repositioningCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	repositioningCallbacks.cb[repositioningCallbacks.index] = callback;
+	repositioningCallbacks.index++;
+	return 0;
 }
 
 void Communication::recieveMessage(const sMessageDown& msg){
@@ -190,23 +211,23 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		speedCommand.vx = msg.downData.speedCmdMsg.vx; //Todo : Maybe do a transformation
  		speedCommand.vy = msg.downData.speedCmdMsg.vy;
  		speedCommand.vtheta = msg.downData.speedCmdMsg.vtheta / radianToMsgFactor - radianToMsgAdder;
- 		for (auto const &callback: speedMsgCallbacks){
-			callback(speedCommand);
+ 		for (unsigned int i=0; i < speedMsgCallbacks.index; i++){
+			speedMsgCallbacks.cb[i](speedCommand);
 		}
 		break;
 	case ACTUATOR_CMD:
 		actuatorCommand.actuatorId = msg.downData.actuatorCmdMsg.actuatorId;
 		actuatorCommand.actuatorCommand = msg.downData.actuatorCmdMsg.actuatorCmd;
-		for (auto const &callback: actuatorMsgCallbacks){
-			callback(actuatorCommand);
+		for (unsigned int i=0; i < actuatorMsgCallbacks.index; i++){
+			actuatorMsgCallbacks.cb[i](actuatorCommand);
 		}
 		break;
 	case HMI_CMD:
 		hmiCommand.redLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask;
 		hmiCommand.greenLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask;
 		hmiCommand.blueLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask;
-		for (auto const &callback: HMIMsgCallbacks){
-			callback(hmiCommand);
+		for (unsigned int i=0; i < HMIMsgCallbacks.index; i++){
+			HMIMsgCallbacks.cb[i](hmiCommand);
 		}
 		break;
 	}

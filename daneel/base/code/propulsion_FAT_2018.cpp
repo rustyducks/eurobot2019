@@ -6,7 +6,7 @@
 using namespace fat;
 Communication comm(Serial2, 115200);  // Initialisation, nanani global nanana, mais c'est juste pour la démo
 
-void testCallback(const Communication::HMICommand& msg);  // Forward declaration
+void testCallback(const Communication::HMICommand msg);  // Forward declaration
 
 void setup()
 {
@@ -17,7 +17,7 @@ void setup()
 void loop()
 {
 
-	comm.registerRecieveHMICommandCallback(testCallback);
+	comm.registerHMICommandCallback(testCallback);
 
 	while (true){
 		comm.checkMessages();
@@ -25,7 +25,7 @@ void loop()
 //Add your repeated code here
 }
 
-void testCallback(const Communication::HMICommand& msg){
+void testCallback(const Communication::HMICommand msg){
 	Serial1.print("Force rouge : ");
 	Serial1.print(msg.redLedCommand);
 	Serial1.print("\tForce verte : ");
