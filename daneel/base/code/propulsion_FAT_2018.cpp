@@ -11,6 +11,7 @@
 
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
+Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 
 Metro testTime = Metro(4000);
 
@@ -43,6 +44,11 @@ void loop()
 		odometry.update();
 		motorControl.control();
 		extNavigation.update();
+	}
+
+	if(posReportTme.check()) {
+		//comm.sendMove(odometry.getMoveDelta())
+		odometry.resetMoveDelta();
 	}
 
 	if(testTime.check()) {
