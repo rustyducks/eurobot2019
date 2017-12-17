@@ -3,6 +3,7 @@ from enum import *
 import serial
 import time
 from collections import deque
+from communication.message_definition import UP_MESSAGE_SIZE, sMessageUp, eTypeUp
 
 from RPi import GPIO
 
@@ -24,17 +25,6 @@ class Communication:
         self._current_msg_id = 0  # type: int
         self._mailbox = deque()
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(PIN_RESET_TEENSY, GPIO.OUT)
-        GPIO.output(PIN_RESET_TEENSY, GPIO.HIGH)
-        self.reset_teensy()
-
-    def reset_teensy(self):
-        GPIO.output(PIN_RESET_TEENSY, GPIO.LOW)
-        time.sleep(1)
-        GPIO.output(PIN_RESET_TEENSY, GPIO.HIGH)
-        time.sleep(10)
 
     def send_message(self, msg, max_retries=1000):
         """
@@ -56,16 +46,16 @@ class Communication:
             # print(serialized)
             self._serial_port.write(serialized)
             time_sent = int(round(time.time() * 1000))
-            while self._serial_port.in_waiting < UP_MSG_SIZE:
+            while self._serial_port.in_waiting < UP_MESSAGE_SIZE:
                 if int(round(time.time() * 1000)) - time_sent > SERIAL_SEND_TIMEOUT:
                     break  # waiting for ack
-            if self._serial_port.in_waiting >= UP_MSG_SIZE:
-                packed = self._serial_port.read(UP_MSG_SIZE)
+            if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
+                packed = self._serial_port.read(UP_MESSAGE_SIZE)
                 up_msg = sMessageUp()
                 up_msg.deserialize(packed)
-                if up_msg.type == eTypeUp.ACK:
+                if up_msg.type == eTypeUp.ACK_UP:
                     return 0  # success
-                elif up_msg.type == eTypeUp.POINT_REACHED or up_msg.type == eTypeUp.POSITION:
+                else:
                     self._mailbox.append(up_msg)  # if it is not an ACK or a NONACK, store it to deliver later
         return -1  # failure
 
@@ -79,8 +69,8 @@ class Communication:
         if self.mock_communication:
             return None
 
-        if self._serial_port.in_waiting >= UP_MSG_SIZE:
-            packed = self._serial_port.read(UP_MSG_SIZE)
+        if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
+            packed = self._serial_port.read(UP_MESSAGE_SIZE)
             up_msg = sMessageUp()
             up_msg.deserialize(packed)
             self._mailbox.append(up_msg)
