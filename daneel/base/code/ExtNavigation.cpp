@@ -15,18 +15,7 @@ ExtNavigation extNavigation = ExtNavigation();
 
 ExtNavigation::ExtNavigation() {
 	table_speed_cons = makeSpeed(0,0,0);
-	rotation_matrix = NULL;
-	rotation_matrix = (arm_matrix_instance_f32*) malloc(sizeof(arm_matrix_instance_f32));
-	float32_t* rotation_matrix_data = NULL;
-	rotation_matrix_data = (float32_t*) malloc(9*sizeof(float32_t));
-
-	if(rotation_matrix_data == NULL || rotation_matrix == NULL) {
-		Serial.println("[ERROR] ExtNavigation(): malloc failed");
-	}
-	rotation_matrix->numCols = 3;
-	rotation_matrix->numRows = 3;
-	rotation_matrix->pData = rotation_matrix_data;
-
+	rotation_matrix = makeMatrix(3,3);
 }
 
 ExtNavigation::~ExtNavigation() {
