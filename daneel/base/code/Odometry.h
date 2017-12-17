@@ -50,28 +50,11 @@ public:
 	}
 
 	/**
-	 * \brief Set robot speed from robot to table reference system
-	 * \param speed Robot speed in the robot reference system
+	 * \return the sum of the moves since last time it was sent (and reset).
 	 */
-	void setSpeed(arm_matrix_instance_f32* speed);
-
-	/**
-	 * \return the sum of the moves from id originId to the most recent (ie moveDeltaId)
-	 * you should call this method, then getNincMoveDeltaId :
-	 * move = getMoveDelta(from);
-	 * id = getNincMoveDeltaId;
-	 * sendMessage(move, id)
-	 */
-	arm_matrix_instance_f32* getMoveDelta(int originId);
-
-	/**
-	 * \brief rotate one step ahead the circular buffer
-	 * Should be called just after getMoveDelta.
-	 */
-	void JumpToNextMove() {
-		_readIndex = (_readIndex + 1) % MOVE_HISTORY_LENGHT;
-	};
-
+	arm_matrix_instance_f32* getMoveDelta() {
+		return _moveDelta;
+	}
 
 	void isr1();
 	void isr11();
@@ -84,19 +67,19 @@ public:
 		return _motorSpeeds;
 	}
 
-	int getMoveDeltaId() const {
-		return _moveDeltaId;
-	}
-
-	int getNincMoveDeltaId() {
-			return _moveDeltaId++;
-		}
-
 	/**
 	 * \return delta theta since last time moveDelta was reset.
 	 * useful for estimating the current theta, in combination with _thetaAI
 	 */
 	float getDeltaTheta();
+
+	void resetMoveDelta();
+
+	void recalerTheta(float32_t theta);
+
+	float32_t getTheta() const {
+		return _theta;
+	}
 
 protected:
 
@@ -105,37 +88,23 @@ protected:
 	 */
 	void updatePosition();
 
-	/**
-	 * \brief Moves between RAZ
-	 *
-	 * Circular buffer holding move deltas.
-	 * The move at the current index is refined at each odometry update (high frequency).
-	 * At low frequency, this move is sent to the AI
-	 */
-	arm_matrix_instance_f32 _moveDelta[];
+	float32_t _theta;		//true theta, updated
 
-	/**
-	 * id of the current moveDelta
-	 * See getMoveDelta for further details
-	 */
-	int _moveDeltaId;
+	arm_matrix_instance_f32* _moveDelta;
 
-	int _readIndex;
+	int _inc1, _inc2, _inc3;
+
+	//!
+	arm_matrix_instance_f32* _motorsDisplacement;
+	arm_matrix_instance_f32* _robotDisplacement;
+
+	arm_matrix_instance_f32* _motorSpeeds;
 
 	/**
 	 *  Last computed speed of the robot
 	 *  defined by (vx, vy, Rw)
 	 */
-
 	arm_matrix_instance_f32* _speed;
-	//Speed3D _speed;
-
-	//! Last theta from AI
-	float _thetaAI;
-
-	int _inc1, _inc2, _inc3;
-
-	arm_matrix_instance_f32* _motorSpeeds;
 
 };
 

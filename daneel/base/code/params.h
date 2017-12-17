@@ -36,8 +36,7 @@ const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
 const float CONTROL_PERIOD = 0.05;
-
-const float RAD_TO_DYNA = 16.615776058793873;
+const float POS_REPORT_PERIOD = 0.2;
 
 #define HOLONOMIC
 

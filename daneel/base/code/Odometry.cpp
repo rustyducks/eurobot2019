@@ -9,39 +9,24 @@
 #include <Odometry.h>
 #include "params.h"
 #include "utilities.h"
-//#include <DynamixelSerial5.h>
-
 
 Odometry odometry = Odometry();
 
 Odometry::Odometry() {
-	_readIndex = 0;
-	_thetaAI = 0;
+	_theta = 0;
 	_inc1 = _inc2 = _inc3 = 0;
-	_moveDeltaId = 1;
 	_speed = makeSpeed(0,0,0);
 	_motorSpeeds = makeSpeed(0,0,0);
-	float32_t* m_data = (float32_t*)malloc(3*sizeof(float32_t));
-	m_data[0] = m_data[1] = m_data[2] = 0;
+	_motorsDisplacement = makeSpeed(0,0,0);
+	_robotDisplacement = makeSpeed(0,0,0);
+	_moveDelta = makeSpeed(0,0,0);				//TODO : do makeMove I know what I am doing. Don't do that if you don't have 3 motors
 }
 
 Odometry::~Odometry() {
 }
 
-arm_matrix_instance_f32* Odometry::getMoveDelta(int originId) {
-	arm_matrix_instance_f32* move = makeSpeed(0,0,0);		//speed, move... Ok, I know what I'm doing. Trust me.
-	int nb_moves = _moveDeltaId - originId;
-	for(int i = 0; i< nb_moves; i++) {
-		int index = (_readIndex - i + MOVE_HISTORY_LENGHT)%MOVE_HISTORY_LENGHT;
-		move->pData[0] += _moveDelta[index].pData[0];
-		move->pData[1] += _moveDelta[index].pData[1];
-		move->pData[2] += _moveDelta[index].pData[2];
-	}
-	return move;
-}
-
 float Odometry::getDeltaTheta() {
-	return _moveDelta[_readIndex].pData[3];
+	return _moveDelta->pData[3];
 }
 
 void Odometry::update() {
@@ -60,7 +45,6 @@ void Odometry::init() {
 }
 
 void Odometry::updateTrike() {
-
 }
 
 void Odometry::updateDifferential() {
@@ -77,55 +61,55 @@ void Odometry::updateHolonomic() {
 	_inc3 = 0;
 	sei();				//enable interrupts
 
-	//tangential distance traveled by each wheel
-	_motorSpeeds->pData[0] = (float)inc1 / INC_PER_MM / CONTROL_PERIOD;
-	_motorSpeeds->pData[1] = (float)inc2 / INC_PER_MM / CONTROL_PERIOD;
-	_motorSpeeds->pData[2] = (float)inc3 / INC_PER_MM / CONTROL_PERIOD;
+	//get motor displacement
+	_motorsDisplacement->pData[0] = (float32_t)inc1 / INC_PER_MM;
+	_motorsDisplacement->pData[1] = (float32_t)inc2 / INC_PER_MM;
+	_motorsDisplacement->pData[2] = (float32_t)inc3 / INC_PER_MM;
 
-	arm_matrix_instance_f32* currentSpeed = makeSpeed(0,0,0);
-
-	arm_status status = arm_mat_mult_f32(&Dplus, _motorSpeeds, currentSpeed);
+	//compute robot displacement, according to robot fame
+	arm_status status = arm_mat_mult_f32(&Dplus, _motorsDisplacement, _robotDisplacement);
 	if(status != ARM_MATH_SUCCESS) {
 		Serial.print("[ERROR] updateHolonomic: matrix multiplication error : ");
 		Serial.println(status);
 	}
 
-	Serial.print(inc1);
-	Serial.print(";");
-//	Serial.print(inc2);
-//	Serial.print(";");
-//	Serial.println(inc3);
-//	Serial.print(";");
-//	Serial.print(inc2);
-//	Serial.print("\t");
-//	Serial.println(inc3);
-
-//	Serial.print("x=");
-//	Serial.print(v.pData[0]);
-//	Serial.print("\ty=");
-//	Serial.print(v.pData[1]);
-//	Serial.print("\tR*theta=");
-//	Serial.println(v.pData[2]/ROBOT_RADIUS);
-
-	//speed is created by malloc as currentSpeed, then passed to _speed, then free.
-	freeSpeed(_speed);
-	_speed = currentSpeed;
-
+	//update robot position in table frame
 	updatePosition();
+
+
+	//get motors speed.
+	//For now, useful for the motors control.
+	_motorSpeeds->pData[0] = _motorsDisplacement->pData[0] / CONTROL_PERIOD;
+	_motorSpeeds->pData[1] = _motorsDisplacement->pData[1] / CONTROL_PERIOD;
+	_motorSpeeds->pData[2] = _motorsDisplacement->pData[2] / CONTROL_PERIOD;
+
+	//get robot speed
+	//should give the same result than :
+	//arm_status status = arm_mat_mult_f32(&Dplus, _motorSpeeds, _speed);
+	_speed->pData[0] = _robotDisplacement->pData[0] / CONTROL_PERIOD;
+	_speed->pData[1] = _robotDisplacement->pData[1] / CONTROL_PERIOD;
+	_speed->pData[2] = _robotDisplacement->pData[2] / CONTROL_PERIOD;	//TODO RW_to_W ?
 
 }
 
+void Odometry::recalerTheta(float32_t theta) {
+	_theta = theta + _moveDelta->pData[3];
+}
+
 void Odometry::updatePosition() {
-	float theta = _thetaAI + getDeltaTheta();
+	float32_t dTheta = RW_to_W(_robotDisplacement->pData[3]);		//transforms speed in dTheta
+	_theta += dTheta;		//update _theta with the last dTheta.
 
-	//change reference system
-	float32_t vx0 = _speed->pData[0] * cos(theta) - _speed->pData[1] * sin(theta);
-	float32_t vy0 = _speed->pData[1] * cos(theta) + _speed->pData[0] * sin(theta);
+	//change speed reference system from robot reference frame to table reference frame
+	//TODO : do it with matrix multiplication
+	float32_t dx = _robotDisplacement->pData[0] * cos(_theta) - _robotDisplacement->pData[1] * sin(_theta);
+	float32_t dy = _robotDisplacement->pData[1] * cos(_theta) + _robotDisplacement->pData[0] * sin(_theta);
 
-	//Add this move to the other
-	_moveDelta[_readIndex].pData[0]+= vx0 * CONTROL_PERIOD;
-	_moveDelta[_readIndex].pData[1]+= vy0  * CONTROL_PERIOD;
-	_moveDelta[_readIndex].pData[2]+= RW_to_W(_speed->pData[3])  * CONTROL_PERIOD;
+	//TODO use function from arm_math ?
+	//Add this move to the other (table reference system)
+	_moveDelta->pData[0]+= dx;
+	_moveDelta->pData[1]+= dy;
+	_moveDelta->pData[2]+= dTheta;
 
 }
 
@@ -228,4 +212,10 @@ void Odometry::isr33() {
 	} else {
 		_inc3--;
 	}
+}
+
+void Odometry::resetMoveDelta() {
+	_moveDelta->pData[0] = 0;
+	_moveDelta->pData[1] = 0;
+	_moveDelta->pData[2] = 0;
 }

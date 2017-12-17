@@ -44,7 +44,7 @@ void ExtNavigation::update() {
 }
 
 void ExtNavigation::computeRotationMatrix() {
-	float32_t theta = odometry.getDeltaTheta();	//TODO : get real theta of the robot/table
+	float32_t theta = odometry.getTheta();
 	float32_t cos_t = cos(theta);
 	float32_t sin_t = sin(theta);
 
