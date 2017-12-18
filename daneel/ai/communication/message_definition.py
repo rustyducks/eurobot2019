@@ -3,6 +3,7 @@ import bitstring
 
 
 UP_MESSAGE_SIZE = 11  # maximum size of a up message (teensy -> raspi) in bytes
+UP_HEADER_SIZE = 3  # size of the header (all except the data) of an up message
 DOWN_MESSAGE_SIZE = 9  # maximum size of a down message (raspi -> teensy) in bytes
 
 # ======= Up (Prop -> raspi) message declaration ======== #
@@ -19,6 +20,10 @@ class sAckDown:
     def __init__(self):
         self.ack_down_id = None  # uint:8
 
+    def deserialize(self, bytes_packed):
+        s = bitstring.BitStream(bytes_packed)
+        self.ack_down_id = s.unpack('uint:8')
+
     def serialize(self):
         return bitstring.pack('uint:8', self.ack_down_id)
 
@@ -31,6 +36,11 @@ class sOdomReport:
         self.dy = None  # uint:16
         self.dtheta = None  # uint:16
 
+    def deserialize(self, bytes_packed):
+        s = bitstring.BitStream(bytes_packed)
+        self.previous_report_id, self.new_report_id, self.dx, self.dy, self.dtheta = s.unpack(
+            'uint:8, uint:8, uintle:16, uintle:16, uintle:16')
+
     def serialize(self):
         return bitstring.pack('uint:8, uint:8, uintle:16, uintle:16, uintle:16',
                               self.previous_report_id, self.new_report_id,
@@ -41,6 +51,10 @@ class sHMIState:
     def __init__(self):
         self.hmi_state = None  # uint:8
 
+    def deserialize(self, bytes_packed):
+        s = bitstring.BitStream(bytes_packed)
+        self.hmi_state = s.unpack('uint:8')
+
     def serialize(self):
         return bitstring.pack('uint:8', self.hmi_state)
 
@@ -49,6 +63,10 @@ class sActuatorState:
     def __init__(self):
         self.actuator_id = None  # uint:8
         self.actuator_value = None  # uint:16
+
+    def deserialize(self, bytes_packed):
+        s = bitstring.BitStream(bytes_packed)
+        self.actuator_id, self.actuator_value = s.unpack('uint:8, uintle:16')
 
     def serialize(self):
         return bitstring.pack('uint:8, uintle:16', self.actuator_id,
@@ -68,6 +86,20 @@ class sMessageUp:
         self.type = None
         self.checksum = None
         self.data = None
+
+    def deserialize(self, packed):
+        header = bitstring.BitStream(packed[0:UP_HEADER_SIZE])
+        self.up_id, type_value, self.data = header.unpack('uint:8, uint:8, uint:8')
+        self.type = eTypeUp(type_value)
+        if self.type == eTypeUp.ACK_UP:
+            self.data = sAckDown()
+        elif self.type == eTypeUp.ACTUATOR_STATE:
+            self.data = sActuatorState()
+        elif self.type == eTypeUp.HMI_STATE:
+            self.data = sHMIState()
+        elif self.type == eTypeUp.ODOM_REPORT:
+            self.data = sOdomReport()
+        self.data.deserialize(packed[UP_HEADER_SIZE:])
 
     def serialize(self):
 
