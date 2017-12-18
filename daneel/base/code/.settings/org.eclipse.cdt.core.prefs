@@ -2,9 +2,6 @@ eclipse.preferences.version=1
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ALT_SIZE_COMMAND/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ALT_SIZE_COMMAND/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ALT_SIZE_COMMAND/value="${A.COMPILER.PATH}${A.COMPILER.SIZE.CMD}" --format\=avr --mcu\=${A.BUILD.MCU} "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.elf"
-environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHITECTURE/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHITECTURE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHITECTURE/value=AVR
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHIVE_FILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHIVE_FILE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.ARCHIVE_FILE/value=arduino.ar
@@ -40,7 +37,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE.PAT
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE.PATH/value=${A.RUNTIME.PLATFORM.PATH}/cores/${A.BUILD.CORE}
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE/value=${A.JANTJE.BUILD_CORE}
+environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.CORE/value=teensy3
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FCPU/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FCPU/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FCPU/value=120000000
@@ -67,13 +64,13 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LD
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LD/value=-Wl,--gc-sections,--relax,--defsym\=__rtc_localtime\=${A.EXTRA.TIME.LOCAL} "-T${A.BUILD.CORE.PATH}/mk64fx512.ld" -lstdc++
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LDSPECS/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LDSPECS/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LDSPECS/value=
+environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LDSPECS/value=-fuse-linker-plugin
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LIBS/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LIBS/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.LIBS/value=-larm_cortexM4lf_math -lm
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.OPTIMIZE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.OPTIMIZE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.OPTIMIZE/value=-O2
+environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.OPTIMIZE/value=-Og -flto -fno-fat-lto-objects
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.S/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.S/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.FLAGS.S/value=-x assembler-with-cpp
@@ -100,10 +97,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.USBTYPE/
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.USBTYPE/value=USB_SERIAL
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT.PATH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT.PATH/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT.PATH/value=${A.RUNTIME.PLATFORM.PATH}/variants/${A.BUILD.VARIANT}
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT/value=${A.JANTJE.BUILD_VARIANT}
+environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.VARIANT.PATH/value=
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.WARN_DATA_PERCENTAGE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.WARN_DATA_PERCENTAGE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.BUILD.WARN_DATA_PERCENTAGE/value=98
@@ -130,25 +124,16 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.DTS
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.DTS/value=0
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.LOCAL/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.LOCAL/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.LOCAL/value=1510795723
+environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.LOCAL/value=1513555084
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.UTC/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.UTC/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.UTC/value=1510792123
+environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.UTC/value=1513551484
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.ZONE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.ZONE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.EXTRA.TIME.ZONE/value=3600
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_CORE/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_CORE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_CORE/value=teensy3
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_VARIANT/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_VARIANT/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.BUILD_VARIANT/value=
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.CORE.REFERENCED.PLATFORM/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.CORE.REFERENCED.PLATFORM/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.CORE.REFERENCED.PLATFORM/value=${JANTJE.SELECTED.PLATFORM}
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.UPLOAD.TOOL/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.UPLOAD.TOOL/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.UPLOAD.TOOL/value=teensyloader
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.USED.BOARDS_FILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.USED.BOARDS_FILE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.JANTJE.USED.BOARDS_FILE/value=${JANTJE.BOARDS_FILE}
@@ -161,12 +146,9 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.NAME/value=Tee
 environment/project/io.sloeber.core.toolChain.release.799604675/A.PACKAGES/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.PACKAGES/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.PACKAGES/value=${eclipse_home}/arduinoPlugin/packages
-environment/project/io.sloeber.core.toolChain.release.799604675/A.PROGRAM.TOOL/delimiter=\:
-environment/project/io.sloeber.core.toolChain.release.799604675/A.PROGRAM.TOOL/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.PROGRAM.TOOL/value=${A.UPLOAD.TOOL}
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc-ar" rcs 
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc-ar" rcs 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.2/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.2/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN.2/value=\ 
@@ -178,19 +160,19 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATT
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.AR.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.AR}" rcs "${A.BUILD.PATH}/core/${A.ARCHIVE_FILE}" "${A.OBJECT_FILE}"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -O2 -Wl,--gc-sections,--relax,--defsym\=__rtc_localtime\=1510795723 "-T/opt/arduino-1.8.5/hardware/teensy/avr/cores/teensy3/mk64fx512.ld" -lstdc++ -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -o "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" 
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -Og -flto -fno-fat-lto-objects -Wl,--gc-sections,--relax,--defsym\=__rtc_localtime\=1513555084 "-T/usr/share/arduino-1.8.5/hardware/teensy/avr/cores/teensy3/mk64fx512.ld" -lstdc++ -fuse-linker-plugin -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -o "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.2/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.2/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.2/value=\ 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.3/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.3/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.3/value=\ "-L/home/fabien/FAT_2018/daneel/base/code/Release" -larm_cortexM4lf_math -lm
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN.3/value=\ "-L/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release" -larm_cortexM4lf_math -lm
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.COMBINE.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.GCC}" ${A.BUILD.FLAGS.OPTIMIZE} ${A.BUILD.FLAGS.LD} ${A.BUILD.FLAGS.LDSPECS} ${A.BUILD.FLAGS.CPU} -o "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.elf" ${A.OBJECT_FILES} "${A.BUILD.PATH}/${A.ARCHIVE_FILE}" "-L${A.BUILD.PATH}" ${A.BUILD.FLAGS.LIBS}
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -c -Og -flto -fno-fat-lto-objects -g -Wall -ffunction-sections -fdata-sections -nostdlib -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.2/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.2/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN.2/value=\ -o 
@@ -202,7 +184,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PAT
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.C.O.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.GCC}" -c ${A.BUILD.FLAGS.OPTIMIZE} ${A.BUILD.FLAGS.COMMON} ${A.BUILD.FLAGS.DEP} ${A.BUILD.FLAGS.C} ${A.BUILD.FLAGS.CPU} ${A.BUILD.FLAGS.DEFS} -DARDUINO\=${A.RUNTIME.IDE.VERSION} -DF_CPU\=${A.BUILD.FCPU} -D${A.BUILD.USBTYPE} -DLAYOUT_${A.BUILD.KEYLAYOUT} ${A.INCLUDES} "${A.SOURCE_FILE}" -o "${A.OBJECT_FILE}"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-g++" -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib -fno-exceptions -felide-constructors -std\=gnu++14 -fno-rtti -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-g++" -c -Og -flto -fno-fat-lto-objects -g -Wall -ffunction-sections -fdata-sections -nostdlib -fno-exceptions -felide-constructors -std\=gnu++14 -fno-rtti -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.2/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.2/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.CPP.O.PATTERN.2/value=\ -o 
@@ -226,13 +208,13 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.HOOKS.P
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.HOOKS.POSTBUILD.3.PATTERN/value="${A.COMPILER.PATH}teensy_post_compile" "-file\=${A.BUILD.PROJECT_NAME}" "-path\=${A.BUILD.PATH}" "-tools\=${A.COMPILER.PATH}" "-board\=${A.BUILD.BOARD}"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-objcopy" -O ihex -j .eeprom --set-section-flags\=.eeprom\=alloc,load --no-change-warnings --change-section-lma .eeprom\=0 "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.eep"
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-objcopy" -O ihex -j .eeprom --set-section-flags\=.eeprom\=alloc,load --no-change-warnings --change-section-lma .eeprom\=0 "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.eep"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.EEP.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.OBJCOPY}" ${A.COMPILER.OBJCOPY.EEP.FLAGS} "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.elf" "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.eep"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-objcopy" -O ihex -R .eeprom "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.hex"
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-objcopy" -O ihex -R .eeprom "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf" "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.hex"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.OBJCOPY.HEX.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.OBJCOPY}" ${A.COMPILER.ELF2HEX.FLAGS} "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.elf" "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.hex"
@@ -256,7 +238,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.PREPROC
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.PREPROC.MACROS/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.G++}" -E -CC -x c++ -w ${A.COMPILER.CPP.FLAGS} ${A.BUILD.FLAGS.COMMON} ${A.BUILD.FLAGS.CPP} ${A.BUILD.FLAGS.CPU} ${A.BUILD.FLAGS.DEFS} -DARDUINO\=${A.RUNTIME.IDE.VERSION} -DF_CPU\=${A.BUILD.FCPU} -D${A.BUILD.USBTYPE} -DLAYOUT_${A.BUILD.KEYLAYOUT} ${A.INCLUDES} "${A.SOURCE_FILE}" -o "${A.PREPROCESSED_FILE_PATH}"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib -x assembler-with-cpp -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-gcc" -c -Og -flto -fno-fat-lto-objects -g -Wall -ffunction-sections -fdata-sections -nostdlib -x assembler-with-cpp -mthumb -mcpu\=cortex-m4 -mfloat-abi\=hard -mfpu\=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO\=140 -DARDUINO\=10802 -DF_CPU\=120000000 -DUSB_SERIAL -DLAYOUT_FRENCH 
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.2/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.2/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN.2/value=\ -o 
@@ -268,7 +250,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PAT
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.S.O.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.GCC}" -c ${A.BUILD.FLAGS.OPTIMIZE} ${A.BUILD.FLAGS.COMMON} ${A.BUILD.FLAGS.DEP} ${A.BUILD.FLAGS.S} ${A.BUILD.FLAGS.CPU} ${A.BUILD.FLAGS.DEFS} -DARDUINO\=${A.RUNTIME.IDE.VERSION} -DF_CPU\=${A.BUILD.FCPU} -D${A.BUILD.USBTYPE} -DLAYOUT_${A.BUILD.KEYLAYOUT} ${A.INCLUDES} "${A.SOURCE_FILE}" -o "${A.OBJECT_FILE}"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN.1/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN.1/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN.1/value="/opt/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-size" -A "/home/fabien/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf"
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN.1/value="/usr/share/arduino-1.8.5/hardware/teensy/../tools/arm/bin/arm-none-eabi-size" -A "/media/Data/Documents/Club_Robotique/FAT_2018/daneel/base/code/Release/propulsion_FAT_2018.elf"
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RECIPE.SIZE.PATTERN/value="${A.COMPILER.PATH}${A.BUILD.TOOLCHAIN}${A.BUILD.COMMAND.SIZE}" -A "${A.BUILD.PATH}/${A.BUILD.PROJECT_NAME}.elf"
@@ -286,13 +268,16 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.REWRITING/oper
 environment/project/io.sloeber.core.toolChain.release.799604675/A.REWRITING/value=disabled
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.HARDWARE.PATH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.HARDWARE.PATH/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.HARDWARE.PATH/value=/opt/arduino-1.8.5/hardware/teensy
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.HARDWARE.PATH/value=/usr/share/arduino-1.8.5/hardware/teensy
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.IDE.VERSION/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.IDE.VERSION/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.IDE.VERSION/value=10802
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.PLATFORM.PATH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.PLATFORM.PATH/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.PLATFORM.PATH/value=/opt/arduino-1.8.5/hardware/teensy/avr
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.PLATFORM.PATH/value=/usr/share/arduino-1.8.5/hardware/teensy/avr
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.REFERENCED.PLATFORM.PATH/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.REFERENCED.PLATFORM.PATH/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.REFERENCED.PLATFORM.PATH/value=/usr/share/arduino-1.8.5/hardware/teensy/avr
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.TOOLS.ARDUINOOTA-1.1.1.PATH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.TOOLS.ARDUINOOTA-1.1.1.PATH/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.RUNTIME.TOOLS.ARDUINOOTA-1.1.1.PATH/value=${eclipse_home}/arduinoPlugin/packages/arduino/tools/arduinoOTA/1.1.1
@@ -331,7 +316,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.SERIAL.RESTART
 environment/project/io.sloeber.core.toolChain.release.799604675/A.SERIAL.RESTART_CMD/value=false
 environment/project/io.sloeber.core.toolChain.release.799604675/A.SOFTWARE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.SOFTWARE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/A.SOFTWARE/value=baeyens
+environment/project/io.sloeber.core.toolChain.release.799604675/A.SOFTWARE/value=ARDUINO
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.AVRDUDE_REMOTE.UPLOAD.VERBOSE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.AVRDUDE_REMOTE.UPLOAD.VERBOSE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.AVRDUDE_REMOTE.UPLOAD.VERBOSE/value=-v
@@ -356,6 +341,9 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.TEENSYLO
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.TEENSYLOADER.UPLOAD.PATTERN/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.TEENSYLOADER.UPLOAD.PATTERN/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.TOOLS.TEENSYLOADER.UPLOAD.PATTERN/value="${A.TOOLS.TEENSYLOADER.CMD.PATH}/teensy_post_compile" -test "-file\=${A.BUILD.PROJECT_NAME}" "-path\=${A.BUILD.PATH}" "-tools\=${A.TOOLS.TEENSYLOADER.CMD.PATH}" "-board\=${A.BUILD.BOARD}" -reboot
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.ALTID/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.ALTID/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.ALTID/value=no_altID
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.MAXIMUM_DATA_SIZE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.MAXIMUM_DATA_SIZE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.MAXIMUM_DATA_SIZE/value=196608
@@ -365,9 +353,15 @@ environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.MAXIMUM
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.PROTOCOL/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.PROTOCOL/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.PROTOCOL/value=halfkay
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.SPEED/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.SPEED/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.SPEED/value=19200
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.TOOL/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.TOOL/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.TOOL/value=teensyloader
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.USBID/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.USBID/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/A.UPLOAD.USBID/value=no_altID
 environment/project/io.sloeber.core.toolChain.release.799604675/A.VERSION/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/A.VERSION/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/A.VERSION/value=1.6.7
@@ -376,7 +370,7 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ARCHITECT
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ARCHITECTURE_ID/value=avr
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARDS_FILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARDS_FILE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARDS_FILE/value=/opt/arduino-1.8.5/hardware/teensy/avr/boards.txt
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARDS_FILE/value=/usr/share/arduino-1.8.5/hardware/teensy/avr/boards.txt
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARD_ID/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARD_ID/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.BOARD_ID/value=teensy35
@@ -388,7 +382,16 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.COM_PORT/
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.COM_PORT/value=/dev/ttyACM0
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ECLIPSE_LOCATION/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ECLIPSE_LOCATION/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ECLIPSE_LOCATION/value=${eclipse_home}//
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.ECLIPSE_LOCATION/value=${eclipse_home}//////////////////
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ALL/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ALL/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ALL/value=
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ARCHIVE/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ARCHIVE/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ARCHIVE/value=
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ASSEMBLY/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ASSEMBLY/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.ASSEMBLY/value=
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.C.COMPILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.C.COMPILE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.C.COMPILE/value=
@@ -398,6 +401,9 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.COM
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.CPP.COMPILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.CPP.COMPILE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.CPP.COMPILE/value=
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.LINK/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.LINK/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.EXTRA.LINK/value=
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.KEYS/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.KEYS/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.KEYS/value=FR-FR
@@ -410,6 +416,9 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.SPEE
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.USB/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.USB/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU.USB/value=SERIAL
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.MENU/value=keys\=fr-fr\nopt\=oglto\nspeed\=120\nusb\=serial
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.OBJCOPY/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.OBJCOPY/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.OBJCOPY/value=${A.RECIPE.OBJCOPY.EEP.PATTERN}\n\t${A.RECIPE.OBJCOPY.HEX.PATTERN}
@@ -421,13 +430,13 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PACKAGE_I
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PACKAGE_ID/value=teensy
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PLATFORM_FILE/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PLATFORM_FILE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PLATFORM_FILE/value=/opt/arduino-1.8.5/hardware/teensy/avr/platform.txt
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PLATFORM_FILE/value=/usr/share/arduino-1.8.5/hardware/teensy/avr/platform.txt
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PROJECT_NAME/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PROJECT_NAME/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PROJECT_NAME/value=
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.PROJECT_NAME/value=propulsion_FAT_2018
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SELECTED.PLATFORM/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SELECTED.PLATFORM/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SELECTED.PLATFORM/value=/opt/arduino-1.8.5/hardware/teensy/avr
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SELECTED.PLATFORM/value=/usr/share/arduino-1.8.5/hardware/teensy/avr
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SIZE.SWITCH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SIZE.SWITCH/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.SIZE.SWITCH/value=${A.RECIPE.SIZE.PATTERN}
@@ -437,12 +446,15 @@ environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD.PA
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD.PROTOCOL/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD.PROTOCOL/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD.PROTOCOL/value=Default
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD/delimiter=\:
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD/operation=replace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.UPLOAD/value=Default
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WARNING_LEVEL/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WARNING_LEVEL/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WARNING_LEVEL/value=true
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WORKSPACE_LOCATION/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WORKSPACE_LOCATION/operation=replace
-environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WORKSPACE_LOCATION/value=/home/fabien/eclipse-workspace
+environment/project/io.sloeber.core.toolChain.release.799604675/JANTJE.WORKSPACE_LOCATION/value=${eclipse_home}///////////////-workspace
 environment/project/io.sloeber.core.toolChain.release.799604675/PATH/delimiter=\:
 environment/project/io.sloeber.core.toolChain.release.799604675/PATH/operation=replace
 environment/project/io.sloeber.core.toolChain.release.799604675/PATH/value=${A.COMPILER.PATH}${PathDelimiter}${A.BUILD.GENERIC.PATH}${PathDelimiter}${PATH}

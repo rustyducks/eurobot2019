@@ -4,13 +4,14 @@
 #include "communication/Communication.h"
 
 using namespace fat;
-Communication comm(Serial2, 115200);  // Initialisation, nanani global nanana, mais c'est juste pour la démo
+Communication comm(Serial1, 115200);  // Initialisation, nanani global nanana, mais c'est juste pour la démo
 
 void testCallback(const Communication::HMICommand msg);  // Forward declaration
 
 void setup()
 {
-	Serial1.begin(115200);
+	Serial.begin(115200);
+	//Serial1.begin(115200);
 }
 
 
@@ -26,10 +27,10 @@ void loop()
 }
 
 void testCallback(const Communication::HMICommand msg){
-	Serial1.print("Force rouge : ");
-	Serial1.print(msg.redLedCommand);
-	Serial1.print("\tForce verte : ");
-	Serial1.print(msg.greenLedCommand);
-	Serial1.print("\tForce bleue : ");
-	Serial1.println(msg.blueLedCommand);
+	Serial.print("Force rouge : ");
+	Serial.print(msg.redLedCommand);
+	Serial.print("\tForce verte : ");
+	Serial.print(msg.greenLedCommand);
+	Serial.print("\tForce bleue : ");
+	Serial.println(msg.blueLedCommand);
 }

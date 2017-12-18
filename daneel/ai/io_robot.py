@@ -223,5 +223,3 @@ class USReader(threading.Thread):
                 dst = self.i2c.read_word_data(sensor.address, 2) / 255
                 if dst != 0:
                     us_sensors_distance[us_sensors[i]] = dst
-
-
