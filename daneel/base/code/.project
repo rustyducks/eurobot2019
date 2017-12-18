@@ -34,7 +34,7 @@
 		<link>
 			<name>core/core</name>
 			<type>2</type>
-			<location>/usr/share/arduino-1.8.5/hardware/teensy/avr/cores/teensy3</location>
+			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/teensy/avr/cores/teensy3</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
