@@ -3,7 +3,7 @@ from enum import *
 import serial
 import time
 from collections import deque
-from communication.message_definition import UP_MESSAGE_SIZE, sMessageUp, eTypeUp
+from communication.message_definition import UP_MESSAGE_SIZE, sMessageUp, eTypeUp, sMessageDown
 
 from RPi import GPIO
 
@@ -39,7 +39,7 @@ class Communication:
         if self.mock_communication:
             max_retries = 0
 
-        msg.id = self._current_msg_id
+        msg.down_id = self._current_msg_id
         self._current_msg_id = (self._current_msg_id + 1) % 256
         serialized = msg.serialize().tobytes()
         for i in range(max_retries):
