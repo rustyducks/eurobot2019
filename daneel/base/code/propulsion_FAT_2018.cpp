@@ -14,7 +14,6 @@ void testSpeedCallback(const Communication::SpeedCommand msg);
 
 void setup()
 {
-	Serial.begin(115200);
 	blinkTime = millis();
 	blink = false;
 	Serial.begin(115200);
@@ -33,7 +32,7 @@ void loop()
 		blink ^= 1;
 		digitalWrite(13, blink);
 		blinkTime = millis();
-		comm.sendOdometryReport(500, 150, 0);
+		comm.sendIHMState(true,false,true, true, true, false);
 	}
 	comm.checkMessages();
 //Add your repeated code here

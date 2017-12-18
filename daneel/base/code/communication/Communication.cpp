@@ -12,7 +12,7 @@ namespace fat {
 
 Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
 		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
-		isFirstMessage(true), nonAcknowledgedOdomReport(){
+		isFirstMessage(true){
 	this->serial.begin(baudrate);
 	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
 		toBeAcknowledged[i].sendTime = 0;
