@@ -12,7 +12,7 @@ namespace fat {
 
 Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
 		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
-		isFirstMessage(true){
+		isFirstMessage(true), nonAcknowledgedOdomReport(){
 	this->serial.begin(baudrate);
 	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
 		toBeAcknowledged[i].sendTime = 0;
@@ -39,7 +39,7 @@ int Communication::sendActuatorState(const int actuatorId, const int actuatorSta
 	sMessageUp msg;
 	msg.upMsgType = Communication::ACTUATOR_STATE;
 
-	if(actuatorId < 0 || actuatorState > 255){
+	if(actuatorId < 0 || actuatorId > 255){
 		return -10;
 	}
 	if (actuatorState < 0 || actuatorState > 65535){
@@ -60,8 +60,6 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 	odomReportIndex = (odomReportIndex + 1) % 256;
 	odomReport = {(uint8_t)odomReportIndex, (double)dx, (double)dy, (double)dtheta};
 
-	nonAcknowledgedOdomReport.push_back(odomReport);
-
 	for (sOdomReportStorage odom: nonAcknowledgedOdomReport){
 		if ((odom.odomId - lastOdomReportIndexAcknowledged) % 256 > 0 &&
 				(odomReportIndex - odom.odomId) % 256 > 0){
@@ -71,6 +69,8 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 			cumuleddtheta += odom.dtheta;
 		}
 	}
+
+	nonAcknowledgedOdomReport.push_back(odomReport);
 
 	int msgdx = cumuleddx + linearOdomToMsgAdder, msgdy = cumuleddy + linearOdomToMsgAdder;
 	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
