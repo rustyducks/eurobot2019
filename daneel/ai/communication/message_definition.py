@@ -113,7 +113,7 @@ class sMessageUp:
 
         ser = bitstring.pack('uint:8, uint:8, uint:8', self.up_id, self.type.value, self.checksum)
         serialized_msg = ser + ser2
-        pad = bitstring.pack('pad:{}'.format((UP_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
+        pad = bitstring.pack('pad:{}'.format((DOWN_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
         return serialized_msg + pad
 
 
@@ -203,7 +203,7 @@ class sMessageDown:
 
         ser = bitstring.pack('uint:8, uint:8, uint:8', self.down_id, self.type.value, self.checksum)
         serialized_msg = ser + ser2
-        pad = bitstring.pack('pad:{}'.format((UP_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
+        pad = bitstring.pack('pad:{}'.format((DOWN_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
         return serialized_msg + pad
 
 
