@@ -239,9 +239,9 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		}
 		break;
 	case HMI_CMD:
-		hmiCommand.redLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask;
-		hmiCommand.greenLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask;
-		hmiCommand.blueLedCommand = (bool)msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask;
+		hmiCommand.redLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask;
+		hmiCommand.greenLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask;
+		hmiCommand.blueLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask;
 		for (unsigned int i=0; i < HMIMsgCallbacks.index; i++){
 			HMIMsgCallbacks.cb[i](hmiCommand);
 		}
@@ -252,13 +252,19 @@ void Communication::recieveMessage(const sMessageDown& msg){
 void Communication::checkMessages(){
 	uRawMessageDown rawDataDown;
 	uRawMessageUp rawUpAckMessage;
-
 	if (serial.available()) { //If there is some data waiting in the buffer
-
 		if (serial.available() >= downMsgMaxSize) { //Read all the data in the buffer (asserting raspi is sending at max one message per teensy loop)
 			for (int i = 0; i < downMsgMaxSize; i++){
 				rawDataDown.bytes[i] = serial.read();
 			}
+#if DEBUG_COMM
+			char tmp[16];
+			for (int debug = 0; debug < downMsgMaxSize; debug++){
+				sprintf(tmp, "%.2X",rawDataDown.bytes[debug]);
+				Serial.print(tmp);
+			}
+			Serial.println();
+#endif
 			if (computeDownChecksum(rawDataDown.messageDown) == rawDataDown.messageDown.checksum){
 				rawUpAckMessage.messageUp.upMsgType = ACK_UP;
 				rawUpAckMessage.messageUp.upData.ackMsg.ackDownMsgId = rawDataDown.messageDown.downMsgId;
@@ -271,6 +277,7 @@ void Communication::checkMessages(){
 								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
 					isFirstMessage = false;
 					lastIdDownMessageRecieved = rawDataDown.messageDown.downMsgId;
+
 					recieveMessage(rawDataDown.messageDown);
 
 				}
