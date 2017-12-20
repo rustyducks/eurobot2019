@@ -108,7 +108,7 @@ class sMessageUp:
             ser2 = self.data.serialize()
             self.checksum = 0
             for octet in ser2.tobytes():
-                self.checksum += octet
+                self.checksum ^= octet
             self.checksum = self.checksum % 0xFF
 
         ser = bitstring.pack('uint:8, uint:8, uint:8', self.up_id, self.type.value, self.checksum)
@@ -197,7 +197,7 @@ class sMessageDown:
             self.checksum = 0
 
             for octet in ser2.tobytes():
-                self.checksum += octet
+                self.checksum ^= octet
 
         self.checksum = self.checksum % 0xFF
 
