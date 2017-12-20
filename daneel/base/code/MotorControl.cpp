@@ -9,6 +9,10 @@
 #include <MotorControl.h>
 #include "params.h"
 #include "utilities.h"
+
+#ifdef SIMULATOR
+#include "Simulator.h"
+#endif
 //#include <DynamixelSerial5.h>
 
 #define sig(x) (x) > 0 ? 1 : 0
@@ -155,6 +159,12 @@ void MotorControl::controlHolonomic() {
 	digitalWrite(MOT2_DIR, sig(cmd2));
 	digitalWrite(MOT3_DIR, sig(cmd3));
 
+#ifdef SIMULATOR
+	simulator.digitalWrite(0, sig(cmd1));
+	simulator.digitalWrite(1, sig(cmd2));
+	simulator.digitalWrite(2, sig(cmd3));
+#endif
+
 	//clamp command between 0 and 255
 	int cons1 = clamp(0, (int)abs(cmd1), 255);
 	int cons2 = clamp(0, (int)abs(cmd2), 255);
@@ -179,6 +189,14 @@ Serial.println(cons1);
 	analogWrite(MOT1_PWM, cons1);
 	analogWrite(MOT2_PWM, cons2);
 	analogWrite(MOT3_PWM, cons3);
+
+#ifdef SIMULATOR
+	simulator.analogWrite(0, cons1);
+	simulator.analogWrite(0, cons2);
+	simulator.analogWrite(0, cons3);
+#endif
+
+
 
 	prev_cons[0] = cons1;
 	prev_cons[1] = cons2;

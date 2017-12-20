@@ -10,6 +10,10 @@
 #include "params.h"
 #include "utilities.h"
 
+#ifdef SIMULATOR
+#include "Simulator.h"
+#endif
+
 Odometry odometry = Odometry();
 
 Odometry::Odometry() {
@@ -60,6 +64,12 @@ void Odometry::updateHolonomic() {
 	_inc2 = 0;
 	_inc3 = 0;
 	sei();				//enable interrupts
+
+#ifdef SIMULATOR
+	inc1 = simulator.readEnc(0);
+	inc2 = simulator.readEnc(1);
+	inc3 = simulator.readEnc(2);
+#endif
 
 	//get motor displacement
 	_motorsDisplacement->pData[0] = (float32_t)inc1 / INC_PER_MM;

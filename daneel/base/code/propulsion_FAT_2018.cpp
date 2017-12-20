@@ -9,6 +9,10 @@
 #include "utilities.h"
 #include "ExtNavigation.h"
 //#include "DynamixelSerial5.h"
+#ifdef SIMULATOR
+#include "Simulator.h"
+Metro simuTime = Metro((unsigned long)(CONTROL_PERIOD*1000/4));
+#endif
 
 using namespace fat;
 Communication comm(Serial1, 115200);  // Initialisation, nanani global nanana, mais c'est juste pour la démo
@@ -26,9 +30,9 @@ Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 Metro testTime = Metro(4000);
 
 float32_t testCommands[][3] = {
-		{0, 0, W_to_RW(600)},
+		{0, 0, W_to_RW(1)},
 		{0, 0, W_to_RW(0)},
-		{0, 0, W_to_RW(-600)},
+		{0, 0, W_to_RW(-1)},
 		{0, 0, W_to_RW(0)}
 };
 int i = 0;
@@ -67,6 +71,12 @@ void loop()
 		comm.sendIHMState(true,false,true, true, true, false);
 	}
 	comm.checkMessages();
+
+#ifdef SIMULATOR
+	if(simuTime.check()) {
+		simulator.update();
+	}
+#endif
 
 	if(controlTime.check()) {
 		odometry.update();
