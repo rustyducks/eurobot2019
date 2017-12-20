@@ -12,6 +12,8 @@
 
 #define SIMULATOR
 
+const int LED_PIN = 13;
+
 const int MOT1_PWM = 21;
 const int MOT1_DIR = 23;
 const int MOT1_BRK = 22;

@@ -53,8 +53,8 @@ void setup()
 	blinkTime = millis();
 	blink = false;
 	Serial.begin(115200);
-	pinMode(13, OUTPUT);
-	digitalWrite(13, blink);
+	pinMode(LED_PIN, OUTPUT);
+	digitalWrite(LED_PIN, blink);
 	comm.registerHMICommandCallback(testHMICallback);
 	comm.registerActuatorCommandCallback(testActuatorCallback);
 	comm.registerSpeedCommandCallback(testSpeedCallback);
@@ -66,7 +66,7 @@ void loop()
 {
 	if(millis() - blinkTime >= 1500){
 		blink ^= 1;
-		digitalWrite(13, blink);
+		digitalWrite(LED_PIN, blink);
 		blinkTime = millis();
 		comm.sendIHMState(true,false,true, true, true, false);
 	}
