@@ -68,7 +68,6 @@ void loop()
 		blink ^= 1;
 		digitalWrite(LED_PIN, blink);
 		blinkTime = millis();
-		comm.sendIHMState(true,false,true, true, true, false);
 	}
 	comm.checkMessages();
 
