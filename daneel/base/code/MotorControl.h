@@ -66,6 +66,8 @@ public:
 		_targetSpeed->pData[2] = w;
 	}
 
+	void setMotorCommand(int command, int pwmPin, int dirPin);
+
 protected:
 
 	//! Target speed : the speed at which the robot must be in m/s, in the table reference.

@@ -153,12 +153,6 @@ void MotorControl::controlHolonomic() {
 	float32_t cmd2 = KP[1] * error2 + KI[1] * _intError[1] + KD[1] * derivError2;
 	float32_t cmd3 = KP[2] * error3 + KI[2] * _intError[2] + KD[2] * derivError3;
 
-
-	//set motors directions
-	digitalWrite(MOT1_DIR, sig(cmd1));
-	digitalWrite(MOT2_DIR, sig(cmd2));
-	digitalWrite(MOT3_DIR, sig(cmd3));
-
 #ifdef SIMULATOR
 	simulator.digitalWrite(0, sig(cmd1));
 	simulator.digitalWrite(1, sig(cmd2));
@@ -166,15 +160,9 @@ void MotorControl::controlHolonomic() {
 #endif
 
 	//clamp command between 0 and 255
-	int cons1 = clamp(0, (int)abs(cmd1), 255);
-	int cons2 = clamp(0, (int)abs(cmd2), 255);
-	int cons3 = clamp(0, (int)abs(cmd3), 255);
-
-	//clamp it to avoid brutal commands
-//	cons1 = clamp(prev_cons[0] - MAX_CONS_DIFF, cons1, prev_cons[0] + MAX_CONS_DIFF);
-//	cons2 = clamp(prev_cons[1] - MAX_CONS_DIFF, cons2, prev_cons[1] + MAX_CONS_DIFF);
-//	cons3 = clamp(prev_cons[2] - MAX_CONS_DIFF, cons3, prev_cons[2] + MAX_CONS_DIFF);
-
+	int cons1 = clamp(-PWM_MAX, (int)abs(cmd1), PWM_MAX);
+	int cons2 = clamp(-PWM_MAX, (int)abs(cmd2), PWM_MAX);
+	int cons3 = clamp(-PWM_MAX, (int)abs(cmd3), PWM_MAX);
 
 Serial.print(m.pData[0]);
 Serial.print(";");
@@ -186,9 +174,9 @@ Serial.print(cmd1);
 Serial.print(";");
 Serial.println(cons1);
 
-	analogWrite(MOT1_PWM, cons1);
-	analogWrite(MOT2_PWM, cons2);
-	analogWrite(MOT3_PWM, cons3);
+	setMotorCommand(cons1, MOT1_PWM, MOT1_DIR);
+	setMotorCommand(cons2, MOT2_PWM, MOT2_DIR);
+	setMotorCommand(cons3, MOT3_PWM, MOT3_DIR);
 
 #ifdef SIMULATOR
 	simulator.analogWrite(0, cons1);
@@ -202,4 +190,9 @@ Serial.println(cons1);
 	prev_cons[1] = cons2;
 	prev_cons[2] = cons3;
 
+}
+
+void MotorControl::setMotorCommand(int command, int pwmPin, int dirPin) {
+	digitalWrite(dirPin, sig(command));
+	analogWrite(pwmPin, abs(command));
 }
