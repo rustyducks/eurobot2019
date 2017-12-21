@@ -21,7 +21,7 @@ unsigned long blinkTime;
 
 void testHMICallback(const Communication::HMICommand msg);  // Forward declaration
 void testActuatorCallback(const Communication::ActuatorCommand msg);
-void testSpeedCallback(const Communication::SpeedCommand msg);
+void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
 
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
@@ -52,13 +52,11 @@ void setup()
 	
 	blinkTime = millis();
 	blink = false;
-	Serial.begin(115200);
 	pinMode(LED_PIN, OUTPUT);
 	digitalWrite(LED_PIN, blink);
 	comm.registerHMICommandCallback(testHMICallback);
 	comm.registerActuatorCommandCallback(testActuatorCallback);
-	comm.registerSpeedCommandCallback(testSpeedCallback);
-	Serial.print("test");
+	comm.registerSpeedCommandCallback(setNewTableSpeedCallback);
 }
 
 
@@ -88,11 +86,11 @@ void loop()
 		odometry.resetMoveDelta();
 	}
 
-	if(testTime.check()) {
+	/*if(testTime.check()) {
 		//motorControl.setTargetSpeed(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
 		extNavigation.setTableSpeedCons(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
 		i = (i+1) % 4;
-	}
+	}*/
 
 //	if(Serial.available()) {
 //		int cmd = Serial.read();
@@ -117,11 +115,6 @@ void testActuatorCallback(const Communication::ActuatorCommand msg){
 	Serial.println(msg.actuatorCommand);
 }
 
-void testSpeedCallback(const Communication::SpeedCommand msg){
-	Serial.print("Speed : vx : ");
-	Serial.print(msg.vx);
-	Serial.print("\tvy : ");
-	Serial.print(msg.vy);
-	Serial.print("\tvtheta : ");
-	Serial.println(msg.vtheta);
+void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
+	extNavigation.setTableSpeedCons(msg.vx, msg.vy, msg.vtheta);
 }
