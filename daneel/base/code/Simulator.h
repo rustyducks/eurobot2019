@@ -16,8 +16,7 @@ public:
 	virtual ~Simulator();
 
 	int readEnc(int moteurNb);
-	void analogWrite(int motor, int value);
-	void digitalWrite(int motor, int value);
+	void setMotorCommand(int command, int motor);
 	void update();
 
 private:
@@ -28,8 +27,6 @@ private:
 	float v[3];
 
 	float thau;
-
-	int signs[3];
 
 	float encs[3];
 	float KMotor;

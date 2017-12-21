@@ -153,12 +153,6 @@ void MotorControl::controlHolonomic() {
 	float32_t cmd2 = KP[1] * error2 + KI[1] * _intError[1] + KD[1] * derivError2;
 	float32_t cmd3 = KP[2] * error3 + KI[2] * _intError[2] + KD[2] * derivError3;
 
-#ifdef SIMULATOR
-	simulator.digitalWrite(0, sig(cmd1));
-	simulator.digitalWrite(1, sig(cmd2));
-	simulator.digitalWrite(2, sig(cmd3));
-#endif
-
 	//clamp command between 0 and 255
 	int cons1 = clamp(-PWM_MAX, (int)abs(cmd1), PWM_MAX);
 	int cons2 = clamp(-PWM_MAX, (int)abs(cmd2), PWM_MAX);
@@ -179,12 +173,10 @@ Serial.println(cons1);
 	setMotorCommand(cons3, MOT3_PWM, MOT3_DIR);
 
 #ifdef SIMULATOR
-	simulator.analogWrite(0, cons1);
-	simulator.analogWrite(0, cons2);
-	simulator.analogWrite(0, cons3);
+	simulator.setMotorCommand(cons1, 0);
+	simulator.setMotorCommand(cons2, 1);
+	simulator.setMotorCommand(cons3, 2);
 #endif
-
-
 
 	prev_cons[0] = cons1;
 	prev_cons[1] = cons2;

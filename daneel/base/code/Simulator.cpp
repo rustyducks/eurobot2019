@@ -18,7 +18,6 @@ Simulator::Simulator() {
 	vDiff[0] = vDiff[1] = vDiff[2] = 0;
 	vFinal[0] = vFinal[1] = vFinal[2] = 0;
 	v[0] = v[1] = v[2] = 0;
-	signs[0] = signs[1] = signs[2] = 1;
 	encs[0] = encs[1] = encs[2] = 0;
 }
 
@@ -32,21 +31,6 @@ int Simulator::readEnc(int motorNb) {
 	return tmp;
 }
 
-void Simulator::analogWrite(int motor, int value) {
-	vFinal[motor] = signs[motor]*value;
-	vDiff[motor] = v[motor] - vFinal[motor];
-	//acc[motor] = 0;
-}
-
-void Simulator::digitalWrite(int motor, int value) {
-	if(value) {
-		signs[motor] = 1;
-	}
-	else {
-		signs[motor] = -1;
-	}
-}
-
 void Simulator::update() {
 	for(int i; i<3;i++) {
 		vDiff[i] = vDiff[i] + acc[i];
@@ -54,4 +38,9 @@ void Simulator::update() {
 		v[i] = vDiff[i] + vFinal[i];
 		encs[i] += v[i] * KMotor;
 	}
+}
+
+void Simulator::setMotorCommand(int command, int motor) {
+	vFinal[motor] = command;
+	vDiff[motor] = v[motor] - vFinal[motor];
 }
