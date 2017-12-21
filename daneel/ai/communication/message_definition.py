@@ -6,6 +6,11 @@ UP_MESSAGE_SIZE = 11  # maximum size of a up message (teensy -> raspi) in bytes
 UP_HEADER_SIZE = 3  # size of the header (all except the data) of an up message
 DOWN_MESSAGE_SIZE = 9  # maximum size of a down message (raspi -> teensy) in bytes
 
+LINEAR_SPEED_TO_MSG_ADDER = 32768
+RADIAN_TO_MSG_FACTOR = 10430.378350470453
+RADIAN_TO_MSG_ADDER = 3.14159265
+
+
 # ======= Up (Prop -> raspi) message declaration ======== #
 
 
@@ -148,13 +153,37 @@ class sAckOdomReport:
 
 class sSpeedCommand:
     def __init__(self):
-        self.vx = None  # uint:16
-        self.vy = None  # uint:16
-        self.vtheta = None  # uint:16
+        self._vx = None  # uint:16
+        self._vy = None  # uint:16
+        self._vtheta = None  # uint:16
+
+    @property
+    def vx(self):
+        return self._vx - LINEAR_SPEED_TO_MSG_ADDER
+
+    @vx.setter
+    def vx(self, vx):
+        self._vx = vx + LINEAR_SPEED_TO_MSG_ADDER
+
+    @property
+    def vy(self):
+        return self._vy - LINEAR_SPEED_TO_MSG_ADDER
+
+    @vy.setter
+    def vy(self, vy):
+        self._vy = vy + LINEAR_SPEED_TO_MSG_ADDER
+
+    @property
+    def vtheta(self):
+        return self._vtheta / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+
+    @vtheta.setter
+    def vtheta(self, vtheta):
+        self._vtheta = (vtheta + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR
 
     def serialize(self):
-        return bitstring.pack('uintle:16, uintle:16, uintle:16', self.vx, self.vy,
-                              self.vtheta)
+        return bitstring.pack('uintle:16, uintle:16, uintle:16', self._vx, self._vy,
+                              self._vtheta)
 
 
 class sActuatorCommand:

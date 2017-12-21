@@ -84,6 +84,7 @@ private:
 	static constexpr int linearOdomToMsgAdder = 32768;
 	static constexpr double radianToMsgFactor = 10430.378350470453;
 	static constexpr double radianToMsgAdder = M_PI;
+	static constexpr int linearSpeedToMsgAdder = 32768;
 	static constexpr int upMsgMaxSize = 11;
 	static constexpr int upMsgHeaderSize = 3;  // Number of bytes discarded for checksum computation
 	static constexpr int downMsgMaxSize = 9;
