@@ -10,6 +10,9 @@
 using namespace std;
 namespace fat {
 
+Communication communication = Communication(RASPI_COMMUNICATION_SERIAL, RASPI_COMMUNICATION_BAUDRATE);
+
+
 Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
 		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
 		isFirstMessage(true){

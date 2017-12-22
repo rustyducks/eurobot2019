@@ -42,6 +42,9 @@ const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 const float CONTROL_PERIOD = 0.05;
 const float POS_REPORT_PERIOD = 0.2;
 
+const HardwareSerial RASPI_COMMUNICATION_SERIAL = Serial1;
+const int RASPI_COMMUNICATION_BAUDRATE = 115200;
+
 #define HOLONOMIC
 
 

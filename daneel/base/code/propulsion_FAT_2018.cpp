@@ -14,7 +14,6 @@
 #endif
 
 using namespace fat;
-Communication comm(Serial1, 115200);  // Initialisation, nanani global nanana, mais c'est juste pour la démo
 bool blink;
 unsigned long blinkTime;
 
@@ -53,9 +52,9 @@ void setup()
 	blink = false;
 	pinMode(LED_PIN, OUTPUT);
 	digitalWrite(LED_PIN, blink);
-	comm.registerHMICommandCallback(testHMICallback);
-	comm.registerActuatorCommandCallback(testActuatorCallback);
-	comm.registerSpeedCommandCallback(setNewTableSpeedCallback);
+	communication.registerHMICommandCallback(testHMICallback);
+	communication.registerActuatorCommandCallback(testActuatorCallback);
+	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
 }
 
 
@@ -66,7 +65,7 @@ void loop()
 		digitalWrite(LED_PIN, blink);
 		blinkTime = millis();
 	}
-	comm.checkMessages();
+	communication.checkMessages();
 
 	if(controlTime.check()) {
 #ifdef SIMULATOR

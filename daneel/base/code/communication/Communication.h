@@ -20,6 +20,7 @@
 #include <Arduino.h>
 #include <iterator>
 #include <HardwareSerial.h>
+#include "params.h"
 
 namespace fat{
 
@@ -246,6 +247,9 @@ private:
 	sUpMessageStorage toBeAcknowledged[maxNonAckMessageStored];
 	std::vector<sOdomReportStorage> nonAcknowledgedOdomReport;
 };
+
+extern Communication communication;
+
 }//namespace fat
 
 #endif /* COMMUNICATION_COMMUNICATION_H_ */
