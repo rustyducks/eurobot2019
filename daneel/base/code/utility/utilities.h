@@ -28,4 +28,6 @@ inline float32_t W_to_RW(float32_t w) {
 	return w * ROBOT_RADIUS;
 }
 
+void printSpeed(const char* str, arm_matrix_instance_f32* speed);
+
 #endif /* UTILITY_UTILITIES_H_ */

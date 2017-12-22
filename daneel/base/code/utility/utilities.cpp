@@ -51,3 +51,12 @@ arm_matrix_instance_f32* makeMove(float32_t dx, float32_t dy, float32_t dTheta) 
 
 	return move;
 }
+
+void printSpeed(const char* str, arm_matrix_instance_f32* speed) {
+	Serial.print(str);
+	Serial.print(speed->pData[0]);
+	Serial.print(" ");
+	Serial.print(speed->pData[1]);
+	Serial.print(" ");
+	Serial.println(speed->pData[2]);
+}
