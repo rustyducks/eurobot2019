@@ -202,6 +202,15 @@ int Communication::registerRepositionningCallback(RepositionningCallback callbac
 	return 0;
 }
 
+int Communication::registerResetCallback(ResetCallback callback){
+	if (resetCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	resetCallbacks.cb[resetCallbacks.index] = callback;
+	resetCallbacks.index++;
+	return 0;
+}
+
 void Communication::recieveMessage(const sMessageDown& msg){
 	vector<sOdomReportStorage>::iterator nonAckOdomReportItr;
 	SpeedCommand speedCommand;
@@ -249,6 +258,10 @@ void Communication::recieveMessage(const sMessageDown& msg){
 			HMIMsgCallbacks.cb[i](hmiCommand);
 		}
 		break;
+	case RESET:
+		for (unsigned int i = 0; i < resetCallbacks.index; i++){
+			resetCallbacks.cb[i]();
+		}
 	}
 }
 
@@ -275,7 +288,7 @@ void Communication::checkMessages(){
 
 
 				if (isFirstMessage || //If it is the first message, accept it
-						/*raw_data_down.msg.type == RESET ||*/
+						rawDataDown.messageDown.downMsgType == RESET ||
 						((rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256>0
 								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
 					isFirstMessage = false;

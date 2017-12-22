@@ -53,6 +53,7 @@ public:
 	typedef void (*ActuatorCommandCallback)(ActuatorCommand);
 	typedef void (*HMICommandCallback)(HMICommand);
 	typedef void (*RepositionningCallback)(Repositionning);
+	typedef void (*ResetCallback)(void);
 
 	Communication(HardwareSerial serial, uint32_t baudrate);
 	virtual ~Communication();
@@ -78,6 +79,7 @@ public:
 	int registerActuatorCommandCallback(ActuatorCommandCallback callback);
 	int registerHMICommandCallback(HMICommandCallback callback);
 	int registerRepositionningCallback(RepositionningCallback callback);
+	int registerResetCallback(ResetCallback callback);
 
 	void checkMessages();
 
@@ -146,7 +148,8 @@ private:
 		ACK_ODOM_REPORT,
 		SPEED_CMD,
 		ACTUATOR_CMD,
-		HMI_CMD
+		HMI_CMD,
+		RESET
 	}eDownMessageType;
 	typedef struct __attribute__((packed)){
 		uint8_t ackUpMsgId;
@@ -215,6 +218,11 @@ private:
 		unsigned int index = 0;
 	}RepositionningMessageCallbackRegister;
 
+	typedef struct{
+		ResetCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}ResetMessageCallbackRegister;
+
 
 	/**
 	 * sentTime == 0 means this structure is empty. Thus, if valid data is holded by the
@@ -237,6 +245,7 @@ private:
 	ActuatorMessageCallbackRegister actuatorMsgCallbacks;
 	HMIMessageCallbackRegister HMIMsgCallbacks;
 	RepositionningMessageCallbackRegister repositioningCallbacks;
+	ResetMessageCallbackRegister resetCallbacks;
 
 	int sendUpMessage(const sMessageUp& msg);
 	void recieveMessage(const sMessageDown& msg);

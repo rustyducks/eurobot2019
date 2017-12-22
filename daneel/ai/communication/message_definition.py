@@ -159,6 +159,7 @@ class eTypeDown(Enum):
     SPEED_COMMAND = 2
     ACTUATOR_COMMAND = 3
     HMI_COMMAND = 4
+    RESET = 5
 
 
 class sAckUp:
