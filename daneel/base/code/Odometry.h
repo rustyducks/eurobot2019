@@ -81,6 +81,8 @@ public:
 		return _theta;
 	}
 
+	void reset();
+
 protected:
 
 	/**

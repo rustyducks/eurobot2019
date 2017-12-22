@@ -229,3 +229,15 @@ void Odometry::resetMoveDelta() {
 	_moveDelta->pData[1] = 0;
 	_moveDelta->pData[2] = 0;
 }
+
+void Odometry::reset() {
+	cli();
+	_theta = 0;
+	_inc1 = _inc2 = _inc3 = 0;
+	zeroMatrix(_moveDelta);
+	zeroMatrix(_motorsDisplacement);
+	zeroMatrix(_robotDisplacement);
+	zeroMatrix(_motorSpeeds);
+	zeroMatrix(_speed);
+	sei();
+}
