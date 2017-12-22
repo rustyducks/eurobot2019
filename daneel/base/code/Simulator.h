@@ -19,6 +19,8 @@ public:
 	void setMotorCommand(int command, int motor);
 	void update();
 
+	void reset();
+
 private:
 	float vDiff[3];
 	float acc[3];

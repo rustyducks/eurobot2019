@@ -45,3 +45,12 @@ void Simulator::setMotorCommand(int command, int motor) {
 	vFinal[motor] = command * KMotor;
 	vDiff[motor] = v[motor] - vFinal[motor];
 }
+
+void Simulator::reset() {
+	for(int i=0; i<3; i++) {
+		acc[i] = 0;
+		vFinal[i] = 0;
+		v[i] = 0;
+		encs[i] = 0;
+	}
+}
