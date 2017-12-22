@@ -47,7 +47,6 @@ void setup()
 	Serial.println("Start");
 	Serial.flush();
 	testTime.reset();
-	i=0;
 	controlTime.reset();
 	
 	blinkTime = millis();
@@ -70,7 +69,9 @@ void loop()
 	comm.checkMessages();
 
 	if(controlTime.check()) {
+#ifdef SIMULATOR
 		simulator.update();
+#endif
 		odometry.update();
 		motorControl.control();
 		extNavigation.update();
