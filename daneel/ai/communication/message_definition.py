@@ -6,6 +6,7 @@ UP_MESSAGE_SIZE = 11  # maximum size of a up message (teensy -> raspi) in bytes
 UP_HEADER_SIZE = 3  # size of the header (all except the data) of an up message
 DOWN_MESSAGE_SIZE = 9  # maximum size of a down message (raspi -> teensy) in bytes
 
+LINEAR_ODOM_TO_MSG_ADDER = 32768
 LINEAR_SPEED_TO_MSG_ADDER = 32768
 RADIAN_TO_MSG_FACTOR = 10430.378350470453
 RADIAN_TO_MSG_ADDER = 3.14159265
@@ -37,19 +38,43 @@ class sOdomReport:
     def __init__(self):
         self.previous_report_id = None  # uint:8
         self.new_report_id = None  # uint:8
-        self.dx = None  # uint:16
-        self.dy = None  # uint:16
-        self.dtheta = None  # uint:16
+        self._dx = None  # uint:16
+        self._dy = None  # uint:16
+        self._dtheta = None  # uint:16
+
+    @property
+    def dx(self):
+        return self._dx - LINEAR_ODOM_TO_MSG_ADDER
+
+    @dx.setter
+    def dx(self, dx):
+        self._dx = dx + LINEAR_ODOM_TO_MSG_ADDER
+
+    @property
+    def dy(self):
+        return self._dy - LINEAR_ODOM_TO_MSG_ADDER
+
+    @dy.setter
+    def dy(self, dy):
+        self._dy = dy + LINEAR_ODOM_TO_MSG_ADDER
+
+    @property
+    def dtheta(self):
+        return self._dtheta / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+
+    @dtheta.setter
+    def dtheta(self, dtheta):
+        self._dtheta = (dtheta + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR
 
     def deserialize(self, bytes_packed):
         s = bitstring.BitStream(bytes_packed)
-        self.previous_report_id, self.new_report_id, self.dx, self.dy, self.dtheta = s.unpack(
+        self.previous_report_id, self.new_report_id, self._dx, self._dy, self._dtheta = s.unpack(
             'uint:8, uint:8, uintle:16, uintle:16, uintle:16')
 
     def serialize(self):
         return bitstring.pack('uint:8, uint:8, uintle:16, uintle:16, uintle:16',
                               self.previous_report_id, self.new_report_id,
-                              self.dx, self.dy, self.dtheta)
+                              self._dx, self._dy, self._dtheta)
 
 
 class sHMIState:
