@@ -9,6 +9,7 @@
 #define EXTNAVIGATION_H_
 
 #include "arm_math.h"
+#include "utilities.h"
 
 class ExtNavigation {
 public:
@@ -35,11 +36,14 @@ public:
 
 	/**
 	 * \brief Set the speed consigne from its 3 composantes.
+	 * \param vx  speed along the X axis in mm/s
+	 * \param vy  speed along the Y axis in mm/s
+	 * \param w   rotation speed in rd/s
 	 */
 	void setTableSpeedCons(float32_t vx, float32_t vy, float32_t w) {
 		table_speed_cons->pData[0] = vx;
 		table_speed_cons->pData[1] = vy;
-		table_speed_cons->pData[2] = w;
+		table_speed_cons->pData[2] =  W_to_RW(w);
 	}
 
 private:
@@ -53,7 +57,11 @@ private:
 	 */
 	arm_matrix_instance_f32* rotation_matrix;
 
-	//! The speed consigne, in mm/s, *in the table reference frame*.
+	/**
+	 * The speed consigne (vx, vy, Rw), *in the table reference frame*.
+	 * vx and vy are in mm/s
+	 * R.w is in mm.rd/s
+	 */
 	arm_matrix_instance_f32* table_speed_cons;
 
 

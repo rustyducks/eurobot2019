@@ -29,10 +29,10 @@ Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 Metro testTime = Metro(4000);
 
 float32_t testCommands[][3] = {
-		{0, 0, W_to_RW(1)},
-		{0, 0, W_to_RW(0)},
-		{0, 0, W_to_RW(-1)},
-		{0, 0, W_to_RW(0)}
+		{0, 0, 1},
+		{0, 0, 0},
+		{0, 0, -1},
+		{0, 0, 0}
 };
 int i = 0;
 
