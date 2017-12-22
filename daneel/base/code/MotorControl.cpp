@@ -99,14 +99,6 @@ void MotorControl::controlDifferential() {
 
 void MotorControl::controlHolonomic() {
 
-//	if(_targetSpeed.getVx() == 0){
-//		digitalWrite(2, HIGH);
-//	}
-//	else {
-//		digitalWrite(2, LOW);
-//	}
-
-
 	float32_t m_data[] =
 				   {0,
 				    0,
@@ -187,4 +179,18 @@ Serial.println(cons1);
 void MotorControl::setMotorCommand(int command, int pwmPin, int dirPin) {
 	digitalWrite(dirPin, sig(command));
 	analogWrite(pwmPin, abs(command));
+}
+
+void MotorControl::reset() {
+	setMotorCommand(0, MOT1_PWM, MOT1_DIR);
+	setMotorCommand(0, MOT2_PWM, MOT2_DIR);
+	setMotorCommand(0, MOT3_PWM, MOT3_DIR);
+
+	zeroMatrix(_targetSpeed);
+	zeroMatrix(_intSpeedError);
+	for(int i=0; i<3;i++) {
+		_intError[i] = 0;
+		_prevError[i] = 0;
+		prev_cons[i] = 0;
+	}
 }
