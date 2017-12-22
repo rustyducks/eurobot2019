@@ -154,9 +154,9 @@ void MotorControl::controlHolonomic() {
 	float32_t cmd3 = KP[2] * error3 + KI[2] * _intError[2] + KD[2] * derivError3;
 
 	//clamp command between 0 and 255
-	int cons1 = clamp(-PWM_MAX, (int)abs(cmd1), PWM_MAX);
-	int cons2 = clamp(-PWM_MAX, (int)abs(cmd2), PWM_MAX);
-	int cons3 = clamp(-PWM_MAX, (int)abs(cmd3), PWM_MAX);
+	int cons1 = clamp(-PWM_MAX, (int)cmd1, PWM_MAX);
+	int cons2 = clamp(-PWM_MAX, (int)cmd2, PWM_MAX);
+	int cons3 = clamp(-PWM_MAX, (int)cmd3, PWM_MAX);
 
 Serial.print(m.pData[0]);
 Serial.print(";");
