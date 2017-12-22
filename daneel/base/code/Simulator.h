@@ -26,9 +26,12 @@ private:
 	float vFinal[3];
 	float v[3];
 
-	float thau;
+	//! time at which the motor reach about 63% of its final speed. 95% at 5*tau.
+	float tau;
 
 	float encs[3];
+
+	//! factor between pwm command and robot speed (dependent of wheel size,motor, and battery level)
 	float KMotor;
 };
 

@@ -11,7 +11,6 @@
 //#include "DynamixelSerial5.h"
 #ifdef SIMULATOR
 #include "Simulator.h"
-Metro simuTime = Metro((unsigned long)(CONTROL_PERIOD*1000/4));
 #endif
 
 using namespace fat;
@@ -69,13 +68,8 @@ void loop()
 	}
 	comm.checkMessages();
 
-#ifdef SIMULATOR
-	if(simuTime.check()) {
-		simulator.update();
-	}
-#endif
-
 	if(controlTime.check()) {
+		simulator.update();
 		odometry.update();
 		motorControl.control();
 		extNavigation.update();

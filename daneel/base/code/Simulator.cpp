@@ -13,8 +13,8 @@ Simulator simulator = Simulator();
 #endif
 
 Simulator::Simulator() {
-	KMotor = 1;
-	thau = 400;
+	KMotor = 2.5;
+	tau = 0.2;
 	vDiff[0] = vDiff[1] = vDiff[2] = 0;
 	vFinal[0] = vFinal[1] = vFinal[2] = 0;
 	v[0] = v[1] = v[2] = 0;
@@ -26,21 +26,22 @@ Simulator::~Simulator() {
 }
 
 int Simulator::readEnc(int motorNb) {
-	int tmp = encs[motorNb];
+	float tmp = encs[motorNb];
 	encs[motorNb] = 0;
-	return tmp;
+	return (int) tmp;
 }
 
 void Simulator::update() {
-	for(int i; i<3;i++) {
-		vDiff[i] = vDiff[i] + acc[i];
-		acc[i] = -vDiff[i]/thau;
+	for(int i=0; i<3;i++) {
+		vDiff[i] = vDiff[i] + acc[i] * CONTROL_PERIOD;
+		acc[i] = -vDiff[i]/tau;
 		v[i] = vDiff[i] + vFinal[i];
-		encs[i] += v[i] * KMotor;
+		encs[i] += v[i] * CONTROL_PERIOD * INC_PER_MM;
+
 	}
 }
 
 void Simulator::setMotorCommand(int command, int motor) {
-	vFinal[motor] = command;
+	vFinal[motor] = command * KMotor;
 	vDiff[motor] = v[motor] - vFinal[motor];
 }
