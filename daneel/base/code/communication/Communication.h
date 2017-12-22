@@ -83,6 +83,8 @@ public:
 
 	void checkMessages();
 
+	void reset();
+
 private:
 	static constexpr int linearOdomToMsgAdder = 32768;
 	static constexpr double radianToMsgFactor = 10430.378350470453;

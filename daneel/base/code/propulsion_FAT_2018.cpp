@@ -20,6 +20,7 @@ unsigned long blinkTime;
 void testHMICallback(const Communication::HMICommand msg);  // Forward declaration
 void testActuatorCallback(const Communication::ActuatorCommand msg);
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
+void resetCallback();
 
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
@@ -55,6 +56,7 @@ void setup()
 	communication.registerHMICommandCallback(testHMICallback);
 	communication.registerActuatorCommandCallback(testActuatorCallback);
 	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
+	communication.registerResetCallback(resetCallback);
 }
 
 
@@ -110,11 +112,12 @@ void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
 	extNavigation.setTableSpeedCons(msg.vx, msg.vy, msg.vtheta);
 }
 
-void reset() {
+void resetCallback(){
 	motorControl.reset();
 	odometry.reset();
 	extNavigation.reset();
 #ifdef SIMULATOR
 	simulator.reset();
 #endif
+	communication.reset();
 }

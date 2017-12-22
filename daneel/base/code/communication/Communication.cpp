@@ -309,4 +309,19 @@ void Communication::checkMessages(){
 	}*/
 }
 
-} /* namespace std */
+void Communication::reset(){
+	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
+		toBeAcknowledged[i].sendTime = 0;
+	}
+	nonAcknowledgedOdomReport = vector<sOdomReportStorage>();
+	odomReportIndex = 0;
+	lastOdomReportIndexAcknowledged = 0;
+	upMessageIndex = 0;
+	lastIdDownMessageRecieved = 0;
+	isFirstMessage = true;
+	while(serial.available()){
+		serial.read();
+	}
+}
+
+} /* namespace fat */
