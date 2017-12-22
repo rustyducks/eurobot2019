@@ -73,8 +73,9 @@ void loop()
 		simulator.update();
 #endif
 		odometry.update();
-		motorControl.control();
 		extNavigation.update();
+		motorControl.control();
+
 	}
 
 	if(posReportTme.check()) {
