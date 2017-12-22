@@ -8,6 +8,6 @@
 #define _propulsion_FAT_2018_H_
 #include "Arduino.h"
 
-
+void reset();
 
 #endif /* _propulsion_FAT_2018_H_ */

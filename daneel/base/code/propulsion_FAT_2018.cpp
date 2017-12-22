@@ -110,3 +110,12 @@ void testActuatorCallback(const Communication::ActuatorCommand msg){
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
 	extNavigation.setTableSpeedCons(msg.vx, msg.vy, msg.vtheta);
 }
+
+void reset() {
+	motorControl.reset();
+	odometry.reset();
+	extNavigation.reset();
+#ifdef SIMULATOR
+	simulator.reset();
+#endif
+}
