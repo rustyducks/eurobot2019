@@ -226,7 +226,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 	case SPEED_CMD:
 		speedCommand.vx = msg.downData.speedCmdMsg.vx - linearSpeedToMsgAdder;  // Todo : Maybe scale linear speed
  		speedCommand.vy = msg.downData.speedCmdMsg.vy - linearSpeedToMsgAdder;
- 		speedCommand.vtheta = msg.downData.speedCmdMsg.vtheta / radianToMsgFactor - radianToMsgAdder;
+ 		speedCommand.vtheta = msg.downData.speedCmdMsg.vtheta / angularSpeedToMsgFactor - angularSpeedToMsgAdder;
  		for (unsigned int i=0; i < speedMsgCallbacks.index; i++){
 			speedMsgCallbacks.cb[i](speedCommand);
 		}

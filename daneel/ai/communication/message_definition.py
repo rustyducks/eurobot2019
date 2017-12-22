@@ -8,6 +8,8 @@ DOWN_MESSAGE_SIZE = 9  # maximum size of a down message (raspi -> teensy) in byt
 
 LINEAR_ODOM_TO_MSG_ADDER = 32768
 LINEAR_SPEED_TO_MSG_ADDER = 32768
+ANGULAR_SPEED_TO_MSG_FACTOR = 1043.0378350470453
+ANGULAR_SPEED_TO_MSG_ADDER = 10 * 3.14159265
 RADIAN_TO_MSG_FACTOR = 10430.378350470453
 RADIAN_TO_MSG_ADDER = 3.14159265
 
@@ -200,11 +202,11 @@ class sSpeedCommand:
 
     @property
     def vtheta(self):
-        return self._vtheta / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+        return self._vtheta / ANGULAR_SPEED_TO_MSG_FACTOR - ANGULAR_SPEED_TO_MSG_ADDER
 
     @vtheta.setter
     def vtheta(self, vtheta):
-        self._vtheta = (vtheta + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR
+        self._vtheta = (vtheta + ANGULAR_SPEED_TO_MSG_ADDER) * ANGULAR_SPEED_TO_MSG_FACTOR
 
     def serialize(self):
         return bitstring.pack('uintle:16, uintle:16, uintle:16', self._vx, self._vy,
