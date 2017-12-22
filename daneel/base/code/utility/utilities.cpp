@@ -40,6 +40,8 @@ arm_matrix_instance_f32* makeMatrix(int nRows, int nCols) {
 	matrix->numRows = nRows;
 	matrix->pData = data;
 
+	zeroMatrix(matrix);
+
 	return matrix;
 }
 
@@ -59,4 +61,11 @@ void printSpeed(const char* str, arm_matrix_instance_f32* speed) {
 	Serial.print(speed->pData[1]);
 	Serial.print(" ");
 	Serial.println(speed->pData[2]);
+}
+
+void zeroMatrix(arm_matrix_instance_f32* matrix) {
+	int nbElts = matrix->numCols * matrix->numRows;
+	for(int i=0; i<nbElts; i++) {
+		matrix->pData[i] = 0;
+	}
 }

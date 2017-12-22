@@ -46,6 +46,8 @@ public:
 		table_speed_cons->pData[2] =  W_to_RW(w);
 	}
 
+	void reset();
+
 private:
 	/**
 	 * \brief The 3x3 matrix rotating a vector from the table reference frame to the

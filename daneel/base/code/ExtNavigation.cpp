@@ -56,3 +56,8 @@ void ExtNavigation::computeRotationMatrix() {
 	//just to not write 9 lines... But it should works !
 	memcpy(rotation_matrix->pData, rot_mat_data, 9*sizeof(float32_t));
 }
+
+void ExtNavigation::reset() {
+	zeroMatrix(rotation_matrix);
+	zeroMatrix(table_speed_cons);
+}
