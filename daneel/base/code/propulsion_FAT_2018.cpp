@@ -47,6 +47,7 @@ void setup()
 	Serial.println("Start");
 	Serial.flush();
 	testTime.reset();
+	i=0;
 	controlTime.reset();
 	
 	blinkTime = millis();
@@ -86,11 +87,6 @@ void loop()
 		i = (i+1) % 4;
 	}*/
 
-//	if(Serial.available()) {
-//		int cmd = Serial.read();
-//		analogWrite(MOT1_PWM, cmd);
-//		Serial.flush();
-//	}
 }
 
 void testHMICallback(const Communication::HMICommand msg){
