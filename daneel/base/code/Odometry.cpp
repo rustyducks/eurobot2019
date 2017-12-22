@@ -103,11 +103,11 @@ void Odometry::updateHolonomic() {
 }
 
 void Odometry::recalerTheta(float32_t theta) {
-	_theta = theta + _moveDelta->pData[3];
+	_theta = theta + _moveDelta->pData[2];
 }
 
 void Odometry::updatePosition() {
-	float32_t dTheta = RW_to_W(_robotDisplacement->pData[3]);		//transforms speed in dTheta
+	float32_t dTheta = RW_to_W(_robotDisplacement->pData[2]);		//transforms speed in dTheta
 	_theta += dTheta;		//update _theta with the last dTheta.
 
 	//change speed reference system from robot reference frame to table reference frame
