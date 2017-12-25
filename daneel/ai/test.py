@@ -1,4 +1,4 @@
-from communication.communication import *
+from communication import *
 from communication.message_definition import *
 import time
 

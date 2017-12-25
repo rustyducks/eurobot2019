@@ -2,7 +2,7 @@ from collections import namedtuple
 from enum import *
 import RPi.GPIO as GPIO
 import threading
-import smbus
+#import smbus
 import time
 
 BALL_PICKER_MOTOR = 3
@@ -38,8 +38,9 @@ class IO(object):
         self._thread_us_reader = USReader()
         self._thread_us_reader.start()
         self.robot = robot
-        self._cord_state = None
-        self._button_state = None
+        self.cord_state = None
+        self.button1_state = None
+        self.button2_state = None
         self.led_color = None
         self.ball_picker_state = None
         self.cannon_state = None
@@ -50,8 +51,8 @@ class IO(object):
         self.close_cannon_barrier()
         self.lock_rocket_launcher()
         self.set_led_color(self.LedColor.BLACK)
-        self._read_cord(PIN_CORD)
-        self._read_switch(PIN_COLOR)
+        # self._read_cord(PIN_CORD)
+        # self._read_switch(PIN_COLOR)
 
     class LedColor(Enum):
         BLACK = (GPIO.LOW, GPIO.LOW, GPIO.LOW)
@@ -87,15 +88,15 @@ class IO(object):
         LOCKED = "locked"
         OPEN = "open"
 
-    @property
-    def cord_state(self):
-        self._read_cord(PIN_CORD)
-        return self._cord_state
-
-    @property
-    def button_state(self):
-        self._read_switch(PIN_COLOR)
-        return self._button_state
+    # @property
+    # def cord_state(self):
+    #     self._read_cord(PIN_CORD)
+    #     return self._cord_state
+    #
+    # @property
+    # def button_state(self):
+    #     self._read_switch(PIN_COLOR)
+    #     return self._button_state
 
     @staticmethod
     def get_us_distance_by_postion(position):
@@ -195,23 +196,23 @@ class IO(object):
         GPIO.setup(PIN_LED_GREEN, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(PIN_LED_BLUE, GPIO.OUT, initial=GPIO.LOW)
 
-    def _read_cord(self, channel):
-        if GPIO.input(channel):
-            self._cord_state = self.CordState.IN
-        else:
-            self._cord_state = self.CordState.OUT
+    # def _read_cord(self, channel):
+    #     if GPIO.input(channel):
+    #         self._cord_state = self.CordState.IN
+    #     else:
+    #         self._cord_state = self.CordState.OUT
 
-    def _read_switch(self, channel):
-        if GPIO.input(channel):
-            self._button_state = self.ButtonState.RELEASED
-        else:
-            self._button_state = self.ButtonState.PRESSED
+    # def _read_switch(self, channel):
+    #     if GPIO.input(channel):
+    #         self._button_state = self.ButtonState.RELEASED
+    #     else:
+    #         self._button_state = self.ButtonState.PRESSED
 
 
 class USReader(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        self.i2c = smbus.SMBus(1)
+        #self.i2c = smbus.SMBus(1)
 
     def run(self):
         global us_sensors, us_sensors_distance
@@ -223,8 +224,3 @@ class USReader(threading.Thread):
                 dst = self.i2c.read_word_data(sensor.address, 2) / 255
                 if dst != 0:
                     us_sensors_distance[us_sensors[i]] = dst
-<<<<<<< HEAD
-
-
-=======
->>>>>>> merge_control_comm

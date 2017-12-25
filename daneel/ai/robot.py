@@ -4,7 +4,7 @@ import datetime
 import argparse
 import builtins
 
-from communication import *
+import communication
 from io_robot import *
 from locomotion import *
 
@@ -15,10 +15,11 @@ behaviors = {
     "FSMTests": 1
 }
 
+robot = None
 
 class Robot(object):
     def __init__(self, behavior=behaviors["FSMMatch"]):
-        self.communication = Communication()
+        self.communication = communication.Communication()
         self.io = IO(self)
         self.locomotion = Locomotion(self)
         if behavior == behaviors["FSMMatch"]:
@@ -31,20 +32,13 @@ class Robot(object):
 
 
 def main():
+    global robot
     robot = Robot()
     # Arguments parsing
     robot.communication.mock_communication = parsed_args.no_teensy
+    robot.communication
     while True:
         msg = robot.communication.check_message()
-        if msg is not None:
-            if msg.type == eTypeUp.POSITION:
-                robot.locomotion.x = msg.x
-                robot.locomotion.y = msg.y
-                robot.locomotion.theta = msg.theta
-            if msg.type == eTypeUp.POINT_REACHED:
-                robot.locomotion.point_reached(msg.down_id, msg.point_id, msg.x, msg.y, msg.theta)
-            if msg.type == eTypeUp.RECALAGE_OK:
-                robot.locomotion.recalage_ok()
         robot.behavior.loop()
 
 
@@ -60,3 +54,10 @@ if __name__ == '__main__':
         main()
 
 
+def new_hmi_state_callback(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
+    if __debug__:
+        print("[Comm] New HMI State : cord : {}; b1 : {}; b2 : {}; red LED : {}; green LED : {}; blue LED : {}".format(
+            cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state))
+    robot.io.cord_state = cord_state
+    robot.io.button1_state = button1_state
+    robot.io.button2_state = button2_state
