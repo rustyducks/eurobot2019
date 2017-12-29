@@ -26,6 +26,7 @@ class Communication:
         self._mailbox = deque()
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
         self._callbacks = {msg_type: [] for msg_type in eTypeUp}
+        self.reset_soft_teensy()
 
     def register_callback(self, message_type, callback):
         if message_type not in self._callbacks:
@@ -67,6 +68,15 @@ class Communication:
         msg.data.actuator_id = actuator_id
         msg.data.actuator_command = actuator_value
         return self.send_message(msg, max_retries)
+
+    def reset_soft_teensy(self, max_retries=1000):
+        msg = sMessageDown()
+        msg.type = eTypeDown.RESET
+        ret = self.send_message(msg, max_retries)
+        if ret == 0:
+            self._current_msg_id = 0
+            self._mailbox = deque()
+        return ret
 
     def send_message(self, msg, max_retries=1000):
         """
