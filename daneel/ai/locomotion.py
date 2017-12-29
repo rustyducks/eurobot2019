@@ -2,16 +2,67 @@ import math
 from collections import namedtuple
 
 
+def center_radians(value):
+    while value <= - math.pi:
+        value += 2 * math.pi
+    while value > math.pi:
+        value -= 2 * math.pi
+    return value
+
+
 class Locomotion:
     def __init__(self, robot):
         self.robot = robot
-        self.x = None
-        self.y = None
-        self.theta = None
+        self.x = 0
+        self.y = 0
+        self.theta = 0
         self.is_trajectory_finished = True
         self.is_stopped = True
         self.is_recalage_ended = False
         self.current_trajectory = []
+        self._odometry_reports = {}  # type: dict[(int, int): (float, float, float)]
+        self._latest_odometry_report = 0
+
+    def handle_new_odometry_report(self, old_report_id, new_report_id, dx, dy, dtheta):
+        if new_report_id > self._latest_odometry_report:
+            if old_report_id < self._latest_odometry_report:
+                # Need to find previous report and add the new information
+                for ids, deltas in self._odometry_reports.items():
+                    if ids[0] == old_report_id and ids[1] == self._latest_odometry_report:
+                        self.x -= deltas[0]
+                        self.y -= deltas[1]
+                        self.theta = center_radians(self.theta - deltas[2])
+                        break
+                #  in fact we search for old_report_id -> _latest_odemtry_report, but what we need is
+                #  a CHAIN going from old_report_id to _latest_odemetry_report and substract each node (and add them if
+                # they overlap).
+
+                self.x += dx
+                self.y += dy
+                self.theta = center_radians(self.theta + dtheta)
+
+                self._odometry_reports[(old_report_id, new_report_id)] = (dx, dy, dtheta)
+            elif old_report_id == self._latest_odometry_report:
+                # Nominal case, the new report brings only new information
+                self.x += dx
+                self.y += dy
+                self.theta = center_radians(self.theta + dtheta)
+
+                self._odometry_reports[(old_report_id, new_report_id)] = (dx, dy, dtheta)
+            else:
+                # Should not happen, information has been missed
+                pass
+        elif new_report_id == self._latest_odometry_report:
+            # We already have this information, but it may worth to update it
+            pass
+        else:
+            # Only old information; it probably don't worth to update it...
+            pass
+
+        #  Delete all the old reports (those taken into account by the teensy)
+        for ids, delta in self._odometry_reports.items():
+            if ids[1] <= old_report_id:
+                del(self._odometry_reports[ids])
 
     def follow_trajectory(self, points, theta, speed):
         if len(points) > 10:

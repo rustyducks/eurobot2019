@@ -19,7 +19,7 @@ robot = None
 
 class Robot(object):
     def __init__(self, behavior=behaviors["FSMMatch"]):
-        self.communication = communication.Communication()
+        self.communication = communication.Communication("/dev/ttyS0")
         self.io = IO(self)
         self.locomotion = Locomotion(self)
         if behavior == behaviors["FSMMatch"]:
@@ -36,7 +36,10 @@ def main():
     robot = Robot()
     # Arguments parsing
     robot.communication.mock_communication = parsed_args.no_teensy
-    robot.communication
+    robot.communication.register_callback(communication.eTypeUp.HMI_STATE, new_hmi_state_callback)
+    robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT, robot.locomotion.handle_new_odometry_report)
+    robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
+        "X : {}, Y : {}, Theta : {}".format(robot.locomotion.x, robot.locomotion.y, robot.locomotion.theta)))
     while True:
         msg = robot.communication.check_message()
         robot.behavior.loop()

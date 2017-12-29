@@ -152,7 +152,10 @@ class Communication:
             for cb in self._callbacks:
                 cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
         elif message.type == eTypeUp.ODOM_REPORT:
-            pass
+            for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
+                print("Firing callback")
+                cb(message.data.previous_report_id, message.data.new_report_id, message.data.dx, message.data.dy,
+                   message.data.dtheta)
         elif message.type == eTypeUp.ACK_UP:
             pass
 

@@ -73,7 +73,7 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 		}
 	}
 
-	nonAcknowledgedOdomReport.push_back(odomReport);
+	//nonAcknowledgedOdomReport.push_back(odomReport);
 
 	int msgdx = cumuleddx + linearOdomToMsgAdder, msgdy = cumuleddy + linearOdomToMsgAdder;
 	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
@@ -233,6 +233,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 				nonAckOdomReportItr++;
 			}
 		}
+		lastOdomReportIndexAcknowledged = msg.downData.ackOdomReportMsg.ackOdomReportId;
 
 		break;
 	case SPEED_CMD:
