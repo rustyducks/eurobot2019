@@ -101,6 +101,7 @@ private:
 	static constexpr unsigned char hmiCommandBlueMask = 1 << 5;
 	static constexpr unsigned int maxCallbackPerMessageType = 10;
 	static constexpr unsigned int maxNonAckMessageStored = 50;
+	static constexpr unsigned int maxNonAckOdomReportStored = 40;
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
@@ -200,6 +201,12 @@ private:
 		double dtheta;
 	};
 
+	struct sOdomReportBuffer{
+		unsigned int startIndex;
+		unsigned int writeIndex;
+		sOdomReportStorage data[maxNonAckOdomReportStored];
+	};
+
 	typedef struct{
 		SpeedCommandCallback cb[maxCallbackPerMessageType];
 		unsigned int index = 0;
@@ -256,7 +263,7 @@ private:
 	int storeNewSentMessage(unsigned long time, const uRawMessageUp msg);
 	int removeAcknowledgedMessage(uint8_t acknowledgedId);
 	sUpMessageStorage toBeAcknowledged[maxNonAckMessageStored];
-	std::vector<sOdomReportStorage> nonAcknowledgedOdomReport;
+	sOdomReportBuffer nonAcknowledgedOdomReport;
 };
 
 extern Communication communication;
