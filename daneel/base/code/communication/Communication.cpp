@@ -79,13 +79,13 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 	int msgdx = cumuleddx + linearOdomToMsgAdder, msgdy = cumuleddy + linearOdomToMsgAdder;
 	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
 
-	if (cumuleddx < 0 || cumuleddx > 65535){
+	if (msgdx < 0 || msgdx > 65535){
 		return -10;
 	}
-	if (cumuleddy < 0 || cumuleddy > 65535){
+	if (msgdy < 0 || msgdy > 65535){
 		return -11;
 	}
-	if (cumuleddtheta < 0 || cumuleddtheta > 65535){
+	if (msgdtheta < 0 || msgdtheta > 65535){
 		return -12;
 	}
 	msg.upMsgType = Communication::ODOM_REPORT;
@@ -94,6 +94,19 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 	msg.upData.odomReportMsg.dx = msgdx;
 	msg.upData.odomReportMsg.dy = msgdy;
 	msg.upData.odomReportMsg.dtheta = msgdtheta;
+
+#if DEBUG_COMM
+	Serial.print("Sending Odom Report : from (");
+	Serial.print(lastOdomReportIndexAcknowledged);
+	Serial.print("; ");
+	Serial.print(odomReportIndex);
+	Serial.print("; ");
+	Serial.print(cumuleddx);
+	Serial.print("; ");
+	Serial.print(cumuleddy);
+	Serial.print("; ");
+	Serial.print(cumuleddtheta);
+#endif
 
 	return sendUpMessage(msg);
 }
@@ -223,6 +236,9 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		removeAcknowledgedMessage(msg.downData.ackMsg.ackUpMsgId);
 		break;
 	case ACK_ODOM_REPORT:
+#if DEBUG_COMM
+		Serial.print("New Ack Odom : ");
+#endif
 		removeAcknowledgedMessage(msg.downData.ackOdomReportMsg.ackUpMsgId);
 
 		unsigned int index;
@@ -230,12 +246,27 @@ void Communication::recieveMessage(const sMessageDown& msg){
 				nonAcknowledgedOdomReport.startIndex + maxNonAckOdomReportStored) % maxNonAckOdomReportStored; i++){
 			index = (nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored;
 			//Not sure... We want to delete "all" the stored id that are < acknowledged received one.
-			if ((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256 > 128 ){
+#if DEBUG_COMM
+			Serial.print("Difference in odom indices : ");
+			Serial.println((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256);
+#endif
+			if ((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256 == 	0 ){
 				nonAcknowledgedOdomReport.startIndex = index;
+#if DEBUG_COMM
+			Serial.print("Wanted new index found : ");
+			Serial.println(index);
+#endif
 				break;
 			}
 		}
 		lastOdomReportIndexAcknowledged = msg.downData.ackOdomReportMsg.ackOdomReportId;
+
+#if DEBUG_COMM
+		Serial.print("AckOdom : ");
+		Serial.print(msg.downData.ackOdomReportMsg.ackOdomReportId);
+		Serial.print(" new index : ");
+		Serial.println(nonAcknowledgedOdomReport.startIndex);
+#endif
 
 		break;
 	case SPEED_CMD:
@@ -292,7 +323,7 @@ void Communication::checkMessages(){
 
 				if (isFirstMessage || //If it is the first message, accept it
 						rawDataDown.messageDown.downMsgType == RESET ||
-						((rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256>0
+						((rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved + 256 )%256>0
 								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
 					isFirstMessage = false;
 					lastIdDownMessageRecieved = rawDataDown.messageDown.downMsgId;

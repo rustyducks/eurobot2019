@@ -50,7 +50,7 @@ class IO(object):
         # self.stop_cannon()
         # self.close_cannon_barrier()
         # self.lock_rocket_launcher()
-        self.set_led_color(self.LedColor.BLACK)
+        # self.set_led_color(self.LedColor.BLACK)
         # self._read_cord(PIN_CORD)
         # self._read_switch(PIN_COLOR)
 

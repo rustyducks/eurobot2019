@@ -7,15 +7,14 @@ i = 0
 speedCommands = [(2, 0, 1), (0, 2, 1), (-2, 0, 1), (0, -2, 1)]
 r = robot.Robot()
 r.communication.send_speed_command(200, 0, 0)
-
+r.communication.register_callback(eTypeUp.ODOM_REPORT, r.locomotion.handle_new_odometry_report)
+r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
+    "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
+        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
 while 1:
-    r.communication.register_callback(eTypeUp.ODOM_REPORT, r.locomotion.handle_new_odometry_report)
-    r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
-        "X : {}, Y : {}, Theta : {}\t(old report id : {}, new report id : {})".format(
-            r.locomotion.x, r.locomotion.y, r.locomotion.theta, o, n)))
-    time.sleep(1)
+    time.sleep(0.01)
     i = (i+1) % len(speedCommands)
-    print('Sending')
+    #print('Sending')
     r.communication.check_message()
     # if msg is not None:
     #     print(msg.type)

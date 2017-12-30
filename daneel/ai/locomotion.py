@@ -27,7 +27,7 @@ class Locomotion:
         if new_report_id > self._latest_odometry_report:
             if old_report_id < self._latest_odometry_report:
                 # Need to find previous report and add the new information
-                for ids, deltas in self._odometry_reports.items():
+                for ids, deltas in list(self._odometry_reports.items()):
                     if ids[0] == old_report_id and ids[1] == self._latest_odometry_report:
                         self.x -= deltas[0]
                         self.y -= deltas[1]
@@ -52,6 +52,7 @@ class Locomotion:
             else:
                 # Should not happen, information has been missed
                 pass
+            self._latest_odometry_report = new_report_id
         elif new_report_id == self._latest_odometry_report:
             # We already have this information, but it may worth to update it
             pass
@@ -60,7 +61,7 @@ class Locomotion:
             pass
 
         #  Delete all the old reports (those taken into account by the teensy)
-        for ids, delta in self._odometry_reports.items():
+        for ids, delta in list(self._odometry_reports.items()):
             if ids[1] <= old_report_id:
                 del(self._odometry_reports[ids])
 

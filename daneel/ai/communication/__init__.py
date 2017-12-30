@@ -114,6 +114,8 @@ class Communication:
 
     def _send_acknowledgment(self, id_to_acknowledge):
         ack = sMessageDown()
+        ack.down_id = self._current_msg_id
+        self._current_msg_id = (self._current_msg_id + 1) % 256
         ack.type = eTypeDown.ACK_DOWN
         ack.data = sAckDown()
         ack.data.ack_up_id = id_to_acknowledge
@@ -122,6 +124,8 @@ class Communication:
 
     def _send_odometry_report_acknowledgment(self, msg_id, odom_id):
         ack = sMessageDown()
+        ack.down_id = self._current_msg_id
+        self._current_msg_id = (self._current_msg_id + 1) % 256
         ack.type = eTypeDown.ACK_ODOM_REPORT
         ack.data = sAckOdomReport()
         ack.data.ack_up_id = msg_id
