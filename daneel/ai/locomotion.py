@@ -24,8 +24,8 @@ class Locomotion:
         self._latest_odometry_report = 0
 
     def handle_new_odometry_report(self, old_report_id, new_report_id, dx, dy, dtheta):
-        if new_report_id > self._latest_odometry_report:
-            if old_report_id < self._latest_odometry_report:
+        if (new_report_id - self._latest_odometry_report + 256) % 256 < 128:
+            if old_report_id - self._latest_odometry_report > 128:
                 # Need to find previous report and add the new information
                 for ids, deltas in list(self._odometry_reports.items()):
                     if ids[0] == old_report_id and ids[1] == self._latest_odometry_report:
@@ -62,7 +62,7 @@ class Locomotion:
 
         #  Delete all the old reports (those taken into account by the teensy)
         for ids, delta in list(self._odometry_reports.items()):
-            if ids[1] <= old_report_id:
+            if (ids[1] - old_report_id + 256) % 256 == 0 or (ids[1] - old_report_id + 256) % 256 > 128:
                 del(self._odometry_reports[ids])
 
     def follow_trajectory(self, points, theta, speed):
