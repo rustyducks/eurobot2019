@@ -105,11 +105,41 @@ class Communication:
                 packed = self._serial_port.read(UP_MESSAGE_SIZE)
                 up_msg = sMessageUp()
                 up_msg.deserialize(packed)
+                self._handle_acknowledgement(up_msg)
                 if up_msg.type == eTypeUp.ACK_UP:
                     return 0  # success
                 else:
                     self._mailbox.append(up_msg)  # if it is not an ACK or a NONACK, store it to deliver later
         return -1  # failure
+
+    def _send_acknowledgment(self, id_to_acknowledge):
+        ack = sMessageDown()
+        ack.down_id = self._current_msg_id
+        self._current_msg_id = (self._current_msg_id + 1) % 256
+        ack.type = eTypeDown.ACK_DOWN
+        ack.data = sAckDown()
+        ack.data.ack_up_id = id_to_acknowledge
+        serialized = ack.serialize().tobytes()
+        self._serial_port.write(serialized)
+
+    def _send_odometry_report_acknowledgment(self, msg_id, odom_id):
+        ack = sMessageDown()
+        ack.down_id = self._current_msg_id
+        self._current_msg_id = (self._current_msg_id + 1) % 256
+        ack.type = eTypeDown.ACK_ODOM_REPORT
+        ack.data = sAckOdomReport()
+        ack.data.ack_up_id = msg_id
+        ack.data.ack_odom_report_id = odom_id
+        serialized = ack.serialize().tobytes()
+        self._serial_port.write(serialized)
+
+    def _handle_acknowledgement(self, msg):
+        if msg.type == eTypeUp.ACK_UP:
+            return
+        elif msg.type == eTypeUp.ODOM_REPORT:
+            self._send_odometry_report_acknowledgment(msg.up_id, msg.data.new_report_id)
+        else:
+            self._send_acknowledgment(msg.up_id)
 
     def check_message(self, max_read=1):
         """
@@ -126,6 +156,7 @@ class Communication:
                 packed = self._serial_port.read(UP_MESSAGE_SIZE)
                 up_msg = sMessageUp()
                 up_msg.deserialize(packed)
+                self._handle_acknowledgement(up_msg)
                 self._mailbox.append(up_msg)
             if len(self._mailbox) > 0:
                 msg = self._mailbox.popleft()
@@ -152,7 +183,10 @@ class Communication:
             for cb in self._callbacks:
                 cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
         elif message.type == eTypeUp.ODOM_REPORT:
-            pass
+
+            for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
+                cb(message.data.previous_report_id, message.data.new_report_id, message.data.dx, message.data.dy,
+                   message.data.dtheta)
         elif message.type == eTypeUp.ACK_UP:
             pass
 

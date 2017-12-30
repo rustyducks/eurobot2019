@@ -35,8 +35,8 @@ class IO(object):
         GPIO.setup(PIN_LED_BLUE, GPIO.OUT)
         GPIO.setup(PIN_CORD, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(PIN_COLOR, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        self._thread_us_reader = USReader()
-        self._thread_us_reader.start()
+        # self._thread_us_reader = USReader()
+        # self._thread_us_reader.start()
         self.robot = robot
         self.cord_state = None
         self.button1_state = None
@@ -46,11 +46,11 @@ class IO(object):
         self.cannon_state = None
         self.cannon_barrier_state = None
         self.rocket_launcher_state = None
-        self.stop_ball_picker()
-        self.stop_cannon()
-        self.close_cannon_barrier()
-        self.lock_rocket_launcher()
-        self.set_led_color(self.LedColor.BLACK)
+        # self.stop_ball_picker()
+        # self.stop_cannon()
+        # self.close_cannon_barrier()
+        # self.lock_rocket_launcher()
+        # self.set_led_color(self.LedColor.BLACK)
         # self._read_cord(PIN_CORD)
         # self._read_switch(PIN_COLOR)
 

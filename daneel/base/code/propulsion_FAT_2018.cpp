@@ -80,7 +80,8 @@ void loop()
 	}
 
 	if(posReportTme.check()) {
-		//comm.sendMove(odometry.getMoveDelta())
+		communication.sendOdometryReport(odometry.getMoveDelta()->pData[0], odometry.getMoveDelta()->pData[1],
+				odometry.getMoveDelta()->pData[2]);
 		odometry.resetMoveDelta();
 	}
 
