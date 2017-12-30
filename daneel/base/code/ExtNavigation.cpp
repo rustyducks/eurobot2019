@@ -49,8 +49,8 @@ void ExtNavigation::computeRotationMatrix() {
 	float32_t sin_t = sin(theta);
 
 	float32_t rot_mat_data[] = {		//TODO : check if it is the correct matrix : it might be the transpose one
-			cos_t, -sin_t, 0,
-			sin_t,  cos_t, 0,
+			cos_t, sin_t, 0,
+			-sin_t,  cos_t, 0,
 		    	0,      0, 1
 	};
 	//just to not write 9 lines... But it should works !
