@@ -76,7 +76,6 @@ class Locomotion:
         self.go_to_orient(point.x, point.y, point.theta)
 
     def position_control_loop(self):
-        self.robot.ivy.highlight_point(0, self.current_point_objective.x, self.current_point_objective.y)
         control_time = time.time()
         if self._last_position_control_time is None:
             delta_time = 0
@@ -85,6 +84,7 @@ class Locomotion:
         self._last_position_control_time = control_time
 
         if self.current_point_objective is not None:
+            self.robot.ivy.highlight_point(0, self.current_point_objective.x, self.current_point_objective.y)
             distance_to_objective = self.current_point_objective.lin_distance_to(self.x, self.y)
             # if distance_to_objective <= ADMITTED_POSITION_ERROR:
             #     self.current_point_objective = None
