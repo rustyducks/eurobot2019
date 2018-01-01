@@ -8,7 +8,7 @@ i = 0
 speedCommands = [(2, 0, 1), (0, 2, 1), (-2, 0, 1), (0, -2, 1)]
 r = robot.Robot()
 r.ivy = ivy_robot.Ivy(r, "192.168.1.19:2010")
-r.communication.send_speed_command(100, 100, 0.1)
+r.locomotion.go_to_orient(1500, 1000, 0)
 r.communication.register_callback(eTypeUp.ODOM_REPORT, r.locomotion.handle_new_odometry_report)
 r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
@@ -19,6 +19,7 @@ while 1:
     i = (i+1) % len(speedCommands)
     #print('Sending')
     r.communication.check_message()
+    r.locomotion.position_control_loop()
     # if msg is not None:
     #     print(msg.type)
     #     if msg.type == eTypeUp.HMI_STATE:

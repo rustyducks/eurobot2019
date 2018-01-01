@@ -8,6 +8,7 @@ NEW_OBSTACLE_REGEXP = "New Obstacle "
 GO_TO_REGEXP = "Go to (.*)"
 NEW_TRAJECTORY_REGEXP = "New trajectory {}"
 UPDATE_ROBOT_POSITION_REGEXP = "Update robot pose {}"
+HIGHLIGHT_POINT_REGEXP = "Highlight point {}"  # Highlight point id;x;y
 
 
 
@@ -29,6 +30,9 @@ class Ivy:
     def send_robot_position(self):
         IvySendMsg(UPDATE_ROBOT_POSITION_REGEXP.format(str(self.robot.locomotion.x) + ";" + str(self.robot.locomotion.y)
                                                        + ";" + str(self.robot.locomotion.theta)))
+
+    def highlight_point(self, ident, x, y):
+        IvySendMsg(HIGHLIGHT_POINT_REGEXP.format(str(ident) + ';' + str(x) + ';' + str(y)))
 
     def send_trajectory(self):
         traj = ""
