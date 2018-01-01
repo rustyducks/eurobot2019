@@ -12,10 +12,12 @@ TRACE_FILE = "/home/pi/code/primary_robot/ai/log/log_"+str(datetime.datetime.now
 
 behaviors = {
     "FSMMatch": 0,
-    "FSMTests": 1
+    "FSMTests": 1,
+    "Slave": 2
 }
 
 robot = None
+
 
 class Robot(object):
     def __init__(self, behavior=behaviors["FSMMatch"]):
@@ -23,10 +25,13 @@ class Robot(object):
         self.io = IO(self)
         self.locomotion = Locomotion(self)
         if behavior == behaviors["FSMMatch"]:
-            from fsmmatch import FSMMatch
+            from behavior.fsmmatch import FSMMatch
             self.behavior = FSMMatch(self)
         elif behavior == behaviors["FSMTests"]:
             raise NotImplementedError("This behavior is not implemented yet !")
+        elif behavior == behaviors["Slave"]:
+            from behavior.slave import Slave
+            self.behavior = Slave(self)
         else:
             raise NotImplementedError("This behavior is not implemented yet !")
 
