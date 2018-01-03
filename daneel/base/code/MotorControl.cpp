@@ -60,17 +60,14 @@ void MotorControl::init() {
 #elif defined(HOLONOMIC)
 	pinMode(MOT1_PWM, OUTPUT);
 	pinMode(MOT1_DIR, OUTPUT);
-	pinMode(MOT1_BRK, OUTPUT);
 	analogWriteFrequency(MOT1_PWM, PWM_FREQUENCY);
 
 	pinMode(MOT2_PWM, OUTPUT);
 	pinMode(MOT2_DIR, OUTPUT);
-	pinMode(MOT2_BRK, OUTPUT);
 	analogWriteFrequency(MOT2_PWM, PWM_FREQUENCY);
 
 	pinMode(MOT3_PWM, OUTPUT);
 	pinMode(MOT3_DIR, OUTPUT);
-	pinMode(MOT3_BRK, OUTPUT);
 	analogWriteFrequency(MOT3_PWM, PWM_FREQUENCY);
 #else
 #error "No Robot type defined (TRIKE, DIFFERENTIAL or HOLONOMIC)"
