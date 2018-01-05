@@ -10,37 +10,37 @@
 #include "Arduino.h"
 #include "arm_math.h"
 
-#define SIMULATOR
+//#define SIMULATOR
 
 const int LED_PIN = 13;
 
 /* BEGIN -----------------Motors & Odometry-------------------------- */
 
-const int MOT1_PWM = 21;
-const int MOT1_DIR = 23;
-const int MOT1_ENCA = 17;
-const int MOT1_ENCB = 16;
+const int MOT3_PWM = 21;
+const int MOT3_DIR = 23;
+const int MOT3_ENCA = 17;
+const int MOT3_ENCB = 16;
 
-const int MOT2_PWM = 35;
-const int MOT2_DIR = 36;
-const int MOT2_ENCA = 14;
-const int MOT2_ENCB = 15;
+const int MOT1_PWM = 35;
+const int MOT1_DIR = 36;
+const int MOT1_ENCA = 14;
+const int MOT1_ENCB = 15;
 
-const int MOT3_PWM = 30;
-const int MOT3_DIR = 29;
-const int MOT3_ENCA = 27;
-const int MOT3_ENCB = 26;
+const int MOT2_PWM = 30;
+const int MOT2_DIR = 29;
+const int MOT2_ENCA = 27;
+const int MOT2_ENCB = 26;
 
 const float PWM_FREQUENCY = 915.527;
 const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
-const float32_t INC_PER_MM = 8.488263631567753;
+const float32_t INC_PER_MM = 14.92822605;//8.488263631567753;
 
 #define HOLONOMIC
 const float CONTROL_PERIOD = 0.05;
 
-const float32_t ROBOT_RADIUS = 170.0;
+const float32_t ROBOT_RADIUS = 85.0;
 
 /* END ------------------- Motors & Odometry --------------------------*/
 
