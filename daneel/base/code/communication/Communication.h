@@ -9,7 +9,7 @@
 #define COMMUNICATION_COMMUNICATION_H_
 
 #ifndef DEBUG_COMM
-#define DEBUG_COMM 1
+//#define DEBUG_COMM 1
 #endif
 
 #include <cstdint>
