@@ -26,14 +26,14 @@ void resetCallback();
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 
-Metro testTime = Metro(4000);
-
-float32_t testCommands[][3] = {
-		{0, 0, 1},
-		{0, 0, 0},
-		{0, 0, -1},
-		{0, 0, 0}
-};
+//Metro testTime = Metro(4000);
+//
+//float32_t testCommands[][3] = {
+//		{0, 0, 0.5},
+//		{0, 0, 0},
+//		{0, 0, -0.3},
+//		{0, 0, 0}
+//};
 int i = 0;
 
 void setup()
@@ -43,10 +43,10 @@ void setup()
 	initOdometry();
 	motorControl.init();
 	Serial.begin(115200);
-	while(!Serial.available());
+	//while(!Serial.available());
 	Serial.println("Start");
 	Serial.flush();
-	testTime.reset();
+//	testTime.reset();
 	controlTime.reset();
 	
 	blinkTime = millis();
@@ -85,11 +85,11 @@ void loop()
 		odometry.resetMoveDelta();
 	}
 
-	/*if(testTime.check()) {
-		//motorControl.setTargetSpeed(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
-		extNavigation.setTableSpeedCons(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
-		i = (i+1) % 4;
-	}*/
+//	if(testTime.check()) {
+//		//motorControl.setTargetSpeed(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
+//		extNavigation.setTableSpeedCons(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
+//		i = (i+1) % 4;
+//	}
 
 }
 
