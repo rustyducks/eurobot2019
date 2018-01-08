@@ -14,5 +14,5 @@ class Slave(Behavior):
 
     def go_to(self, agent, *arg):
         print(arg[0])
-        x, y = arg[0].split(",")
-        self.robot.locomotion.go_to_orient(float(x), float(y), 0)
+        x, y, theta = arg[0].split(",")
+        self.robot.locomotion.go_to_orient(float(x), float(y), float(theta))
