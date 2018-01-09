@@ -76,7 +76,8 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 	nonAcknowledgedOdomReport.data[nonAcknowledgedOdomReport.writeIndex] = odomReport;
 	nonAcknowledgedOdomReport.writeIndex = (nonAcknowledgedOdomReport.writeIndex + 1) % maxNonAckOdomReportStored;
 
-	int msgdx = cumuleddx + linearOdomToMsgAdder, msgdy = cumuleddy + linearOdomToMsgAdder;
+	int msgdx = cumuleddx + linearOdomToMsgAdder;
+	int msgdy = cumuleddy + linearOdomToMsgAdder;
 	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
 
 	if (msgdx < 0 || msgdx > 65535){
@@ -251,7 +252,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 			Serial.println((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256);
 #endif
 			if ((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256 == 	0 ){
-				nonAcknowledgedOdomReport.startIndex = index;
+				nonAcknowledgedOdomReport.startIndex = index + 1;
 #if DEBUG_COMM
 			Serial.print("Wanted new index found : ");
 			Serial.println(index);

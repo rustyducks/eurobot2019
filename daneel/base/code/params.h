@@ -35,12 +35,12 @@ const float PWM_FREQUENCY = 915.527;
 const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
-const float32_t INC_PER_MM = 14.92822605;//8.488263631567753;
+const float32_t INC_PER_MM = 7.554804140138556;
 
 #define HOLONOMIC
 const float CONTROL_PERIOD = 0.05;
 
-const float32_t ROBOT_RADIUS = 85.0;
+const float32_t ROBOT_RADIUS = 170.0;
 
 /* END ------------------- Motors & Odometry --------------------------*/
 
