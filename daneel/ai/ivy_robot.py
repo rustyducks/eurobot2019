@@ -5,10 +5,12 @@ from ivy.std_api import *
 IVY_APP_NAME = "AI_Robot"
 
 NEW_OBSTACLE_REGEXP = "New Obstacle "
-GO_TO_REGEXP = "Go to (.*)"
+GO_TO_ORIENT_REGEXP = "Go to orient (.*)"
+GO_TO_REGEXP = "Go to linear (.*)"
 NEW_TRAJECTORY_REGEXP = "New trajectory {}"
 UPDATE_ROBOT_POSITION_REGEXP = "Update robot pose {}"
 HIGHLIGHT_POINT_REGEXP = "Highlight point {}"  # Highlight point id;x;y
+HIGHLIGHT_ANGLE_REGEXP = "Highlight angle {}"  # Highlight angle id;theta
 
 
 
@@ -33,6 +35,9 @@ class Ivy:
 
     def highlight_point(self, ident, x, y):
         IvySendMsg(HIGHLIGHT_POINT_REGEXP.format(str(ident) + ';' + str(x) + ';' + str(y)))
+
+    def highlight_robot_angle(self, ident, theta):
+        IvySendMsg(HIGHLIGHT_ANGLE_REGEXP.format(str(ident) + ";" + str(theta)))
 
     def send_trajectory(self):
         traj = ""

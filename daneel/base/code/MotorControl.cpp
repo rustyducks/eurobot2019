@@ -147,15 +147,15 @@ void MotorControl::controlHolonomic() {
 	int cons2 = clamp(-PWM_MAX, (int)cmd2, PWM_MAX);
 	int cons3 = clamp(-PWM_MAX, (int)cmd3, PWM_MAX);
 
-Serial.print(m.pData[0]);
-Serial.print(";");
-Serial.print(speed->pData[0]);
-Serial.print(";");
-Serial.print(error1);
-Serial.print(";");
-Serial.print(cmd1);
-Serial.print(";");
-Serial.println(cons1);
+//Serial.print(m.pData[0]);
+//Serial.print(";");
+//Serial.print(speed->pData[0]);
+//Serial.print(";");
+//Serial.print(error1);
+//Serial.print(";");
+//Serial.print(cmd1);
+//Serial.print(";");
+//Serial.println(cons1);
 
 	setMotorCommand(cons1, MOT1_PWM, MOT1_DIR);
 	setMotorCommand(cons2, MOT2_PWM, MOT2_DIR);

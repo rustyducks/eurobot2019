@@ -94,7 +94,7 @@ protected:
 
 	arm_matrix_instance_f32* _moveDelta;
 
-	int _inc1, _inc2, _inc3;
+	volatile int _inc1, _inc2, _inc3;
 
 	//!
 	arm_matrix_instance_f32* _motorsDisplacement;

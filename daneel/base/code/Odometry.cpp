@@ -99,7 +99,6 @@ void Odometry::updateHolonomic() {
 	_speed->pData[0] = _robotDisplacement->pData[0] / CONTROL_PERIOD;
 	_speed->pData[1] = _robotDisplacement->pData[1] / CONTROL_PERIOD;
 	_speed->pData[2] = _robotDisplacement->pData[2] / CONTROL_PERIOD;	//TODO RW_to_W ?
-
 }
 
 void Odometry::recalerTheta(float32_t theta) {
@@ -178,49 +177,49 @@ void ISR33() {
 
 void Odometry::isr1() {
 	if(digitalRead(MOT1_ENCB)) {
-		_inc1--;
-	} else {
 		_inc1++;
+	} else {
+		_inc1--;
 	}
 }
 
 void Odometry::isr11() {
 	if(digitalRead(MOT1_ENCA)) {
-		_inc1++;
-	} else {
 		_inc1--;
+	} else {
+		_inc1++;
 	}
 }
 
 void Odometry::isr2() {
 	if(digitalRead(MOT2_ENCB)) {
-		_inc2--;
-	} else {
 		_inc2++;
+	} else {
+		_inc2--;
 	}
 }
 
 void Odometry::isr22() {
 	if(digitalRead(MOT2_ENCA)) {
-		_inc2++;
-	} else {
 		_inc2--;
+	} else {
+		_inc2++;
 	}
 }
 
 void Odometry::isr3() {
 	if(digitalRead(MOT3_ENCB)) {
-		_inc3--;
-	} else {
 		_inc3++;
+	} else {
+		_inc3--;
 	}
 }
 
 void Odometry::isr33() {
 	if(digitalRead(MOT3_ENCA)) {
-		_inc3++;
-	} else {
 		_inc3--;
+	} else {
+		_inc3++;
 	}
 }
 
