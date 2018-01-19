@@ -8,9 +8,9 @@
 #ifndef COMMUNICATION_COMMUNICATION_H_
 #define COMMUNICATION_COMMUNICATION_H_
 
-#ifndef DEBUG_COMM
-//#define DEBUG_COMM 1
-#endif
+//#ifndef DEBUG_COMM
+//#define DEBUG_COMM 0
+//#endif
 
 #include <cstdint>
 #include <math.h>
