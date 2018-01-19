@@ -152,7 +152,8 @@ private:
 		SPEED_CMD,
 		ACTUATOR_CMD,
 		HMI_CMD,
-		RESET
+		RESET,
+		THETA_REPOSITIONING
 	}eDownMessageType;
 	typedef struct __attribute__((packed)){
 		uint8_t ackUpMsgId;
@@ -173,12 +174,16 @@ private:
 	typedef struct __attribute__((packed)){
 		uint8_t hmiCmd;
 	}sHMICmd;
+	typedef struct __attribute__((packed)){
+		uint16_t thetaRepositioning;
+	}sThetaRepositioning;
 	typedef union __attribute__((packed)){
 		sAckUp ackMsg;
 		sAckOdomReport ackOdomReportMsg;
 		sSpeedCmd speedCmdMsg;
 		sActuatorCmd actuatorCmdMsg;
 		sHMICmd hmiCmdMsg;
+		sThetaRepositioning thetaRepositioningMsg;
 	}uMessageDownData;
 	typedef struct __attribute__((packed)){
 		uint8_t downMsgId;
