@@ -78,7 +78,7 @@ int Communication::sendOdometryReport(const int dx, const int dy, const double d
 
 	int msgdx = cumuleddx + linearOdomToMsgAdder;
 	int msgdy = cumuleddy + linearOdomToMsgAdder;
-	int msgdtheta = (cumuleddtheta + radianToMsgAdder) * radianToMsgFactor;
+	int msgdtheta = round((cumuleddtheta + radianToMsgAdder) * radianToMsgFactor);
 
 	if (msgdx < 0 || msgdx > 65535){
 		return -10;
