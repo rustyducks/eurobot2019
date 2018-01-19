@@ -10,6 +10,7 @@ ROTATION_ACCELERATION_MAX = 0.1  # rad/s²
 ROTATION_SPEED_MAX = 0.7  # rad/s
 ADMITTED_ANGLE_ERROR = 0.05  # rad
 
+Speed = namedtuple("Speed", ['vx', 'vy', 'vtheta'])
 
 def center_radians(value):
     while value <= - math.pi:
@@ -26,7 +27,7 @@ class Locomotion:
         self.y = 0
         self.theta = 0
         self.current_point_objective = None  # type: self.PointOrient
-        self.current_speed = (0, 0, 0)
+        self.current_speed = Speed(0, 0, 0)  # type: Speed
         self._last_position_control_time = None
         self._odometry_reports = {}  # type: dict[(int, int): (float, float, float)]
         self._latest_odometry_report = 0
@@ -96,7 +97,7 @@ class Locomotion:
 
             # Acceleration part
             alpha = math.atan2(self.current_point_objective.y - self.y, self.current_point_objective.x - self.x)
-            current_linear_speed = math.hypot(self.current_speed[0], self.current_speed[1])
+            current_linear_speed = math.hypot(self.current_speed.vx, self.current_speed.vy)
             new_speed = min((LINEAR_SPEED_MAX, current_linear_speed + delta_time * ACCELERATION_MAX))
 
             # Check if we need to decelerate
@@ -114,23 +115,23 @@ class Locomotion:
                 new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
 
             # Rotation part
-            omega = min((ROTATION_SPEED_MAX, abs(self.current_speed[2]) + delta_time * ROTATION_ACCELERATION_MAX))
+            omega = min((ROTATION_SPEED_MAX, abs(self.current_speed.vtheta) + delta_time * ROTATION_ACCELERATION_MAX))
             rotation_error_sign = math.copysign(1, center_radians(self.current_point_objective.theta - self.theta))
-            t_rotation_stop = abs(self.current_speed[2]) / ROTATION_ACCELERATION_MAX
+            t_rotation_stop = abs(self.current_speed.vtheta) / ROTATION_ACCELERATION_MAX
             planned_stop_angle = center_radians(
                 self.theta + rotation_error_sign * 2.5 * (
-                    abs(self.current_speed[2]) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop ** 2))
+                    abs(self.current_speed.vtheta) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop ** 2))
             self.robot.ivy.highlight_robot_angle(0, self.current_point_objective.theta)
             self.robot.ivy.highlight_robot_angle(1, planned_stop_angle)
             if abs(center_radians(planned_stop_angle - self.current_point_objective.theta)) <= ADMITTED_ANGLE_ERROR or abs(
                 center_radians(planned_stop_angle - self.theta)) > abs(center_radians(self.current_point_objective.theta - self.theta)):
-                omega = max((0, abs(self.current_speed[2]) - ROTATION_ACCELERATION_MAX * delta_time))
+                omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
 
-            self.current_speed = (new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
+            self.current_speed = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
                 omega, rotation_error_sign))
 
         else:
-            self.current_speed = (0, 0, 0)
+            self.current_speed = Speed(0, 0, 0)
         #print("Speed : " + str(self.current_speed))
         self.robot.communication.send_speed_command(*self.current_speed)
 
