@@ -231,6 +231,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 	SpeedCommand speedCommand;
 	ActuatorCommand actuatorCommand;
 	HMICommand hmiCommand;
+	Repositionning thetaRepositioning;
 
 	switch(msg.downMsgType){
 	case ACK_DOWN:
@@ -297,6 +298,18 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		for (unsigned int i = 0; i < resetCallbacks.index; i++){
 			resetCallbacks.cb[i]();
 		}
+		break;
+	case THETA_REPOSITIONING:
+		thetaRepositioning.theta = msg.downData.thetaRepositioningMsg.thetaRepositioning / radianToMsgFactor - radianToMsgAdder;
+		for (unsigned int i = 0; i < (nonAcknowledgedOdomReport.writeIndex -
+			nonAcknowledgedOdomReport.startIndex + maxNonAckOdomReportStored) % maxNonAckOdomReportStored; i++){
+			// Adds all the non acknowledged odometry report. They cannot have been taken into account by the AI.
+			thetaRepositioning.theta += nonAcknowledgedOdomReport.data[(nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored].dtheta;
+		}
+		for (unsigned int i = 0; i < repositioningCallbacks.index; i++){
+			repositioningCallbacks.cb[i](thetaRepositioning);
+		}
+		break;
 	}
 }
 

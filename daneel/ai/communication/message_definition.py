@@ -160,6 +160,7 @@ class eTypeDown(Enum):
     ACTUATOR_COMMAND = 3
     HMI_COMMAND = 4
     RESET = 5
+    THETA_REPOSITIONING = 6
 
 
 class sAckUp:
@@ -229,6 +230,22 @@ class sHMICommand:
 
     def serialize(self):
         return bitstring.pack('uint:8', self.hmi_command)
+
+
+class sThetaRepositioning:
+    def __init__(self):
+        self._theta_repositioning = None
+
+    @property
+    def theta_repositioning(self):
+        return self._theta_repositioning / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+
+    @theta_repositioning.setter
+    def theta_repositioning(self, value):
+        self._theta_repositioning = round((value + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR)
+
+    def serialize(self):
+        return bitstring.pack('uint:16', self._theta_repositioning)
 
 
 class sMessageDown:
