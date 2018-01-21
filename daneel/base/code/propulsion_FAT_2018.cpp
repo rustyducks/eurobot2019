@@ -8,6 +8,7 @@
 #include "params.h"
 #include "utilities.h"
 #include "ExtNavigation.h"
+#include "InputOutputs.h"
 //#include "DynamixelSerial5.h"
 #ifdef SIMULATOR
 #include "Simulator.h"
@@ -42,6 +43,7 @@ void setup()
 	//digitalWrite(25, HIGH);
 	initOdometry();
 	motorControl.init();
+	inputOutputs.init();
 	Serial.begin(115200);
 	//while(!Serial.available());
 	Serial.println("Start");

@@ -48,6 +48,9 @@ const float32_t ROBOT_RADIUS = 170.0;
 const int LED_RED = 0;
 const int LED_GREEN = 0;
 const int LED_BLUE = 0;
+const int CORD = 0;
+const int BUTTON1 = 0;
+const int BUTTON2 = 0;
 /* END ------------------------- HMI ----------------------------------*/
 
 /* BEGIN ----------------------- IOs ----------------------------------*/
