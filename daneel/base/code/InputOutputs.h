@@ -26,13 +26,23 @@ public:
 	void _onNewCordState();
 	void _onNewButtonState(int button);
 
+	bool isHmIhasChanged() const {
+		return _HMIhasChanged;
+	}
+
+	void setHmIhasChanged(bool hmIhasChanged) {
+		_HMIhasChanged = hmIhasChanged;
+	}
+
 private:
-	bool button1Pressed;
-	bool button2Pressed;
-	bool cordIn;
-	bool redLEDOn;
-	bool greenLEDOn;
-	bool blueLEDOn;
+	bool _button1Pressed;
+	bool _button2Pressed;
+	bool _cordIn;
+	bool _redLEDOn;
+	bool _greenLEDOn;
+	bool _blueLEDOn;
+	
+	volatile bool _HMIhasChanged;
 };
 
 extern InputOutputs inputOutputs;

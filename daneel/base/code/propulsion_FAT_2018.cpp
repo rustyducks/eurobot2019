@@ -26,6 +26,7 @@ void resetCallback();
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
+Metro IOsTime = Metro((unsigned long)(IO_REPORT_PERIOD*1000));
 
 //Metro testTime = Metro(4000);
 //
@@ -85,6 +86,12 @@ void loop()
 		communication.sendOdometryReport(odometry.getMoveDelta()->pData[0], odometry.getMoveDelta()->pData[1],
 				odometry.getMoveDelta()->pData[2]);
 		odometry.resetMoveDelta();
+	}
+
+	if(IOsTime.check()) {
+		if(inputOutputs.isHmIhasChanged()) {
+			inputOutputs.HMISendState();
+		}
 	}
 
 //	if(testTime.check()) {
