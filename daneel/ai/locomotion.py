@@ -127,13 +127,35 @@ class Locomotion:
                 center_radians(planned_stop_angle - self.theta)) > abs(center_radians(self.current_point_objective.theta - self.theta)):
                 omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
 
-            self.current_speed = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
+            speed_command = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
                 omega, rotation_error_sign))
 
         else:
-            self.current_speed = Speed(0, 0, 0)
-        #print("Speed : " + str(self.current_speed))
+            speed_command = Speed(0, 0, 0)
+        # print("Speed : " + str(self.current_speed))
+        self.current_speed = self.comply_speed_constraints(speed_command, delta_time)
         self.robot.communication.send_speed_command(*self.current_speed)
+
+    def comply_speed_constraints(self, speed_cmd, dt, alpha_step = 0.05):
+        if dt == 0:
+            return Speed(0, 0, 0)
+
+        # Verify if maximum acceleration is respected
+        alpha = alpha_step
+        vx, vy, vtheta = speed_cmd
+        while math.hypot(vx - self.current_speed.vx,
+                         vy - self.current_speed.vy) / dt > ACCELERATION_MAX:
+            vx = speed_cmd.vx * (1 - alpha) + self.current_speed.vx * alpha
+            vy = speed_cmd.vy * (1 - alpha) + self.current_speed.vy * alpha
+            alpha += alpha_step
+
+        alpha = alpha_step
+        while abs(vtheta - self.current_speed.vtheta) / dt > ROTATION_ACCELERATION_MAX:
+            vtheta = speed_cmd.vtheta * (1 - alpha) + self.current_speed.vtheta * alpha
+            alpha += alpha_step
+
+        return Speed(vx, vy, vtheta)
+
 
     def distance_to(self, x, y):
         return math.sqrt((self.x - x) ** 2 + (self.y - y) ** 2)
