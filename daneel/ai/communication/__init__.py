@@ -27,6 +27,7 @@ class Communication:
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
         self._callbacks = {msg_type: [] for msg_type in eTypeUp}
         self.reset_soft_teensy()
+        self.eTypeUp = eTypeUp  # For exposure purposes
 
     def register_callback(self, message_type, callback):
         if message_type not in self._callbacks:
