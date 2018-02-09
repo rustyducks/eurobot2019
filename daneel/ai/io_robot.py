@@ -64,7 +64,7 @@ class IO(object):
         return self.get_us_distance_by_postion("rear")
 
     def set_led_color(self, color):
-        self.robot.communication.send_hmi_command(*color)
+        self.robot.communication.send_hmi_command(*color.value)
         self.led_color = color
         if __debug__:
             print("[IO] Led switched to {}".format(color))
