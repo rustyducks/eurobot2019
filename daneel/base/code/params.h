@@ -58,6 +58,9 @@ const HardwareSerial RASPI_COMMUNICATION_SERIAL = Serial1;
 const int RASPI_COMMUNICATION_BAUDRATE = 115200;
 const int DYNAMIXEL_CONTROL = 24;
 const float IO_REPORT_PERIOD = 0.5;
+const int WATER_DELIVERER = 2;
+const bool DYNA_TURN_CW = false;
+const bool DYNA_TURN_CCW = true;
 /* END ------------------------- IOs ----------------------------------*/
 
 

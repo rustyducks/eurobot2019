@@ -23,6 +23,8 @@ public:
 	bool HMIGetCordState();
 	void HMISendState();
 
+	void deliverWater(bool enable);
+
 	void _onNewCordState();
 	void _onNewButtonState(int button);
 

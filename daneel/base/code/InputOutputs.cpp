@@ -78,3 +78,13 @@ void ioHMIhasChanged(){
 	inputOutputs.setHmIhasChanged(true);
 }
 
+void InputOutputs::deliverWater(bool enable) {
+	if(enable) {
+		Dynamixel.setEndless(2, true);
+		Dynamixel.turn(WATER_DELIVERER, DYNA_TURN_CCW, 1023);
+	}
+	else {
+		Dynamixel.turn(WATER_DELIVERER, DYNA_TURN_CCW, 0);
+	}
+}
+
