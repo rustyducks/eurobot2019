@@ -6,27 +6,12 @@ import math
 
 from behavior import Behavior
 
-FUNNY_ACTION_TIME = 92  # in seconds
-END_MATCH_TIME = 95  # in seconds
-INITIAL_WAIT = 35 #in seconds
-
-#2017 specific
-SMALL_CRATER_COLLECT_DURATION = 4  # in seconds
-SMALL_CRATER_FIRE_DURATION = 4  # in seconds
-GREAT_CRATER_COLLECT_DURATION = 1  # in seconds
-STANDARD_SEPARATION_US = 20  # in cm
-FULL_SPEED_CANNON_TIME = 2  # in seconds
-AFTER_SEESAW_RECALAGE_MAX_TIME = 5  # in sec
-FIRE1_RECALAGE_MAX_TIME = 3  # in sec
-FIRE1_CANNON_POWER = 45  # between 0 and 255
-MAX_CANNON_POWER = 105  # between 0 and 255
-CANNON_AUGMENTATION_DISTANCE_STEP = 50  # in mm
-CANNON_AUGMENTATION_POWER_STEP = 10  # between 0 and 255
+END_MATCH_TIME = 100  # in seconds
 
 
 class Color(Enum):
-    BLUE = "blue"
-    YELLOW = "yellow"
+    GREEN = "green"
+    ORANGE = "orange"
 
 
 class FSMMatch(Behavior):
@@ -34,16 +19,11 @@ class FSMMatch(Behavior):
         self.robot = robot
         self.color = None
         self.start_time = None
-        self.funny_action_finished = False
         self.state = StateRepositionningPreMatch(self)
 
     def loop(self):
         time_now = time.time()
-        if self.start_time is not None and time_now - self.start_time >= FUNNY_ACTION_TIME and not self.funny_action_finished:  # Checks time for funny action!
-            if __debug__:
-                print("[FSMMatch] Funny Action time")
-            next_state = StateFunnyAction
-        elif self.start_time is not None and time_now - self.start_time >= END_MATCH_TIME and self.funny_action_finished and self.state.__class__ != StateEnd:
+        if self.start_time is not None and time_now - self.start_time >= END_MATCH_TIME and self.state.__class__ != StateEnd:
             if __debug__:
                 print("[FSMMatch] End match")
             next_state = StateEnd
@@ -60,8 +40,6 @@ class FSMMatch(Behavior):
             print("[FSMMatch] Match Started")
         self.start_time = time.time()
 
-
-
 class FSMState:
     def __init__(self, behavior):
         raise NotImplementedError("this state is not defined yet")
@@ -72,22 +50,22 @@ class FSMState:
     def deinit(self):
         raise NotImplementedError("deinit of this state is not defined yet !")
 
-class StateRepositionningPreMatch(FSMState):
-    def __init__(self, behavior):
-        self.behavior = behavior
-        self.repositionning = False
-        self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.WHITE)
-
-    def test(self):
-        if not self.repositionning and self.behavior.robot.io.cord_state == self.behavior.robot.io.CordState.IN:
-            self.behavior.robot.locomotion.do_recalage()
-            self.repositionning = True
-            self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.RED)
-        if self.repositionning and self.behavior.robot.locomotion.is_recalage_ended:
-            return StateColorSelection
-
-    def deinit(self):
-        pass
+# class StateRepositionningPreMatch(FSMState):
+#     def __init__(self, behavior):
+#         self.behavior = behavior
+#         self.repositionning = False
+#         self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.WHITE)
+#
+#     def test(self):
+#         if not self.repositionning and self.behavior.robot.io.cord_state == self.behavior.robot.io.CordState.IN:
+#             self.behavior.robot.locomotion.do_recalage()
+#             self.repositionning = True
+#             self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.RED)
+#         if self.repositionning and self.behavior.robot.locomotion.is_recalage_ended:
+#             return StateColorSelection
+#
+#     def deinit(self):
+#         pass
 
 
 
