@@ -21,6 +21,7 @@ unsigned long blinkTime;
 void testHMICallback(const Communication::HMICommand msg);  // Forward declaration
 void testActuatorCallback(const Communication::ActuatorCommand msg);
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
+void handleActuatorCallback(const Communication::ActuatorCommand msg);
 void resetCallback();
 
 
@@ -58,6 +59,7 @@ void setup()
 	digitalWrite(LED_PIN, blink);
 	communication.registerHMICommandCallback(testHMICallback);
 	communication.registerActuatorCommandCallback(testActuatorCallback);
+	communication.registerActuatorCommandCallback(handleActuatorCallback);
 	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
 	communication.registerResetCallback(resetCallback);
 }
@@ -116,6 +118,10 @@ void testActuatorCallback(const Communication::ActuatorCommand msg){
 	Serial.print(msg.actuatorId);
 	Serial.print("\tActuator command : ");
 	Serial.println(msg.actuatorCommand);
+}
+
+void handleActuatorCallback(const Communication::ActuatorCommand msg){
+	inputOutputs.handleActuatorMessage(msg.actuatorId, msg.actuatorCommand);
 }
 
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg){

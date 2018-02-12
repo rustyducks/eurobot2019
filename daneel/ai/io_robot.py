@@ -10,6 +10,9 @@ us_sensors = [UltraSoundSensor(0x76, "front_left"), UltraSoundSensor(0x77, "fron
 # us_sensors=[]
 us_sensors_distance = {us_sensors[i]: 0 for i in range(len(us_sensors))}
 
+class ActuatorID(Enum):
+    WATER_COLLECTOR = 0  # Dynamixel
+    WATER_CANNON = 1     # DC motor
 
 def get_us_distance(i):
     global us_sensors, us_sensors_distance
@@ -25,7 +28,13 @@ class IO(object):
         self.button1_state = None
         self.button2_state = None
         self.led_color = None
+        self.water_collector_state = None
+        self.water_cannon_state = None
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
+
+        self.stop_water_cannon()
+        self.stop_water_collector()
+
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -45,6 +54,14 @@ class IO(object):
         PRESSED = "pressed"
         RELEASED = "released"
 
+    class WaterCollectorState(Enum):
+        ACTIVATED = "activated"
+        STOPPED = "stopped"
+
+    class WaterCannonState(Enum):
+        FIRING = "firing"
+        STOPPED = "stopped"
+
     @staticmethod
     def get_us_distance_by_postion(position):
         global us_sensors
@@ -63,11 +80,35 @@ class IO(object):
     def rear_distance(self):
         return self.get_us_distance_by_postion("rear")
 
+    def start_water_collector(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR, 1) == 0:
+            self.water_collector_state = self.WaterCollectorState.ACTIVATED
+            if __debug__:
+                print("[IO] Start water collector")
+
+    def stop_water_collector(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR, 0) == 0:
+            self.water_collector_state = self.WaterCollectorState.STOPPED
+            if __debug__:
+                print("[IO] Stop water collector")
+
+    def start_water_cannon(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON, 255) == 0:
+            self.water_cannon_state = self.WaterCannonState.FIRING
+            if __debug__:
+                print("[IO] Start water cannon")
+
+    def stop_water_cannon(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON, 0) == 0:
+            self.water_cannon_state = self.WaterCannonState.STOPPED
+            if __debug__:
+                print("[IO] Stop water cannon")
+
     def set_led_color(self, color):
-        self.robot.communication.send_hmi_command(*color.value)
-        self.led_color = color
-        if __debug__:
-            print("[IO] Led switched to {}".format(color))
+        if self.robot.communication.send_hmi_command(*color.value) == 0:
+            self.led_color = color
+            if __debug__:
+                print("[IO] Led switched to {}".format(color))
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT

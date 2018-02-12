@@ -33,6 +33,7 @@ void InputOutputs::init() {
 	pinMode(CORD, INPUT_PULLUP);
 	pinMode(BUTTON1, INPUT_PULLUP);
 	pinMode(BUTTON2, INPUT_PULLUP);
+	pinMode(WATER_CANNON, OUTPUT);
 	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
@@ -85,6 +86,19 @@ void InputOutputs::deliverWater(bool enable) {
 	}
 	else {
 		Dynamixel.turn(WATER_DELIVERER, DYNA_TURN_CCW, 0);
+	}
+}
+
+void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
+	switch(actuatorId){
+	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL:
+		deliverWater(actuatorCommand);
+		break;
+	case eMsgActuatorId::WATER_CANNON_DC_MOTOR:
+		analogWrite(WATER_CANNON, actuatorCommand);
+		break;
+	default:
+		break;
 	}
 }
 

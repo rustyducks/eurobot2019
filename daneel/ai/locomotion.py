@@ -136,7 +136,7 @@ class Locomotion:
         self.current_speed = self.comply_speed_constraints(speed_command, delta_time)
         self.robot.communication.send_speed_command(*self.current_speed)
 
-    def comply_speed_constraints(self, speed_cmd, dt, alpha_step = 0.05):
+    def comply_speed_constraints(self, speed_cmd, dt, alpha_step=0.05):
         if dt == 0:
             return Speed(0, 0, 0)
 

@@ -23,6 +23,7 @@ public:
 	bool HMIGetCordState();
 	void HMISendState();
 
+	void handleActuatorMessage(int actuatorId, int actuatorCommand);
 	void deliverWater(bool enable);
 
 	void _onNewCordState();
@@ -37,6 +38,10 @@ public:
 	}
 
 private:
+	typedef enum{
+		WATER_DELIVERING_DYNAMIXEL = 0,
+		WATER_CANNON_DC_MOTOR = 1
+	}eMsgActuatorId;
 	bool _button1Pressed;
 	bool _button2Pressed;
 	bool _cordIn;
