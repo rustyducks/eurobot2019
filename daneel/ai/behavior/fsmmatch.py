@@ -19,7 +19,7 @@ class FSMMatch(Behavior):
         self.robot = robot
         self.color = None
         self.start_time = None
-        self.state = StateRepositionningPreMatch(self)
+        self.state = StateEnd(self)
 
     def loop(self):
         time_now = time.time()
