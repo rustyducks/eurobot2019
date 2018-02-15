@@ -18,7 +18,7 @@ RADIAN_TO_MSG_ADDER = 3.14159265358979323846
 
 
 class eTypeUp(Enum):
-    ACK_UP = 0
+    ACK_DOWN = 0
     ODOM_REPORT = 1
     HMI_STATE = 2
     ACTUATOR_STATE = 3
@@ -123,7 +123,7 @@ class sMessageUp:
         header = bitstring.BitStream(packed[0:UP_HEADER_SIZE])
         self.up_id, type_value, self.data = header.unpack('uint:8, uint:8, uint:8')
         self.type = eTypeUp(type_value)
-        if self.type == eTypeUp.ACK_UP:
+        if self.type == eTypeUp.ACK_DOWN:
             self.data = sAckDown()
         elif self.type == eTypeUp.ACTUATOR_STATE:
             self.data = sActuatorState()
@@ -154,7 +154,7 @@ class sMessageUp:
 
 
 class eTypeDown(Enum):
-    ACK_DOWN = 0
+    ACK_UP = 0
     ACK_ODOM_REPORT = 1
     SPEED_COMMAND = 2
     ACTUATOR_COMMAND = 3

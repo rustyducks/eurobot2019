@@ -105,7 +105,7 @@ private:
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
-		ACK_UP, ODOM_REPORT, HMI_STATE, ACTUATOR_STATE
+		ACK_DOWN, ODOM_REPORT, HMI_STATE, ACTUATOR_STATE
 	}eUpMessageType;
 
 	typedef struct __attribute__((packed)) {
@@ -147,7 +147,7 @@ private:
 	//========End Up Messages definitions==========
 	//========Start Down Messages definitions======
 	typedef enum __attribute__((packed)){
-		ACK_DOWN,
+		ACK_UP,
 		ACK_ODOM_REPORT,
 		SPEED_CMD,
 		ACTUATOR_CMD,
