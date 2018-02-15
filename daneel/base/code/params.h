@@ -45,12 +45,13 @@ const float32_t ROBOT_RADIUS = 170.0;
 /* END ------------------- Motors & Odometry --------------------------*/
 
 /* BEGIN ----------------------- HMI ----------------------------------*/
-const int LED_RED = 0;
-const int LED_GREEN = 0;
-const int LED_BLUE = 0;
-const int CORD = 0;
-const int BUTTON1 = 0;
-const int BUTTON2 = 0;
+const int LED_RED = 42;
+const int LED_GREEN = 42;
+const int LED_BLUE = 42;
+const int CORD = 42;
+const int BUTTON1 = 42;
+const int BUTTON2 = 42;
+#warning "/!\ DO NOT USE PIN 42 !!! IT IS USED AS A DUMMY PIN FOR IO FOR NOW !!!"
 /* END ------------------------- HMI ----------------------------------*/
 
 /* BEGIN ----------------------- IOs ----------------------------------*/
