@@ -1,21 +1,14 @@
-from communication import *
 from communication.message_definition import *
 import robot
 import time
-import ivy_robot
-import behavior.slave
 
-i = 0
-speedCommands = [(2, 0, 1), (0, 2, 1), (-2, 0, 1), (0, -2, 1)]
 r = robot.Robot(2)
-r.communication.register_callback(eTypeUp.ODOM_REPORT, r.locomotion.handle_new_odometry_report)
 # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
 #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
 #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
 r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: r.ivy.send_robot_position())
 while 1:
     time.sleep(0.01)
-    i = (i+1) % len(speedCommands)
     #print('Sending')
     r.communication.check_message()
     r.locomotion.position_control_loop()
