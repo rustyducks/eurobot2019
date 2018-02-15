@@ -7,9 +7,7 @@ import behavior.slave
 
 i = 0
 speedCommands = [(2, 0, 1), (0, 2, 1), (-2, 0, 1), (0, -2, 1)]
-r = robot.Robot()
-r.ivy = ivy_robot.Ivy(r, "192.168.1.14:2010")
-r.behavior = behavior.slave.Slave(r)
+r = robot.Robot(2)
 r.communication.register_callback(eTypeUp.ODOM_REPORT, r.locomotion.handle_new_odometry_report)
 # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
 #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(

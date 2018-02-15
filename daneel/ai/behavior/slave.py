@@ -7,6 +7,9 @@ class Slave(Behavior):
         self.robot = robot
         self.robot.locomotion.x = 1500
         self.robot.locomotion.y = 1000
+        if self.robot.ivy is None:
+            raise BaseException("No ivy component set on the robot !\n"
+                                "Hint : do 'robot.ivy = ivy_robot.Ivy(robot, 192.168.255.255:2010)")
         self.robot.ivy.register_callback(ivy_robot.GO_TO_ORIENT_REGEXP, self.go_to_orient)
         self.robot.ivy.register_callback(ivy_robot.GO_TO_REGEXP, self.go_to)
 
