@@ -5,6 +5,7 @@ import argparse
 import builtins
 
 import communication
+import ivy_robot
 from io_robot import *
 from locomotion import *
 
@@ -24,6 +25,7 @@ class Robot(object):
         self.communication = communication.Communication("/dev/ttyS0")
         self.io = IO(self)
         self.locomotion = Locomotion(self)
+        self.ivy = ivy_robot.Ivy(self, "192.168.1.14:2010")
         if behavior == behaviors["FSMMatch"]:
             from behavior.fsmmatch import FSMMatch
             self.behavior = FSMMatch(self)
