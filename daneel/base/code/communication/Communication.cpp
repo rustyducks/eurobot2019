@@ -234,7 +234,7 @@ void Communication::recieveMessage(const sMessageDown& msg){
 	Repositionning thetaRepositioning;
 
 	switch(msg.downMsgType){
-	case ACK_DOWN:
+	case ACK_UP:
 		removeAcknowledgedMessage(msg.downData.ackMsg.ackUpMsgId);
 		break;
 	case ACK_ODOM_REPORT:
@@ -330,7 +330,7 @@ void Communication::checkMessages(){
 			Serial.println();
 #endif
 			if (computeDownChecksum(rawDataDown.messageDown) == rawDataDown.messageDown.checksum){
-				rawUpAckMessage.messageUp.upMsgType = ACK_UP;
+				rawUpAckMessage.messageUp.upMsgType = ACK_DOWN;
 				rawUpAckMessage.messageUp.upData.ackMsg.ackDownMsgId = rawDataDown.messageDown.downMsgId;
 				serial.write(rawUpAckMessage.bytes, upMsgMaxSize);
 
