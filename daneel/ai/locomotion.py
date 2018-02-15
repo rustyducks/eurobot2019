@@ -28,6 +28,8 @@ class Locomotion:
         self.theta = 0
         self.current_point_objective = None  # type: self.PointOrient
         self.current_speed = Speed(0, 0, 0)  # type: Speed
+        self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
+                                                   self.handle_new_odometry_report)
         self._last_position_control_time = None
         self._odometry_reports = {}  # type: dict[(int, int): (float, float, float)]
         self._latest_odometry_report = 0
