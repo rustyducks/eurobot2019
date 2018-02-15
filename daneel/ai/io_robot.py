@@ -81,25 +81,25 @@ class IO(object):
         return self.get_us_distance_by_postion("rear")
 
     def start_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR, 1) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR.value, 1) == 0:
             self.water_collector_state = self.WaterCollectorState.ACTIVATED
             if __debug__:
                 print("[IO] Start water collector")
 
     def stop_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR, 0) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR.value, 0) == 0:
             self.water_collector_state = self.WaterCollectorState.STOPPED
             if __debug__:
                 print("[IO] Stop water collector")
 
     def start_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON, 255) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 255) == 0:
             self.water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start water cannon")
 
     def stop_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON, 0) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 0) == 0:
             self.water_cannon_state = self.WaterCannonState.STOPPED
             if __debug__:
                 print("[IO] Stop water cannon")
