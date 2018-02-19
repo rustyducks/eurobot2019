@@ -11,6 +11,8 @@ NEW_TRAJECTORY_REGEXP = "New trajectory {}"
 UPDATE_ROBOT_POSITION_REGEXP = "Update robot pose {}"
 HIGHLIGHT_POINT_REGEXP = "Highlight point {}"  # Highlight point id;x;y
 HIGHLIGHT_ANGLE_REGEXP = "Highlight angle {}"  # Highlight angle id;theta
+CUSTOM_ACTION_REGEXP = "Custom action (.*)"  # Custom action 5
+
 
 
 

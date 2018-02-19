@@ -12,6 +12,8 @@ class Slave(Behavior):
                                 "Hint : do 'robot.ivy = ivy_robot.Ivy(robot, 192.168.255.255:2010)")
         self.robot.ivy.register_callback(ivy_robot.GO_TO_ORIENT_REGEXP, self.go_to_orient)
         self.robot.ivy.register_callback(ivy_robot.GO_TO_REGEXP, self.go_to)
+        self.robot.ivy.register_callback(ivy_robot.CUSTOM_ACTION_REGEXP, self.handle_custom_action)
+
 
     def loop(self):
         pass
@@ -23,3 +25,23 @@ class Slave(Behavior):
     def go_to(self, agent, *arg):
         x, y = arg[0].split(",")
         self.robot.locomotion.go_to_orient(float(x), float(y), self.robot.locomotion.theta)
+
+    def toggle_water_cannon(self):
+        if self.robot.io.water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
+            self.robot.io.start_water_cannon()
+        elif self.robot.io.water_cannon_state == self.robot.io.WaterCannonState.FIRING:
+            self.robot.io.stop_water_cannon()
+
+    def toggle_water_collector(self):
+        if self.robot.io.water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
+            self.robot.io.start_water_collector()
+        elif self.robot.io.water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
+            self.robot.io.stop_water_collector()
+
+    def handle_custom_action(self, agent, *arg):
+        custom_action_number = int(arg[0])
+        print(custom_action_number)
+        if custom_action_number == 1:
+            self.toggle_water_cannon()
+        elif custom_action_number == 2:
+            self.toggle_water_collector()
