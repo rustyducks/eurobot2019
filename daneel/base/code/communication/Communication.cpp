@@ -56,6 +56,21 @@ int Communication::sendActuatorState(const int actuatorId, const int actuatorSta
 	return sendUpMessage(msg);
 }
 
+int Communication::sendSensorValue(const int sensorId, const int sensorValue){
+	sMessageUp msg;
+	msg.upMsgType = Communication::SENSOR_VALUE;
+	if (sensorId < 0 || sensorId > 255){
+		return -10;
+	}
+	if (sensorValue < 0 || sensorValue > 65535){
+		return -11;
+	}
+	msg.upData.sensorValueMsg.sensorId = sensorId;
+	msg.upData.sensorValueMsg.sensorValue = sensorValue;
+
+	return sendUpMessage(msg);
+}
+
 int Communication::sendOdometryReport(const int dx, const int dy, const double dtheta){
 	sMessageUp msg;
 	sOdomReportStorage odomReport;
@@ -226,12 +241,21 @@ int Communication::registerResetCallback(ResetCallback callback){
 	return 0;
 }
 
+int Communication::registerSensorCommandCallback(SensorCommandCallback callback){
+	if (sensorMsgCallbacks.index >= maxCallbackPerMessageType){
+		return -1;
+	}
+	sensorMsgCallbacks.cb[sensorMsgCallbacks.index] = callback;
+	sensorMsgCallbacks.index++;
+}
+
 void Communication::recieveMessage(const sMessageDown& msg){
 	vector<sOdomReportStorage>::iterator nonAckOdomReportItr;
 	SpeedCommand speedCommand;
 	ActuatorCommand actuatorCommand;
 	HMICommand hmiCommand;
 	Repositionning thetaRepositioning;
+	SensorCommand sensorCommand;
 
 	switch(msg.downMsgType){
 	case ACK_UP:
@@ -308,6 +332,13 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		}
 		for (unsigned int i = 0; i < repositioningCallbacks.index; i++){
 			repositioningCallbacks.cb[i](thetaRepositioning);
+		}
+		break;
+	case SENSOR_CMD:
+		sensorCommand.sensorId = msg.downData.sensorCmdMsg.sensorId;
+		sensorCommand.sensorCommand = msg.downData.sensorCmdMsg.sensorState;
+		for (unsigned int i=0; i < sensorMsgCallbacks.index; i++){
+			sensorMsgCallbacks.cb[i](sensorCommand);
 		}
 		break;
 	}
