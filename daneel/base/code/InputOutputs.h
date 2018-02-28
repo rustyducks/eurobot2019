@@ -7,6 +7,8 @@
 
 #ifndef INPUTOUTPUTS_H_
 #define INPUTOUTPUTS_H_
+#include <cstdint>
+
 
 #include <libraries/TM1637/TM1637Display.h>
 #include <params.h>
@@ -17,6 +19,8 @@ public:
 	virtual ~InputOutputs();
 
 	void init();
+
+	void run();
 
 	void HMISetLedColor(int red, int green, int blue);
 
@@ -32,6 +36,8 @@ public:
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
 	void deliverWater(bool enable, int dynamixelId, bool direction);
 
+	void handleSensorCommand(int sensorId, int sensorCommand);
+
 	void _onNewCordState();
 	void _onNewButtonState(int button);
 
@@ -43,7 +49,15 @@ public:
 		_HMIhasChanged = hmIhasChanged;
 	}
 
+	typedef enum{
+		STOPPED,
+		ON_CHANGE,
+		PERIODIC
+	}sSensorReadState;
+
 private:
+	static constexpr int maxSensorNumber = 20;
+	static constexpr int sensorPeriodicTime = 100; // ms
 	typedef enum{
 		WATER_DELIVERING_DYNAMIXEL_GREEN = 0,
 		WATER_DELIVERING_DYNAMIXEL_ORANGE = 1,
@@ -53,6 +67,25 @@ private:
 		ARM_GRIPPER_DYNAMIXEL = 5,
 		SCORE_COUNTER = 6
 	}eMsgActuatorId;
+
+	typedef struct{
+		enum eSensorType{
+			DIGITAL,
+			ANALOG
+		};
+		eSensorType sensorType;
+		int sensorId;
+		sSensorReadState sensorReadState;
+		long lastReadTime;
+		int lastReadValue;
+		uint8_t sensorPin;
+	}sSensor;
+
+	sSensor sensors[maxSensorNumber];
+	int registeredSensorsNumber;
+	void initSensors();
+	int readSensor(sSensor& sensor);
+
 	bool _button1Pressed;
 	bool _button2Pressed;
 	bool _cordIn;

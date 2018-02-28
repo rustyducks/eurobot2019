@@ -9,7 +9,8 @@ r = robot.Robot(2)
 r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: r.ivy.send_robot_position())
 r.communication.register_callback(eTypeUp.HMI_STATE, lambda cord, b1, b2, lr, lg, lb: print("c: {}, b1: {}, b2: {}".format(
     r.io.cord_state, r.io.button1_state ,r.io.button2_state)))
-
+r.communication.register_callback(eTypeUp.SENSOR_VALUE, lambda i, v: print("Sensor ID : {}, Sensor Value : {}".format(i, v)))
+r.communication.send_sensor_command(0, 1)
 while 1:
     time.sleep(0.01)
     #print('Sending')

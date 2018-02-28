@@ -73,6 +73,14 @@ class Communication:
         msg.data.actuator_command = actuator_value
         return self.send_message(msg, max_retries)
 
+    def send_sensor_command(self, sensor_id, command_state, max_retries=1000):
+        msg = sMessageDown()
+        msg.type = eTypeDown.SENSOR_COMMAND
+        msg.data = sSensorCommand()
+        msg.data.sensor_id = sensor_id
+        msg.data.sensor_state = command_state
+        return self.send_message(msg, max_retries)
+
     def reset_soft_teensy(self, max_retries=1000):
         msg = sMessageDown()
         msg.type = eTypeDown.RESET
@@ -209,6 +217,9 @@ class Communication:
         if message.type == eTypeUp.ACTUATOR_STATE:
             for cb in self._callbacks[eTypeUp.ACTUATOR_STATE]:
                 cb(message.data.actuator_id, message.data.actuator_value)
+        elif message.type == eTypeUp.SENSOR_VALUE:
+            for cb in self._callbacks[eTypeUp.SENSOR_VALUE]:
+                cb(message.data.sensor_id, message.data.sensor_value)
         elif message.type == eTypeUp.HMI_STATE:
             cord_state = bool(message.data.hmi_state & (1 << 7))
             button1_state = bool(message.data.hmi_state & (1 << 6))

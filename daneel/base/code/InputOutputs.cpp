@@ -16,8 +16,9 @@ InputOutputs inputOutputs = InputOutputs();
 
 void ioHMIhasChanged();
 
-InputOutputs::InputOutputs(): _button1Pressed(false), _button2Pressed(false), _cordIn(false),
-		_redLEDOn(false), _greenLEDOn(false), _blueLEDOn(false), _HMIhasChanged(false),
+InputOutputs::InputOutputs(): registeredSensorsNumber(0),_button1Pressed(false),
+		_button2Pressed(false), _cordIn(false), _redLEDOn(false), _greenLEDOn(false),
+		_blueLEDOn(false), _HMIhasChanged(false),
 		scoreDisplay(TM1637Display(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO)){
 
 }
@@ -42,7 +43,66 @@ void InputOutputs::init() {
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
 
+	initSensors();
+
 	HMISetLedColor(0, 0, 0);
+}
+
+void InputOutputs::initSensors(){
+//	sSensor irCubeLeft;
+//	pinMode(IR_CUBES_LEFT, INPUT);
+//	irCubeLeft.sensorType = sSensor::ANALOG;
+//	irCubeLeft.sensorId = 0;
+//	irCubeLeft.sensorPin = IR_CUBES_LEFT;
+//	irCubeLeft.sensorReadState = STOPPED;
+//	irCubeLeft.lastReadTime = 0;
+//	irCubeLeft.lastReadValue = 0;
+//	sensors[registeredSensorsNumber] = irCubeLeft;
+//	registeredSensorsNumber++;
+}
+
+void InputOutputs::run(){
+	if(isHmIhasChanged()) {
+		HMISendState();
+	}
+	for (int i = 0; i < registeredSensorsNumber; i++){
+		sSensor* s = &sensors[i];
+		int value;
+		switch (s->sensorReadState){
+		case STOPPED:
+			continue;
+			break;
+		case ON_CHANGE:
+			value = readSensor(*s);
+			if (value != s->lastReadValue){
+				s->lastReadValue = value;
+				s->lastReadTime = millis();
+				communication.sendSensorValue(s->sensorId, s->lastReadValue);
+			}
+			continue;
+			break;
+		case PERIODIC:
+			long now = millis();
+			Serial.println(now);
+			if (now - s->lastReadTime >= sensorPeriodicTime){
+				s->lastReadValue = readSensor(*s);
+				s->lastReadTime = now;
+				communication.sendSensorValue(s->sensorId, s->lastReadValue);
+			}
+		}
+	}
+}
+
+int InputOutputs::readSensor(sSensor& sensor){
+	switch (sensor.sensorType){
+	case sSensor::ANALOG:
+		return analogRead(sensor.sensorPin);
+		break;
+	case sSensor::DIGITAL:
+		return digitalRead(sensor.sensorPin);
+		break;
+	}
+	return 0;
 }
 
 bool InputOutputs::HMIGetButton1State() {
@@ -139,6 +199,15 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		break;
 	default:
 		break;
+	}
+}
+
+void InputOutputs::handleSensorCommand(int sensorId, int sensorCommand){
+	for (int i = 0; i < registeredSensorsNumber; i++){
+		if (sensors[i].sensorId == sensorId){
+			sensors[i].sensorReadState = static_cast<sSensorReadState>(sensorCommand);
+			break;
+		}
 	}
 }
 

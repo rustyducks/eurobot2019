@@ -49,11 +49,17 @@ public:
 		double theta;
 	};
 
+	struct SensorCommand{
+		int sensorId;
+		int sensorCommand;
+	};
+
 	typedef void (*SpeedCommandCallback)(SpeedCommand); // Pointer to function, callback types, on per message type
 	typedef void (*ActuatorCommandCallback)(ActuatorCommand);
 	typedef void (*HMICommandCallback)(HMICommand);
 	typedef void (*RepositionningCallback)(Repositionning);
 	typedef void (*ResetCallback)(void);
+	typedef void (*SensorCommandCallback)(SensorCommand);
 
 	Communication(HardwareSerial serial, uint32_t baudrate);
 	virtual ~Communication();
@@ -67,6 +73,7 @@ public:
 			const bool greenLedState, const bool blueLedState);
 	int sendActuatorState(const int actuatorId, const int actuatorState);
 	int sendOdometryReport(const int dx, const int dy, const double dtheta);
+	int sendSensorValue(const int sensorId, const int sensorValue);
 
 	/*
 	 * Callback registering function. Fonctions registered will be called when the appropriate
@@ -80,6 +87,7 @@ public:
 	int registerHMICommandCallback(HMICommandCallback callback);
 	int registerRepositionningCallback(RepositionningCallback callback);
 	int registerResetCallback(ResetCallback callback);
+	int registerSensorCommandCallback(SensorCommandCallback callback);
 
 	void checkMessages();
 
@@ -105,7 +113,7 @@ private:
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
-		ACK_DOWN, ODOM_REPORT, HMI_STATE, ACTUATOR_STATE
+		ACK_DOWN, ODOM_REPORT, HMI_STATE, ACTUATOR_STATE, SENSOR_VALUE
 	}eUpMessageType;
 
 	typedef struct __attribute__((packed)) {
@@ -125,11 +133,16 @@ private:
 		uint8_t actuatorId;
 		uint16_t actuatorValue;
 	}sActuatorStateMsg;
+	typedef struct __attribute__((packed)){
+		uint8_t sensorId;
+		uint16_t sensorValue;
+	}sSensorValueMsg;
 	typedef union __attribute__((packed)){
 		sAckDown ackMsg;
 		sOdomReportMsg odomReportMsg;
 		sHMIStateMsg hmiStateMsg;
 		sActuatorStateMsg actuatorStateMsg;
+		sSensorValueMsg sensorValueMsg;
 	}uMessageUpData;
 
 	typedef struct __attribute__((packed)){
@@ -153,7 +166,8 @@ private:
 		ACTUATOR_CMD,
 		HMI_CMD,
 		RESET,
-		THETA_REPOSITIONING
+		THETA_REPOSITIONING,
+		SENSOR_CMD
 	}eDownMessageType;
 	typedef struct __attribute__((packed)){
 		uint8_t ackUpMsgId;
@@ -177,6 +191,10 @@ private:
 	typedef struct __attribute__((packed)){
 		uint16_t thetaRepositioning;
 	}sThetaRepositioning;
+	typedef struct __attribute__((packed)){
+		uint8_t sensorId;
+		uint8_t sensorState;
+	}sSensorCmd;
 	typedef union __attribute__((packed)){
 		sAckUp ackMsg;
 		sAckOdomReport ackOdomReportMsg;
@@ -184,6 +202,7 @@ private:
 		sActuatorCmd actuatorCmdMsg;
 		sHMICmd hmiCmdMsg;
 		sThetaRepositioning thetaRepositioningMsg;
+		sSensorCmd sensorCmdMsg;
 	}uMessageDownData;
 	typedef struct __attribute__((packed)){
 		uint8_t downMsgId;
@@ -237,6 +256,11 @@ private:
 		unsigned int index = 0;
 	}ResetMessageCallbackRegister;
 
+	typedef struct{
+		SensorCommandCallback cb[maxCallbackPerMessageType];
+		unsigned int index = 0;
+	}SensorMessageCallbackRegister;
+
 
 	/**
 	 * sentTime == 0 means this structure is empty. Thus, if valid data is holded by the
@@ -260,6 +284,7 @@ private:
 	HMIMessageCallbackRegister HMIMsgCallbacks;
 	RepositionningMessageCallbackRegister repositioningCallbacks;
 	ResetMessageCallbackRegister resetCallbacks;
+	SensorMessageCallbackRegister sensorMsgCallbacks;
 
 	int sendUpMessage(const sMessageUp& msg);
 	void recieveMessage(const sMessageDown& msg);

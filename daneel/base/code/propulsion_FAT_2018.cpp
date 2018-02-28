@@ -25,6 +25,7 @@ void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
 void handleActuatorCallback(const Communication::ActuatorCommand msg);
 void resetCallback();
 void handleRepositionningCallback(const Communication::Repositionning msg);
+void handleSensorCommandCallback(const Communication::SensorCommand cmd);
 
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
@@ -66,6 +67,7 @@ void setup()
 	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
 	communication.registerResetCallback(resetCallback);
 	communication.registerRepositionningCallback(handleRepositionningCallback);
+	communication.registerSensorCommandCallback(handleSensorCommandCallback);
 }
 
 
@@ -95,9 +97,7 @@ void loop()
 	}
 
 	if(IOsTime.check()) {
-		if(inputOutputs.isHmIhasChanged()) {
-			inputOutputs.HMISendState();
-		}
+		inputOutputs.run();
 	}
 
 //	if(testTime.check()) {
@@ -153,4 +153,8 @@ void handleRepositionningCallback(const Communication::Repositionning msg){
 	Serial.println(msg.theta);
 	Serial.print("Set theta to : ");
 	Serial.println(odometry.getTheta());
+}
+
+void handleSensorCommandCallback(Communication::SensorCommand cmd){
+	inputOutputs.handleSensorCommand(cmd.sensorId, cmd.sensorCommand);
 }
