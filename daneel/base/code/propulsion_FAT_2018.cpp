@@ -18,6 +18,7 @@ using namespace fat;
 bool blink;
 unsigned long blinkTime;
 
+void handleLEDCallback(const Communication::HMICommand msg);
 void testHMICallback(const Communication::HMICommand msg);  // Forward declaration
 void testActuatorCallback(const Communication::ActuatorCommand msg);
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
@@ -58,6 +59,7 @@ void setup()
 	pinMode(LED_PIN, OUTPUT);
 	digitalWrite(LED_PIN, blink);
 	communication.registerHMICommandCallback(testHMICallback);
+	communication.registerHMICommandCallback(handleLEDCallback);
 	communication.registerActuatorCommandCallback(testActuatorCallback);
 	communication.registerActuatorCommandCallback(handleActuatorCallback);
 	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
@@ -104,6 +106,10 @@ void loop()
 
 }
 
+void handleLEDCallback(const Communication::HMICommand msg){
+	inputOutputs.HMISetLedColor(msg.redLedCommand, msg.greenLedCommand, msg.blueLedCommand);
+}
+
 void testHMICallback(const Communication::HMICommand msg){
 	Serial.print("Force rouge : ");
 	Serial.print(msg.redLedCommand);
@@ -122,6 +128,7 @@ void testActuatorCallback(const Communication::ActuatorCommand msg){
 
 void handleActuatorCallback(const Communication::ActuatorCommand msg){
 	inputOutputs.handleActuatorMessage(msg.actuatorId, msg.actuatorCommand);
+	//Dynamixel.ledStatus(msg.actuatorId, msg.actuatorCommand);
 }
 
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
