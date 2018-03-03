@@ -11,8 +11,10 @@ us_sensors = [UltraSoundSensor(0x76, "front_left"), UltraSoundSensor(0x77, "fron
 us_sensors_distance = {us_sensors[i]: 0 for i in range(len(us_sensors))}
 
 class ActuatorID(Enum):
-    WATER_COLLECTOR = 0  # Dynamixel
-    WATER_CANNON = 1     # DC motor
+    WATER_COLLECTOR = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
+    WATER_CANNON = 1     # DC motor
+    ARM_BASE = 2         # Dynamixel
+    ARM_GRIPPER = 3      # Dynamixel
 
 def get_us_distance(i):
     global us_sensors, us_sensors_distance
@@ -30,11 +32,12 @@ class IO(object):
         self.led_color = None
         self.water_collector_state = None
         self.water_cannon_state = None
+        self.arm_base_state = None
+        self.arm_gripper_state = None
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
 
         self.stop_water_cannon()
         self.stop_water_collector()
-
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -61,6 +64,15 @@ class IO(object):
     class WaterCannonState(Enum):
         FIRING = "firing"
         STOPPED = "stopped"
+
+    class ArmBaseState(Enum):
+        RAISED = 200
+        MIDDLE = 385
+        LOWERED = 490
+
+    class ArmGripperState(Enum):
+        OPEN = 400
+        CLOSED = 518
 
     @staticmethod
     def get_us_distance_by_postion(position):
@@ -109,6 +121,27 @@ class IO(object):
             self.led_color = color
             if __debug__:
                 print("[IO] Led switched to {}".format(color))
+
+    def move_arm_base(self, state: ArmBaseState):
+        if state is not None:
+            if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE, state.value):
+                self.arm_base_state = state  # TODO : Update state only when sensor value is sent by teensy
+                if __debug__:
+                    print("[IO] Moved arm base to {}".format(state))
+        else:
+            raise AttributeError("None argument passed in move arm base !")
+
+    def open_arm_gripper(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER, self.ArmGripperState.OPEN.value):
+            self.arm_gripper_state = self.ArmGripperState.OPEN  # TODO : Update state only when sensor value is sent by teensy
+            if __debug__:
+                print("[IO] Arm gripper opened")
+
+    def close_arm_gripper(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER, self.ArmGripperState.CLOSED.value):
+            self.arm_gripper_state = self.ArmGripperState.CLOSED # TODO : Update state only when sensor value is sent by teensy
+            if __debug__:
+                print("[IO] Arm gripper closed")
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT

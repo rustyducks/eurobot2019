@@ -45,13 +45,13 @@ const float32_t ROBOT_RADIUS = 170.0;
 /* END ------------------- Motors & Odometry --------------------------*/
 
 /* BEGIN ----------------------- HMI ----------------------------------*/
-const int LED_RED = 42;
-const int LED_GREEN = 42;
-const int LED_BLUE = 42;
-const int CORD = 42;
-const int BUTTON1 = 42;
-const int BUTTON2 = 42;
-#warning "/!\ DO NOT USE PIN 42 !!! IT IS USED AS A DUMMY PIN FOR IO FOR NOW !!!"
+const int LED_RED = 2;
+const int LED_GREEN = 5;
+const int LED_BLUE = 6;
+const int CORD = 25;
+const int BUTTON1 = 11;
+const int BUTTON2 = 12;
+
 /* END ------------------------- HMI ----------------------------------*/
 
 /* BEGIN ----------------------- IOs ----------------------------------*/
@@ -59,7 +59,10 @@ const HardwareSerial RASPI_COMMUNICATION_SERIAL = Serial1;
 const int RASPI_COMMUNICATION_BAUDRATE = 115200;
 const int DYNAMIXEL_CONTROL = 24;
 const float IO_REPORT_PERIOD = 0.5;
-const int WATER_DELIVERER = 2;
+const int WATER_DELIVERER = 2;  // Dynamixel ID
+const int ARM_BASE = 1;  // Dynamixel ID
+const int ARM_GRIPPER = 3;  // Dynamixel ID
+const int ARM_BASE_SPEED = 300;
 const int WATER_CANNON = 12;
 const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;

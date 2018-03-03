@@ -23,6 +23,9 @@ public:
 	bool HMIGetCordState();
 	void HMISendState();
 
+	void moveArmBase(int degree);
+	void moveArmGripper(int degree);
+
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
 	void deliverWater(bool enable);
 
@@ -40,7 +43,9 @@ public:
 private:
 	typedef enum{
 		WATER_DELIVERING_DYNAMIXEL = 0,
-		WATER_CANNON_DC_MOTOR = 1
+		WATER_CANNON_DC_MOTOR = 1,
+		ARM_BASE_DYNAMIXEL = 2,
+		ARM_GRIPPER_DYNAMIXEL = 3
 	}eMsgActuatorId;
 	bool _button1Pressed;
 	bool _button2Pressed;

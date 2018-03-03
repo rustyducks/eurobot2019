@@ -73,8 +73,6 @@ void InputOutputs::HMISendState(){
 	communication.sendIHMState(_cordIn, _button1Pressed, _button2Pressed, _redLEDOn, _greenLEDOn, _blueLEDOn);
 }
 
-
-
 void ioHMIhasChanged(){
 	inputOutputs.setHmIhasChanged(true);
 }
@@ -89,6 +87,18 @@ void InputOutputs::deliverWater(bool enable) {
 	}
 }
 
+void InputOutputs::moveArmBase(int degree){
+	Dynamixel.setEndless(ARM_BASE, false);
+	Dynamixel.moveSpeed(ARM_BASE, degree, ARM_BASE_SPEED);
+	// TODO : Activate dynamixel sensor sending to AI.
+}
+
+void InputOutputs::moveArmGripper(int degree){
+	Dynamixel.setEndless(ARM_GRIPPER, false);
+	Dynamixel.move(ARM_GRIPPER, degree);
+	// TODO : Activate dynamixel sensor sending to AI.
+}
+
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
 	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL:
@@ -96,6 +106,12 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR:
 		analogWrite(WATER_CANNON, actuatorCommand);
+		break;
+	case eMsgActuatorId::ARM_BASE_DYNAMIXEL:
+		moveArmBase(actuatorCommand);
+		break;
+	case eMsgActuatorId::ARM_GRIPPER_DYNAMIXEL:
+		moveArmGripper(actuatorCommand);
 		break;
 	default:
 		break;

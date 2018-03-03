@@ -14,6 +14,12 @@ class Slave(Behavior):
         self.robot.ivy.register_callback(ivy_robot.GO_TO_REGEXP, self.go_to)
         self.robot.ivy.register_callback(ivy_robot.CUSTOM_ACTION_REGEXP, self.handle_custom_action)
 
+        #to remove
+        self.arm_hand = True
+        self.robot.communication.send_actuator_command(3, 512)
+        self.robot.communication.send_actuator_command(2, 200)
+
+
 
     def loop(self):
         pass
@@ -45,3 +51,14 @@ class Slave(Behavior):
             self.toggle_water_cannon()
         elif custom_action_number == 2:
             self.toggle_water_collector()
+        elif custom_action_number == 3:
+            if self.robot.io.arm_gripper_state == self.robot.io.ArmGripperState.CLOSED:
+                self.robot.io.open_arm_gripper()
+            else:
+                self.robot.io.close_arm_gripper()
+        elif custom_action_number == 4:
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.RAISED)
+        elif custom_action_number == 5:
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
+        elif custom_action_number == 6:
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.LOWERED)
