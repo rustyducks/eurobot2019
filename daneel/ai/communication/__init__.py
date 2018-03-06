@@ -26,6 +26,7 @@ class Communication:
         self._mailbox = deque()
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
         self._callbacks = {msg_type: [] for msg_type in eTypeUp}
+        self._serial_lock = threading.Lock()
         self.reset_soft_teensy()
         self.eTypeUp = eTypeUp  # For exposure purposes
 
@@ -92,6 +93,7 @@ class Communication:
         if self.mock_communication:
             max_retries = 0
 
+        self._serial_lock.acquire()
         msg.down_id = self._current_msg_id
         self._current_msg_id = (self._current_msg_id + 1) % 256
         serialized = msg.serialize().tobytes()
@@ -108,9 +110,11 @@ class Communication:
                 up_msg.deserialize(packed)
                 self._handle_acknowledgement(up_msg)
                 if up_msg.type == eTypeUp.ACK_DOWN:
+                    self._serial_lock.release()
                     return 0  # success
                 else:
                     self._mailbox.append(up_msg)  # if it is not an ACK or a NONACK, store it to deliver later
+        self._serial_lock.release()
         return -1  # failure
 
     def _send_acknowledgment(self, id_to_acknowledge):
@@ -153,12 +157,14 @@ class Communication:
             return
 
         for i in range(max_read):
+            self._serial_lock.acquire()
             if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
                 packed = self._serial_port.read(UP_MESSAGE_SIZE)
                 up_msg = sMessageUp()
                 up_msg.deserialize(packed)
                 self._handle_acknowledgement(up_msg)
                 self._mailbox.append(up_msg)
+            self._serial_lock.release()
             if len(self._mailbox) > 0:
                 msg = self._mailbox.popleft()
                 self.handle_message(msg)
