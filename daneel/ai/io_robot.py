@@ -38,6 +38,8 @@ class IO(object):
 
         self.stop_water_cannon()
         self.stop_water_collector()
+        self.move_arm_base(self.ArmBaseState.RAISED)
+        self.close_arm_gripper()
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -105,7 +107,7 @@ class IO(object):
                 print("[IO] Stop water collector")
 
     def start_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 255) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 180) == 0:
             self.water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start water cannon")
@@ -124,7 +126,7 @@ class IO(object):
 
     def move_arm_base(self, state: ArmBaseState):
         if state is not None:
-            if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE, state.value):
+            if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE.value, state.value) == 0:
                 self.arm_base_state = state  # TODO : Update state only when sensor value is sent by teensy
                 if __debug__:
                     print("[IO] Moved arm base to {}".format(state))
@@ -132,13 +134,13 @@ class IO(object):
             raise AttributeError("None argument passed in move arm base !")
 
     def open_arm_gripper(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER, self.ArmGripperState.OPEN.value):
+        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.OPEN.value) == 0:
             self.arm_gripper_state = self.ArmGripperState.OPEN  # TODO : Update state only when sensor value is sent by teensy
             if __debug__:
                 print("[IO] Arm gripper opened")
 
     def close_arm_gripper(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER, self.ArmGripperState.CLOSED.value):
+        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.CLOSED.value) == 0:
             self.arm_gripper_state = self.ArmGripperState.CLOSED # TODO : Update state only when sensor value is sent by teensy
             if __debug__:
                 print("[IO] Arm gripper closed")
