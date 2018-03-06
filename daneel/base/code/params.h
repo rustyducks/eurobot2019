@@ -63,7 +63,8 @@ const int WATER_DELIVERER = 2;  // Dynamixel ID
 const int ARM_BASE = 1;  // Dynamixel ID
 const int ARM_GRIPPER = 3;  // Dynamixel ID
 const int ARM_BASE_SPEED = 300;
-const int WATER_CANNON = 12;
+const int WATER_CANNON_PWM = 8;
+const int WATER_CANNON_DIR = 7;
 const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;
 /* END ------------------------- IOs ----------------------------------*/
