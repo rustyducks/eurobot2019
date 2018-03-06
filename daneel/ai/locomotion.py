@@ -1,10 +1,11 @@
 import math
 import time
 from collections import namedtuple
+from enum import Enum
 
 ACCELERATION_MAX = 20  # mm/s²
 LINEAR_SPEED_MAX = 150  # mm/s
-ADMITTED_POSITION_ERROR = 50  # mm
+ADMITTED_POSITION_ERROR = 10  # mm
 
 ROTATION_ACCELERATION_MAX = 0.1  # rad/s²
 ROTATION_SPEED_MAX = 0.7  # rad/s
@@ -19,6 +20,9 @@ def center_radians(value):
         value -= 2 * math.pi
     return value
 
+class LocomotionState(Enum):
+    POSITION_CONTROL = 0
+    DIRECT_SPEED_CONTROL = 1
 
 class Locomotion:
     def __init__(self, robot):
@@ -26,6 +30,7 @@ class Locomotion:
         self.x = 0
         self.y = 0
         self.theta = 0
+        self.mode = LocomotionState.POSITION_CONTROL
         self.current_point_objective = None  # type: self.PointOrient
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
@@ -77,12 +82,27 @@ class Locomotion:
                 del (self._odometry_reports[ids])
 
     def go_to_orient(self, x, y, theta):
+        self.mode = LocomotionState.POSITION_CONTROL
         self.current_point_objective = self.PointOrient(x, y, center_radians(theta))
 
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
 
+    def set_direct_speed(self, x_speed, y_speed, theta_speed):
+        control_time = time.time()
+        if self._last_position_control_time is None:
+            delta_time = 0
+        else:
+            delta_time = control_time - self._last_position_control_time
+        self._last_position_control_time = control_time
+        self.mode = LocomotionState.DIRECT_SPEED_CONTROL
+        # self.current_speed = self.comply_speed_constraints(Speed(x_speed, y_speed, theta_speed), delta_time)
+        self.current_speed = Speed(x_speed, y_speed, theta_speed)
+        self.robot.communication.send_speed_command(*self.current_speed)
+
     def position_control_loop(self):
+        if self.mode != LocomotionState.POSITION_CONTROL:
+            return
         control_time = time.time()
         if self._last_position_control_time is None:
             delta_time = 0
@@ -131,7 +151,6 @@ class Locomotion:
 
             speed_command = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
                 omega, rotation_error_sign))
-
         else:
             speed_command = Speed(0, 0, 0)
         # print("Speed : " + str(self.current_speed))

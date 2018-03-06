@@ -1,6 +1,10 @@
+import math
+
 import ivy_robot
 from behavior import Behavior
 
+DIRECT_SPEED_COMMAND_LINEAR_VALUE = 100.0  # mm/s
+DIRECT_SPEED_COMMAND_ROTATION_VALUE = 1.0  # rad/s
 
 class Slave(Behavior):
     def __init__(self, robot):
@@ -13,6 +17,7 @@ class Slave(Behavior):
         self.robot.ivy.register_callback(ivy_robot.GO_TO_ORIENT_REGEXP, self.go_to_orient)
         self.robot.ivy.register_callback(ivy_robot.GO_TO_REGEXP, self.go_to)
         self.robot.ivy.register_callback(ivy_robot.CUSTOM_ACTION_REGEXP, self.handle_custom_action)
+        self.robot.ivy.register_callback(ivy_robot.SPEED_DIRECTION_REGEXP, self.handle_ivy_speed_direction)
 
         #to remove
         self.arm_hand = True
@@ -62,3 +67,14 @@ class Slave(Behavior):
             self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
         elif custom_action_number == 6:
             self.robot.io.move_arm_base(self.robot.io.ArmBaseState.LOWERED)
+
+    def handle_ivy_speed_direction(self, agent, *arg):
+        x, y, theta = map(lambda f: float(f), arg[0].split(","))
+        if x == 0 and y == 0:
+            x_speed = 0
+            y_speed = 0
+        else:
+            x_speed = x * DIRECT_SPEED_COMMAND_LINEAR_VALUE / math.hypot(x, y)
+            y_speed = y * DIRECT_SPEED_COMMAND_LINEAR_VALUE / math.hypot(x, y)
+        theta_speed = theta * DIRECT_SPEED_COMMAND_ROTATION_VALUE
+        self.robot.locomotion.set_direct_speed(x_speed, y_speed, theta_speed)

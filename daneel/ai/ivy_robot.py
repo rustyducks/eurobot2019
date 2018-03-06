@@ -12,6 +12,8 @@ UPDATE_ROBOT_POSITION_REGEXP = "Update robot pose {}"
 HIGHLIGHT_POINT_REGEXP = "Highlight point {}"  # Highlight point id;x;y
 HIGHLIGHT_ANGLE_REGEXP = "Highlight angle {}"  # Highlight angle id;theta
 CUSTOM_ACTION_REGEXP = "Custom action (.*)"  # Custom action 5
+SPEED_DIRECTION_REGEXP = "Direction (.*)"  # eg : Direction 1,1,1  or 1,0,-1 (vertical, horiztonal, orientation)
+
 
 
 
