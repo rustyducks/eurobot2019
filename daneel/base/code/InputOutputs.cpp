@@ -71,6 +71,7 @@ void InputOutputs::HMISendState(){
 	_cordIn = digitalRead(CORD);
 	_button1Pressed = digitalRead(BUTTON1);
 	_button2Pressed = digitalRead(BUTTON2);
+	_HMIhasChanged = false;
 	communication.sendIHMState(_cordIn, _button1Pressed, _button2Pressed, _redLEDOn, _greenLEDOn, _blueLEDOn);
 }
 

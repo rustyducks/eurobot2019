@@ -1,3 +1,5 @@
+import threading
+
 import bitstring
 from enum import *
 import serial
@@ -187,7 +189,7 @@ class Communication:
             red_led_state = bool(message.data.hmi_state & (1 << 4))
             green_led_state = bool(message.data.hmi_state & (1 << 3))
             blue_led_state = bool(message.data.hmi_state & (1 << 2))
-            for cb in self._callbacks:
+            for cb in self._callbacks[eTypeUp.HMI_STATE]:
                 cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
         elif message.type == eTypeUp.ODOM_REPORT:
 

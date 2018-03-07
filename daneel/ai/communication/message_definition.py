@@ -30,7 +30,7 @@ class sAckDown:
 
     def deserialize(self, bytes_packed):
         s = bitstring.BitStream(bytes_packed)
-        self.ack_down_id = s.unpack('uint:8')
+        self.ack_down_id, = s.unpack('uint:8')
 
     def serialize(self):
         return bitstring.pack('uint:8', self.ack_down_id)
@@ -85,7 +85,7 @@ class sHMIState:
 
     def deserialize(self, bytes_packed):
         s = bitstring.BitStream(bytes_packed)
-        self.hmi_state = s.unpack('uint:8')
+        self.hmi_state, = s.unpack('uint:8')
 
     def serialize(self):
         return bitstring.pack('uint:8', self.hmi_state)
