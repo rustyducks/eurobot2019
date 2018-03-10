@@ -2,7 +2,6 @@ from collections import namedtuple
 from enum import *
 import threading
 import serial
-# import smbus
 import time
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
