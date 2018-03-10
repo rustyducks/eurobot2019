@@ -1,14 +1,20 @@
 from collections import namedtuple
 from enum import *
 import threading
+import serial
 # import smbus
 import time
 
-UltraSoundSensor = namedtuple('ultra_sound_sensor', ['address', 'position'])
-us_sensors = [UltraSoundSensor(0x76, "front_left"), UltraSoundSensor(0x77, "front_right"), UltraSoundSensor(0x73, "rear_left"),
-              UltraSoundSensor(0x74, "rear_center"), UltraSoundSensor(0x72, "rear_right")]  # Sets US sensors here !, empty list if no US is plugged
-# us_sensors=[]
-us_sensors_distance = {us_sensors[i]: 0 for i in range(len(us_sensors))}
+from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
+
+# UltraSoundSensor = namedtuple('ultra_sound_sensor', ['address', 'position'])
+# us_sensors = [UltraSoundSensor(0x76, "front_left"), UltraSoundSensor(0x77, "front_right"), UltraSoundSensor(0x73, "rear_left"),
+#               UltraSoundSensor(0x74, "rear_center"), UltraSoundSensor(0x72, "rear_right")]  # Sets US sensors here !, empty list if no US is plugged
+# # us_sensors=[]
+# us_sensors_distance = {us_sensors[i]: 0 for i in range(len(us_sensors))}
+
+LIDAR_SERIAL_PATH = "/dev/ttyACM0"
+LIDAR_SERIAL_BAUDRATE = 115200
 
 class ActuatorID(Enum):
     WATER_COLLECTOR = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
@@ -16,9 +22,9 @@ class ActuatorID(Enum):
     ARM_BASE = 2         # Dynamixel
     ARM_GRIPPER = 3      # Dynamixel
 
-def get_us_distance(i):
-    global us_sensors, us_sensors_distance
-    return us_sensors_distance[us_sensors[i]]
+# def get_us_distance(i):
+#     global us_sensors, us_sensors_distance
+#     return us_sensors_distance[us_sensors[i]]
 
 
 class IO(object):
@@ -34,12 +40,19 @@ class IO(object):
         self.water_cannon_state = None
         self.arm_base_state = None
         self.arm_gripper_state = None
+        self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
+        self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
+        self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
 
         self.stop_water_cannon()
         self.stop_water_collector()
         self.move_arm_base(self.ArmBaseState.RAISED)
         self.close_arm_gripper()
+
+    @property
+    def lidar_points(self):
+        return lidar_points[:] # returns a copy of the lidar point to avoid modification while iterating over the array
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -76,23 +89,23 @@ class IO(object):
         OPEN = 400
         CLOSED = 518
 
-    @staticmethod
-    def get_us_distance_by_postion(position):
-        global us_sensors
-        correct_sensors = [i for i in range(len(us_sensors)) if position.lower() in us_sensors[i].position.lower()]
-        distances = [get_us_distance(i) for i in correct_sensors]
-        if len(distances) == 0:
-            return 500000
-        else:
-            return min(distances)
+    # @staticmethod
+    # def get_us_distance_by_postion(position):
+    #     global us_sensors
+    #     correct_sensors = [i for i in range(len(us_sensors)) if position.lower() in us_sensors[i].position.lower()]
+    #     distances = [get_us_distance(i) for i in correct_sensors]
+    #     if len(distances) == 0:
+    #         return 500000
+    #     else:
+    #         return min(distances)
 
-    @property
-    def front_distance(self):
-        return self.get_us_distance_by_postion("front")
-
-    @property
-    def rear_distance(self):
-        return self.get_us_distance_by_postion("rear")
+    # @property
+    # def front_distance(self):
+    #     return self.get_us_distance_by_postion("front")
+    #
+    # @property
+    # def rear_distance(self):
+    #     return self.get_us_distance_by_postion("rear")
 
     def start_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR.value, 1) == 0:
@@ -146,24 +159,35 @@ class IO(object):
                 print("[IO] Arm gripper closed")
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
-        self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT
-        self.button1_state = self.ButtonState.PRESSED if button1_state else self.ButtonState.RELEASED
-        self.button2_state = self.ButtonState.PRESSED if button2_state else self.ButtonState.RELEASED
+        self.cord_state = self.CordState.OUT if cord_state else self.CordState.IN
+        self.button1_state = self.ButtonState.RELEASED if button1_state else self.ButtonState.PRESSED
+        self.button2_state = self.ButtonState.RELEASED if button2_state else self.ButtonState.PRESSED
         self.led_color = self.LedColor((red_led_state, green_led_state, blue_led_state))
 
+    def is_obstacle_in_cone(self, direction, cone_angle, distance):
+        for i in range(len(self.lidar_points)):
+            pt = self.lidar_points[i]
+            a = (pt.azimut - direction + 180) % 360 - 180
+            if abs(a) <= cone_angle:
+                print(pt.azimut)
+                print(pt.distance)
+                if pt.valid and not pt.warning and pt.distance < distance:
+                    return True
+        return False
 
-class USReader(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        # self.i2c = smbus.SMBus(1)
 
-    def run(self):
-        global us_sensors, us_sensors_distance
-        while True:
-            for i, sensor in enumerate(us_sensors):
-                self.i2c.write_byte_data(sensor.address, 0, 81)
-            time.sleep(0.070)
-            for i, sensor in enumerate(us_sensors):
-                dst = self.i2c.read_word_data(sensor.address, 2) / 255
-                if dst != 0:
-                    us_sensors_distance[us_sensors[i]] = dst
+# class USReader(threading.Thread):
+#     def __init__(self):
+#         threading.Thread.__init__(self)
+#         # self.i2c = smbus.SMBus(1)
+#
+#     def run(self):
+#         global us_sensors, us_sensors_distance
+#         while True:
+#             for i, sensor in enumerate(us_sensors):
+#                 self.i2c.write_byte_data(sensor.address, 0, 81)
+#             time.sleep(0.070)
+#             for i, sensor in enumerate(us_sensors):
+#                 dst = self.i2c.read_word_data(sensor.address, 2) / 255
+#                 if dst != 0:
+#                     us_sensors_distance[us_sensors[i]] = dst
