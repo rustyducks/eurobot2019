@@ -245,7 +245,7 @@ class sThetaRepositioning:
         self._theta_repositioning = round((value + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR)
 
     def serialize(self):
-        return bitstring.pack('uint:16', self._theta_repositioning)
+        return bitstring.pack('uintle:16', self._theta_repositioning)
 
 
 class sMessageDown:
@@ -254,7 +254,7 @@ class sMessageDown:
     :type type: eTypeDown
     :type down_id: int
     :type checksum: int
-    :type data: sAckOdomReport|sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand
+    :type data: sAckOdomReport|sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand|sThetaRepositioning
     """
     def __init__(self):
         self.down_id = 0  # :8
