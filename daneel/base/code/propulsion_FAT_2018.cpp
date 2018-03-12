@@ -24,6 +24,7 @@ void testActuatorCallback(const Communication::ActuatorCommand msg);
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
 void handleActuatorCallback(const Communication::ActuatorCommand msg);
 void resetCallback();
+void handleRepositionningCallback(const Communication::Repositionning msg);
 
 
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
@@ -64,6 +65,7 @@ void setup()
 	communication.registerActuatorCommandCallback(handleActuatorCallback);
 	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
 	communication.registerResetCallback(resetCallback);
+	communication.registerRepositionningCallback(handleRepositionningCallback);
 }
 
 
@@ -143,4 +145,12 @@ void resetCallback(){
 	simulator.reset();
 #endif
 	communication.reset();
+}
+
+void handleRepositionningCallback(const Communication::Repositionning msg){
+	odometry.recalerTheta(msg.theta);
+	Serial.print("Received (with non ack added) : ");
+	Serial.println(msg.theta);
+	Serial.print("Set theta to : ");
+	Serial.println(odometry.getTheta());
 }

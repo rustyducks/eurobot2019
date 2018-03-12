@@ -177,9 +177,15 @@ class Locomotion:
 
         return Speed(vx, vy, vtheta)
 
-
     def distance_to(self, x, y):
         return math.sqrt((self.x - x) ** 2 + (self.y - y) ** 2)
+
+    def reposition_robot(self, x, y, theta):
+        self.x = x
+        self.y = y
+        if self.robot.communication.send_theta_repositionning(theta) == 0:
+            self.theta = theta
+
 
     class Point:
         def __init__(self, x, y):

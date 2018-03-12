@@ -82,6 +82,13 @@ class Communication:
             self._mailbox = deque()
         return ret
 
+    def send_theta_repositionning(self, theta, max_retries=1000):
+        msg = sMessageDown()
+        msg.type = eTypeDown.THETA_REPOSITIONING
+        msg.data = sThetaRepositioning()
+        msg.data.theta_repositioning = theta
+        return self.send_message(msg, max_retries)
+
     def send_message(self, msg, max_retries=1000):
         """
         Send message via Serial (defined during the instantiation of the class)
