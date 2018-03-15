@@ -33,7 +33,7 @@ void InputOutputs::init() {
 	pinMode(CORD, INPUT_PULLUP);
 	pinMode(BUTTON1, INPUT_PULLUP);
 	pinMode(BUTTON2, INPUT_PULLUP);
-	pinMode(WATER_CANNON_DIR, OUTPUT);
+	//pinMode(WATER_CANNON_DIR, OUTPUT);
 	pinMode(WATER_CANNON_PWM, OUTPUT);
 	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
@@ -107,7 +107,7 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		deliverWater(actuatorCommand);
 		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR:
-		analogWrite(WATER_CANNON_DIR, HIGH);
+		//analogWrite(WATER_CANNON_DIR, HIGH);
 		analogWrite(WATER_CANNON_PWM, actuatorCommand);
 		break;
 	case eMsgActuatorId::ARM_BASE_DYNAMIXEL:
