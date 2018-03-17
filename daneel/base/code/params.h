@@ -70,6 +70,8 @@ const int SCORE_DISPLAY_DIO = 31;
 const int SCORE_DISPLAY_CLK = 32;
 const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;
+const int BAT_SIG = A21;
+const int BAT_POW = A22;
 /* END ------------------------- IOs ----------------------------------*/
 
 
