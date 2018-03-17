@@ -16,10 +16,13 @@ LIDAR_SERIAL_PATH = "/dev/ttyACM0"
 LIDAR_SERIAL_BAUDRATE = 115200
 
 class ActuatorID(Enum):
-    WATER_COLLECTOR = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
-    WATER_CANNON = 1     # DC motor
-    ARM_BASE = 2         # Dynamixel
-    ARM_GRIPPER = 3      # Dynamixel
+    WATER_COLLECTOR_GREEN = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
+    WATER_COLLECTOR_ORANGE = 1  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
+    WATER_CANNON_GREEN = 2     # DC motor
+    WATER_CANNON_ORANGE = 3    # DC motor
+    ARM_BASE = 4         # Dynamixel
+    ARM_GRIPPER = 5      # Dynamixel
+    SCORE_COUNTER = 6
 
 # def get_us_distance(i):
 #     global us_sensors, us_sensors_distance
@@ -39,9 +42,9 @@ class IO(object):
         self.water_cannon_state = None
         self.arm_base_state = None
         self.arm_gripper_state = None
-        self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
-        self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
-        self.lidar_thread.start()
+        # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
+        # self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
+        # self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
 
         self.stop_water_cannon()
@@ -107,25 +110,25 @@ class IO(object):
     #     return self.get_us_distance_by_postion("rear")
 
     def start_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR.value, 1) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
             self.water_collector_state = self.WaterCollectorState.ACTIVATED
             if __debug__:
                 print("[IO] Start water collector")
 
     def stop_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR.value, 0) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 0) == 0:
             self.water_collector_state = self.WaterCollectorState.STOPPED
             if __debug__:
                 print("[IO] Stop water collector")
 
     def start_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 180) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 180) == 0:
             self.water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start water cannon")
 
     def stop_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON.value, 0) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 0) == 0:
             self.water_cannon_state = self.WaterCannonState.STOPPED
             if __debug__:
                 print("[IO] Stop water cannon")
