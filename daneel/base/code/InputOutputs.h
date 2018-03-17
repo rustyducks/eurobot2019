@@ -30,7 +30,7 @@ public:
 	void moveArmGripper(int degree);
 
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
-	void deliverWater(bool enable);
+	void deliverWater(bool enable, int dynamixelId);
 
 	void _onNewCordState();
 	void _onNewButtonState(int button);
@@ -45,11 +45,13 @@ public:
 
 private:
 	typedef enum{
-		WATER_DELIVERING_DYNAMIXEL = 0,
-		WATER_CANNON_DC_MOTOR = 1,
-		ARM_BASE_DYNAMIXEL = 2,
-		ARM_GRIPPER_DYNAMIXEL = 3,
-		SCORE_COUNTER = 4
+		WATER_DELIVERING_DYNAMIXEL_GREEN = 0,
+		WATER_DELIVERING_DYNAMIXEL_ORANGE = 1,
+		WATER_CANNON_DC_MOTOR_GREEN = 2,
+		WATER_CANNON_DC_MOTOR_ORANGE = 3,
+		ARM_BASE_DYNAMIXEL = 4,
+		ARM_GRIPPER_DYNAMIXEL = 5,
+		SCORE_COUNTER = 6
 	}eMsgActuatorId;
 	bool _button1Pressed;
 	bool _button2Pressed;
