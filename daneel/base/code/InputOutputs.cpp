@@ -36,6 +36,8 @@ void InputOutputs::init() {
 	pinMode(BUTTON2, INPUT_PULLUP);
 	pinMode(WATER_CANNON_GREEN, OUTPUT);
 	pinMode(WATER_CANNON_ORANGE, OUTPUT);
+	analogWrite(WATER_CANNON_GREEN, 0);
+	analogWrite(WATER_CANNON_ORANGE, 0);
 	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
@@ -114,8 +116,8 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		analogWrite(WATER_CANNON_GREEN, actuatorCommand);
 		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_ORANGE:
-			analogWrite(WATER_CANNON_ORANGE, actuatorCommand);
-			break;
+		analogWrite(WATER_CANNON_ORANGE, actuatorCommand);
+		break;
 	case eMsgActuatorId::ARM_BASE_DYNAMIXEL:
 		moveArmBase(actuatorCommand);
 		break;
