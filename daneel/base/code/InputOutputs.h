@@ -8,6 +8,9 @@
 #ifndef INPUTOUTPUTS_H_
 #define INPUTOUTPUTS_H_
 
+#include <libraries/TM1637/TM1637Display.h>
+#include <params.h>
+
 class InputOutputs {
 public:
 	InputOutputs();
@@ -45,7 +48,8 @@ private:
 		WATER_DELIVERING_DYNAMIXEL = 0,
 		WATER_CANNON_DC_MOTOR = 1,
 		ARM_BASE_DYNAMIXEL = 2,
-		ARM_GRIPPER_DYNAMIXEL = 3
+		ARM_GRIPPER_DYNAMIXEL = 3,
+		SCORE_COUNTER = 4
 	}eMsgActuatorId;
 	bool _button1Pressed;
 	bool _button2Pressed;
@@ -55,6 +59,22 @@ private:
 	bool _blueLEDOn;
 	
 	volatile bool _HMIhasChanged;
+
+	TM1637Display scoreDisplay;
+};
+
+const uint8_t SEG_ENAC[] = {
+		SEG_A | SEG_D | SEG_E | SEG_F | SEG_G,  // E
+		SEG_E | SEG_G | SEG_C,  // n
+		SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G,  // A
+		SEG_A | SEG_F | SEG_E | SEG_D
+};
+
+const uint8_t SEG_FAT[] = {
+		SEG_A | SEG_F | SEG_E | SEG_G,  // F
+		SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G,  // A
+		SEG_A | SEG_B | SEG_C,  // Half T
+		SEG_A | SEG_F | SEG_E   // Half T
 };
 
 extern InputOutputs inputOutputs;

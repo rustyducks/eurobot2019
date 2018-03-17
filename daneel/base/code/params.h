@@ -64,7 +64,9 @@ const int ARM_BASE = 1;  // Dynamixel ID
 const int ARM_GRIPPER = 3;  // Dynamixel ID
 const int ARM_BASE_SPEED = 150;
 const int WATER_CANNON_PWM = 22;
-//const int WATER_CANNON_DIR = 7;
+const int WATER_CANNON_DIR = 23;
+const int SCORE_DISPLAY_DIO = 31;
+const int SCORE_DISPLAY_CLK = 32;
 const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;
 /* END ------------------------- IOs ----------------------------------*/

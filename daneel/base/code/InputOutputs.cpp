@@ -17,7 +17,8 @@ InputOutputs inputOutputs = InputOutputs();
 void ioHMIhasChanged();
 
 InputOutputs::InputOutputs(): _button1Pressed(false), _button2Pressed(false), _cordIn(false),
-		_redLEDOn(false), _greenLEDOn(false), _blueLEDOn(false), _HMIhasChanged(false) {
+		_redLEDOn(false), _greenLEDOn(false), _blueLEDOn(false), _HMIhasChanged(false),
+		scoreDisplay(TM1637Display(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO)){
 
 }
 
@@ -115,6 +116,19 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		break;
 	case eMsgActuatorId::ARM_GRIPPER_DYNAMIXEL:
 		moveArmGripper(actuatorCommand);
+		break;
+	case eMsgActuatorId::SCORE_COUNTER:
+		scoreDisplay.setBrightness(7, true);
+		if (actuatorCommand <= 9999){
+			scoreDisplay.showNumberDec(actuatorCommand);
+		}
+		else if (actuatorCommand == 10001){
+			scoreDisplay.setSegments(SEG_ENAC);
+		}else if (actuatorCommand == 10002){
+			scoreDisplay.setSegments(SEG_FAT);
+		}else{
+			scoreDisplay.setBrightness(7, false);
+		}
 		break;
 	default:
 		break;
