@@ -45,12 +45,12 @@ const float32_t ROBOT_RADIUS = 185.0;
 /* END ------------------- Motors & Odometry --------------------------*/
 
 /* BEGIN ----------------------- HMI ----------------------------------*/
-const int LED_RED = 17;
-const int LED_GREEN = 18;
-const int LED_BLUE = 19;
-const int CORD = 20;
-const int BUTTON1 = 21;
-const int BUTTON2 = 29;
+const int LED_RED = 18;
+const int LED_GREEN = 19;
+const int LED_BLUE = 20;
+const int CORD = 21;
+const int BUTTON1 = 9;
+const int BUTTON2 = 10;
 
 /* END ------------------------- HMI ----------------------------------*/
 
