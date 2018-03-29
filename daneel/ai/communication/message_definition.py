@@ -14,8 +14,12 @@ RADIAN_TO_MSG_FACTOR = 10430.378350470453
 RADIAN_TO_MSG_ADDER = 3.14159265358979323846
 
 
-# ======= Up (Prop -> raspi) message declaration ======== #
+class DeserializationException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
 
+
+# ======= Up (Prop -> raspi) message declaration ======== #
 
 class eTypeUp(Enum):
     ACK_DOWN = 0
@@ -121,8 +125,12 @@ class sMessageUp:
 
     def deserialize(self, packed):
         header = bitstring.BitStream(packed[0:UP_HEADER_SIZE])
-        self.up_id, type_value, self.data = header.unpack('uint:8, uint:8, uint:8')
-        self.type = eTypeUp(type_value)
+        try:
+            self.up_id, type_value, self.data = header.unpack('uint:8, uint:8, uint:8')
+            self.type = eTypeUp(type_value)
+        except ValueError as e:
+            raise DeserializationException("Can't deserialize up message header : {}".format(str(e)))
+
         if self.type == eTypeUp.ACK_DOWN:
             self.data = sAckDown()
         elif self.type == eTypeUp.ACTUATOR_STATE:
@@ -131,7 +139,12 @@ class sMessageUp:
             self.data = sHMIState()
         elif self.type == eTypeUp.ODOM_REPORT:
             self.data = sOdomReport()
-        self.data.deserialize(packed[UP_HEADER_SIZE:])
+        elif self.type == eTypeUp.SENSOR_VALUE:
+            self.data = sSensorValue()
+        try:
+            self.data.deserialize(packed[UP_HEADER_SIZE:])
+        except ValueError as e:
+            raise DeserializationException("Can't deserialize up message payload : {}".format(str(e)))
 
     def serialize(self):
 

@@ -76,6 +76,9 @@ class Communication:
     def reset_soft_teensy(self, max_retries=1000):
         msg = sMessageDown()
         msg.type = eTypeDown.RESET
+        for i in range(100):
+             self._serial_port.read_all()
+             time.sleep(0.01)
         ret = self.send_message(msg, max_retries)
         if ret == 0:
             self._current_msg_id = 0
@@ -116,7 +119,15 @@ class Communication:
             if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
                 packed = self._serial_port.read(UP_MESSAGE_SIZE)
                 up_msg = sMessageUp()
-                up_msg.deserialize(packed)
+                try:
+                    up_msg.deserialize(packed)
+                except DeserializationException as e:
+                    print("[Comm] Message synchronisation lost : Trying to re synchronise")
+                    while not self._serial_port.in_waiting:
+                        time.sleep(0.1)
+                    self._serial_port.read(1)  # Read one byte and retry. Until synchro is ok.
+                    continue
+
                 self._handle_acknowledgement(up_msg)
                 if up_msg.type == eTypeUp.ACK_DOWN:
                     self._serial_lock.release()
@@ -165,15 +176,24 @@ class Communication:
         if self.mock_communication:
             return
 
+        self._serial_lock.acquire()
         for i in range(max_read):
-            self._serial_lock.acquire()
             if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
-                packed = self._serial_port.read(UP_MESSAGE_SIZE)
-                up_msg = sMessageUp()
-                up_msg.deserialize(packed)
+                try:
+                    packed = self._serial_port.read(UP_MESSAGE_SIZE)
+                    up_msg = sMessageUp()
+                    up_msg.deserialize(packed)
+                except DeserializationException as e:
+                    print("[Comm] Message synchronisation lost : Trying to re synchronise")
+                    while not self._serial_port.in_waiting:
+                        time.sleep(0.1)
+                    self._serial_port.read(1)  # Read one byte and retry. Until synchro is ok.
+                    continue
                 self._handle_acknowledgement(up_msg)
                 self._mailbox.append(up_msg)
-            self._serial_lock.release()
+        self._serial_lock.release()
+
+        for i in range(max_read):
             if len(self._mailbox) > 0:
                 msg = self._mailbox.popleft()
                 self.handle_message(msg)
