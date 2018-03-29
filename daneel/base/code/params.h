@@ -49,8 +49,8 @@ const int LED_RED = 19;
 const int LED_GREEN = 20;
 const int LED_BLUE = 18;
 const int CORD = 21;
-const int BUTTON1 = 9;
-const int BUTTON2 = 10;
+const int BUTTON1 = 10;
+const int BUTTON2 = 9;
 
 /* END ------------------------- HMI ----------------------------------*/
 
