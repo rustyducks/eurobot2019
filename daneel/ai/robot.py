@@ -22,10 +22,10 @@ robot = None
 
 class Robot(object):
     def __init__(self, behavior=behaviors["FSMMatch"]):
-        self.communication = communication.Communication("/dev/ttyS0")
+        self.communication = communication.Communication("/dev/ttyAMA0")
         self.io = IO(self)
         self.locomotion = Locomotion(self)
-        self.ivy = ivy_robot.Ivy(self, "192.168.1.14:2010")
+        self.ivy = ivy_robot.Ivy(self, "192.168.1.255:2010")
         if behavior == behaviors["FSMMatch"]:
             from behavior.fsmmatch import FSMMatch
             self.behavior = FSMMatch(self)
