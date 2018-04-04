@@ -31,6 +31,7 @@ class IO(object):
         self.orange_water_cannon_state = None
         self.arm_base_state = None
         self.arm_gripper_state = None
+        self.score_display_text = None
         # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
         # self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         # self.lidar_thread.start()
@@ -42,6 +43,7 @@ class IO(object):
         self.stop_orange_water_collector()
         self.move_arm_base(self.ArmBaseState.RAISED)
         self.close_arm_gripper()
+        self.score_display_fat()
 
     @property
     def lidar_points(self):
@@ -81,6 +83,10 @@ class IO(object):
     class ArmGripperState(Enum):
         OPEN = 400
         CLOSED = 518
+
+    class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
+        ENAC = 10001
+        FAT = 10002
 
     def start_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
@@ -156,6 +162,21 @@ class IO(object):
             self.arm_gripper_state = self.ArmGripperState.CLOSED # TODO : Update state only when sensor value is sent by teensy
             if __debug__:
                 print("[IO] Arm gripper closed")
+
+    def score_display_fat(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.FAT.value) == 0:
+            self.score_display_text = "FAT"
+            print("[IO] Score display displays " + self.score_display_text)
+
+    def score_display_enac(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.ENAC.value) == 0:
+            self.score_display_text = "ENAC"
+            print("[IO] Score display displays " + self.score_display_text)
+
+    def score_display_number(self, number):
+        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, number) == 0:
+            self.score_display_text = str(number)
+            print("[IO] Score display displays " + self.score_display_text)
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT
