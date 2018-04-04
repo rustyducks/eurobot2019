@@ -1,16 +1,7 @@
-from collections import namedtuple
 from enum import *
-import threading
-import serial
-import time
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 
-# UltraSoundSensor = namedtuple('ultra_sound_sensor', ['address', 'position'])
-# us_sensors = [UltraSoundSensor(0x76, "front_left"), UltraSoundSensor(0x77, "front_right"), UltraSoundSensor(0x73, "rear_left"),
-#               UltraSoundSensor(0x74, "rear_center"), UltraSoundSensor(0x72, "rear_right")]  # Sets US sensors here !, empty list if no US is plugged
-# # us_sensors=[]
-# us_sensors_distance = {us_sensors[i]: 0 for i in range(len(us_sensors))}
 
 LIDAR_SERIAL_PATH = "/dev/ttyACM0"
 LIDAR_SERIAL_BAUDRATE = 115200
@@ -24,10 +15,6 @@ class ActuatorID(Enum):
     ARM_GRIPPER = 5      # Dynamixel
     SCORE_COUNTER = 6
 
-# def get_us_distance(i):
-#     global us_sensors, us_sensors_distance
-#     return us_sensors_distance[us_sensors[i]]
-
 
 class IO(object):
     def __init__(self, robot):
@@ -38,8 +25,10 @@ class IO(object):
         self.button1_state = None
         self.button2_state = None
         self.led_color = None
-        self.water_collector_state = None
-        self.water_cannon_state = None
+        self.green_water_collector_state = None
+        self.green_water_cannon_state = None
+        self.orange_water_collector_state = None
+        self.orange_water_cannon_state = None
         self.arm_base_state = None
         self.arm_gripper_state = None
         # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
@@ -47,8 +36,10 @@ class IO(object):
         # self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
 
-        self.stop_water_cannon()
-        self.stop_water_collector()
+        self.stop_green_water_cannon()
+        self.stop_green_water_collector()
+        self.stop_orange_water_cannon()
+        self.stop_orange_water_collector()
         self.move_arm_base(self.ArmBaseState.RAISED)
         self.close_arm_gripper()
 
@@ -91,47 +82,53 @@ class IO(object):
         OPEN = 400
         CLOSED = 518
 
-    # @staticmethod
-    # def get_us_distance_by_postion(position):
-    #     global us_sensors
-    #     correct_sensors = [i for i in range(len(us_sensors)) if position.lower() in us_sensors[i].position.lower()]
-    #     distances = [get_us_distance(i) for i in correct_sensors]
-    #     if len(distances) == 0:
-    #         return 500000
-    #     else:
-    #         return min(distances)
-
-    # @property
-    # def front_distance(self):
-    #     return self.get_us_distance_by_postion("front")
-    #
-    # @property
-    # def rear_distance(self):
-    #     return self.get_us_distance_by_postion("rear")
-
-    def start_water_collector(self):
+    def start_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
-            self.water_collector_state = self.WaterCollectorState.ACTIVATED
+            self.green_water_collector_state = self.WaterCollectorState.ACTIVATED
             if __debug__:
-                print("[IO] Start water collector")
+                print("[IO] Start green water collector")
 
-    def stop_water_collector(self):
+    def start_orange_water_collector(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_ORANGE.value, 1) == 0:
+            self.orange_water_collector_state = self.WaterCollectorState.ACTIVATED
+            if __debug__:
+                print("[IO] Start orange water collector")
+
+    def stop_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 0) == 0:
-            self.water_collector_state = self.WaterCollectorState.STOPPED
+            self.green_water_collector_state = self.WaterCollectorState.STOPPED
             if __debug__:
-                print("[IO] Stop water collector")
+                print("[IO] Stop green water collector")
 
-    def start_water_cannon(self):
+    def stop_orange_water_collector(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_ORANGE.value, 0) == 0:
+            self.orange_water_collector_state = self.WaterCollectorState.STOPPED
+            if __debug__:
+                print("[IO] Stop orange water collector")
+
+    def start_green_water_cannon(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 180) == 0:
-            self.water_cannon_state = self.WaterCannonState.FIRING
+            self.green_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
-                print("[IO] Start water cannon")
+                print("[IO] Start green water cannon")
 
-    def stop_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 0) == 0:
-            self.water_cannon_state = self.WaterCannonState.STOPPED
+    def start_orange_water_cannon(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 180) == 0:
+            self.orange_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
-                print("[IO] Stop water cannon")
+                print("[IO] Start orange water cannon")
+
+    def stop_green_water_cannon(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 0) == 0:
+            self.green_water_cannon_state = self.WaterCannonState.STOPPED
+            if __debug__:
+                print("[IO] Stop green water cannon")
+
+    def stop_orange_water_cannon(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 0) == 0:
+            self.orange_water_cannon_state = self.WaterCannonState.STOPPED
+            if __debug__:
+                print("[IO] Stop orange water cannon")
 
     def set_led_color(self, color):
         if self.robot.communication.send_hmi_command(*color.value) == 0:

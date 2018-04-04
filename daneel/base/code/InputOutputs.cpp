@@ -110,8 +110,8 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		deliverWater(actuatorCommand, WATER_DELIVERER_GREEN);
 		break;
 	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_ORANGE:
-			deliverWater(actuatorCommand, WATER_DELIVERER_ORANGE);
-			break;
+		deliverWater(actuatorCommand, WATER_DELIVERER_ORANGE);
+		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_GREEN:
 		analogWrite(WATER_CANNON_GREEN, actuatorCommand);
 		break;
