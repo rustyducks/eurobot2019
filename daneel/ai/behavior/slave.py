@@ -21,8 +21,6 @@ class Slave(Behavior):
 
         #to remove
         self.arm_hand = True
-        self.robot.communication.send_actuator_command(3, 512)
-        self.robot.communication.send_actuator_command(2, 200)
 
 
 
