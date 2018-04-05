@@ -36,16 +36,16 @@ class Slave(Behavior):
         self.robot.locomotion.go_to_orient(float(x), float(y), self.robot.locomotion.theta)
 
     def toggle_water_cannon(self):
-        if self.robot.io.water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
-            self.robot.io.start_water_cannon()
-        elif self.robot.io.water_cannon_state == self.robot.io.WaterCannonState.FIRING:
-            self.robot.io.stop_water_cannon()
+        if self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
+            self.robot.io.start_green_water_cannon()
+        elif self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
+            self.robot.io.stop_green_water_cannon()
 
     def toggle_water_collector(self):
-        if self.robot.io.water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
-            self.robot.io.start_water_collector()
-        elif self.robot.io.water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
-            self.robot.io.stop_water_collector()
+        if self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
+            self.robot.io.start_green_water_collector()
+        elif self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
+            self.robot.io.stop_green_water_collector()
 
     def handle_custom_action(self, agent, *arg):
         custom_action_number = int(arg[0])
