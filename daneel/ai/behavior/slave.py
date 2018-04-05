@@ -35,35 +35,51 @@ class Slave(Behavior):
         x, y = arg[0].split(",")
         self.robot.locomotion.go_to_orient(float(x), float(y), self.robot.locomotion.theta)
 
-    def toggle_water_cannon(self):
-        if self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
-            self.robot.io.start_green_water_cannon()
-        elif self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
-            self.robot.io.stop_green_water_cannon()
+    def toggle_water_cannon(self, color):
+        if color == "green":
+            if self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
+                self.robot.io.start_green_water_cannon()
+            elif self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
+                self.robot.io.stop_green_water_cannon()
+        else:
+            if self.robot.io.orange_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
+                self.robot.io.start_orange_water_cannon()
+            elif self.robot.io.orange_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
+                self.robot.io.stop_orange_water_cannon()
 
-    def toggle_water_collector(self):
-        if self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
-            self.robot.io.start_green_water_collector()
-        elif self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
-            self.robot.io.stop_green_water_collector()
+    def toggle_water_collector(self, color):
+        if color == "green":
+            if self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
+                self.robot.io.start_green_water_collector()
+            elif self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
+                self.robot.io.stop_green_water_collector()
+        else:
+            if self.robot.io.orange_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
+                self.robot.io.start_orange_water_collector()
+            elif self.robot.io.orange_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
+                self.robot.io.stop_orange_water_collector()
 
     def handle_custom_action(self, agent, *arg):
         custom_action_number = int(arg[0])
         print(custom_action_number)
         if custom_action_number == 1:
-            self.toggle_water_cannon()
+            self.toggle_water_cannon("green")
         elif custom_action_number == 2:
-            self.toggle_water_collector()
+            self.toggle_water_collector("green")
         elif custom_action_number == 3:
+            self.toggle_water_cannon("orange")
+        elif custom_action_number == 4:
+            self.toggle_water_collector("orange")
+        elif custom_action_number == 5:
             if self.robot.io.arm_gripper_state == self.robot.io.ArmGripperState.CLOSED:
                 self.robot.io.open_arm_gripper()
             else:
                 self.robot.io.close_arm_gripper()
-        elif custom_action_number == 4:
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.RAISED)
-        elif custom_action_number == 5:
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
         elif custom_action_number == 6:
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.RAISED)
+        elif custom_action_number == 7:
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
+        elif custom_action_number == 8:
             self.robot.io.move_arm_base(self.robot.io.ArmBaseState.LOWERED)
 
     def handle_ivy_speed_direction(self, agent, *arg):
