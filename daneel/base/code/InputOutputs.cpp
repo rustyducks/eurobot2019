@@ -82,13 +82,13 @@ void ioHMIhasChanged(){
 	inputOutputs.setHmIhasChanged(true);
 }
 
-void InputOutputs::deliverWater(bool enable, int dynamixelId) {
+void InputOutputs::deliverWater(bool enable, int dynamixelId, bool direction) {
 	if(enable) {
 		Dynamixel.setEndless(2, true);
-		Dynamixel.turn(dynamixelId, DYNA_TURN_CCW, 1023);
+		Dynamixel.turn(dynamixelId, direction, 1023);
 	}
 	else {
-		Dynamixel.turn(dynamixelId, DYNA_TURN_CCW, 0);
+		Dynamixel.turn(dynamixelId, direction, 0);
 	}
 }
 
@@ -107,10 +107,10 @@ void InputOutputs::moveArmGripper(int degree){
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
 	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_GREEN:
-		deliverWater(actuatorCommand, WATER_DELIVERER_GREEN);
+		deliverWater(actuatorCommand, WATER_DELIVERER_GREEN, DYNA_TURN_CCW);
 		break;
 	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_ORANGE:
-		deliverWater(actuatorCommand, WATER_DELIVERER_ORANGE);
+		deliverWater(actuatorCommand, WATER_DELIVERER_ORANGE, DYNA_TURN_CW);
 		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_GREEN:
 		analogWrite(WATER_CANNON_GREEN, actuatorCommand);

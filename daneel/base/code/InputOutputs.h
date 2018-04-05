@@ -30,7 +30,7 @@ public:
 	void moveArmGripper(int degree);
 
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
-	void deliverWater(bool enable, int dynamixelId);
+	void deliverWater(bool enable, int dynamixelId, bool direction);
 
 	void _onNewCordState();
 	void _onNewButtonState(int button);
