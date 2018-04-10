@@ -85,8 +85,8 @@ class IO(object):
         CLOSED = 518
 
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
-        ENAC = 10001
-        FAT = 10002
+        ENAC = 20001
+        FAT = 20002
 
     def start_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
@@ -173,9 +173,16 @@ class IO(object):
             self.score_display_text = "ENAC"
             print("[IO] Score display displays " + self.score_display_text)
 
-    def score_display_number(self, number):
-        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, number) == 0:
-            self.score_display_text = str(number)
+    def score_display_number(self, number, with_two_points=False):
+        command = number
+        if with_two_points:
+            command += 10000
+        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, command) == 0:
+            if with_two_points:
+                self.score_display_text = str(number)[:-2] + ":" + str(number)[-2:]
+                #FIXME: Not working with number = 4 (text = ":4" instead of ": 4")
+            else:
+                self.score_display_text = str(number)
             print("[IO] Score display displays " + self.score_display_text)
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
