@@ -127,14 +127,17 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	case eMsgActuatorId::SCORE_COUNTER:
 		scoreDisplay.setBrightness(7, true);
 		if (actuatorCommand <= 9999){
-			scoreDisplay.showNumberDec(actuatorCommand);
+			scoreDisplay.showNumberDecEx(actuatorCommand, 0);
 		}
-		else if (actuatorCommand == 10001){
+		else if(actuatorCommand <= 19999){
+			scoreDisplay.showNumberDecEx(actuatorCommand - 10000, 2); //TODO: Maybe change the 2 to 4 or 8
+		}
+		else if (actuatorCommand == 20001){
 			scoreDisplay.setSegments(SEG_ENAC);
-		}else if (actuatorCommand == 10002){
+		}else if (actuatorCommand == 20002){
 			scoreDisplay.setSegments(SEG_FAT);
 		}else{
-			scoreDisplay.setBrightness(7, false);
+			scoreDisplay.setBrightness(0, false);
 		}
 		break;
 	default:
