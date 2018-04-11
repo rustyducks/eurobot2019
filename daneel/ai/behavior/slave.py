@@ -2,6 +2,7 @@ import math
 
 import ivy_robot
 from behavior import Behavior
+import time
 
 DIRECT_SPEED_COMMAND_LINEAR_VALUE = 100.0  # mm/s
 DIRECT_SPEED_COMMAND_ROTATION_VALUE = 1.0  # rad/s
@@ -19,13 +20,20 @@ class Slave(Behavior):
         self.robot.ivy.register_callback(ivy_robot.CUSTOM_ACTION_REGEXP, self.handle_custom_action)
         self.robot.ivy.register_callback(ivy_robot.SPEED_DIRECTION_REGEXP, self.handle_ivy_speed_direction)
 
+        self._voltage_toggle_time = 0
+
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.PERIODIC)
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.PERIODIC)
 
     def loop(self):
         if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
-            self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage) * 100
-                                               + round(self.robot.io.battery_power_voltage), with_two_points=True)
+            if (self._voltage_toggle_time % 10) > 5:
+                self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100), with_two_points=True)
+                self.robot.io.set_led_color(self.robot.io.LedColor.CYAN)
+            else:
+                self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
+                self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
+            self._voltage_toggle_time = time.time()
 
     def go_to_orient(self, agent, *arg):
         x, y, theta = arg[0].split(",")
