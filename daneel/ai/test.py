@@ -10,12 +10,16 @@ r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: r.i
 r.communication.register_callback(eTypeUp.HMI_STATE, lambda cord, b1, b2, lr, lg, lb: print("c: {}, b1: {}, b2: {}".format(
     r.io.cord_state, r.io.button1_state ,r.io.button2_state)))
 r.communication.register_callback(eTypeUp.SENSOR_VALUE, lambda i, v: print("Sensor ID : {}, Sensor Value : {}".format(i, v)))
-r.communication.send_sensor_command(0, 1)
+
+last_behavior_time = time.time()
 while 1:
     time.sleep(0.01)
     #print('Sending')
     r.communication.check_message()
     r.locomotion.position_control_loop()
+    if time.time() - last_behavior_time >= 1:
+        r.behavior.loop()
+        last_behavior_time = time.time()
     # print([l.distance for l in r.io.lidar_points])
     # print(r.io.is_obstacle_in_cone(0, 20, 200))
     # if msg is not None:

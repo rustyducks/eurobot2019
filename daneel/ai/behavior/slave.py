@@ -19,13 +19,13 @@ class Slave(Behavior):
         self.robot.ivy.register_callback(ivy_robot.CUSTOM_ACTION_REGEXP, self.handle_custom_action)
         self.robot.ivy.register_callback(ivy_robot.SPEED_DIRECTION_REGEXP, self.handle_ivy_speed_direction)
 
-        #to remove
-        self.arm_hand = True
-
-
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.PERIODIC)
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.PERIODIC)
 
     def loop(self):
-        pass
+        if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
+            self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage) * 100
+                                               + round(self.robot.io.battery_power_voltage), with_two_points=True)
 
     def go_to_orient(self, agent, *arg):
         x, y, theta = arg[0].split(",")

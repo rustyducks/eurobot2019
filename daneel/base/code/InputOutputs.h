@@ -49,12 +49,6 @@ public:
 		_HMIhasChanged = hmIhasChanged;
 	}
 
-	typedef enum{
-		STOPPED,
-		ON_CHANGE,
-		PERIODIC
-	}sSensorReadState;
-
 private:
 	static constexpr int maxSensorNumber = 20;
 	static constexpr int sensorPeriodicTime = 100; // ms
@@ -73,9 +67,18 @@ private:
 			DIGITAL,
 			ANALOG
 		};
+		enum eSensorId{
+			BATTERY_SIG = 0,
+			BATTERY_POW = 1
+		};
+		typedef enum{
+			STOPPED,
+			ON_CHANGE,
+			PERIODIC
+		}eSensorReadState;
 		eSensorType sensorType;
-		int sensorId;
-		sSensorReadState sensorReadState;
+		eSensorId sensorId;
+		eSensorReadState sensorReadState;
 		long lastReadTime;
 		int lastReadValue;
 		uint8_t sensorPin;
