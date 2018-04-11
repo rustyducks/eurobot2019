@@ -113,7 +113,7 @@ private:
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
-		ACK_DOWN, ODOM_REPORT, HMI_STATE, ACTUATOR_STATE, SENSOR_VALUE
+		ACK_DOWN, ODOM_REPORT, HMI_STATE, SENSOR_VALUE
 	}eUpMessageType;
 
 	typedef struct __attribute__((packed)) {
@@ -130,10 +130,6 @@ private:
 		uint8_t HMIState;
 	}sHMIStateMsg;
 	typedef struct __attribute__((packed)){
-		uint8_t actuatorId;
-		uint16_t actuatorValue;
-	}sActuatorStateMsg;
-	typedef struct __attribute__((packed)){
 		uint8_t sensorId;
 		uint16_t sensorValue;
 	}sSensorValueMsg;
@@ -141,7 +137,6 @@ private:
 		sAckDown ackMsg;
 		sOdomReportMsg odomReportMsg;
 		sHMIStateMsg hmiStateMsg;
-		sActuatorStateMsg actuatorStateMsg;
 		sSensorValueMsg sensorValueMsg;
 	}uMessageUpData;
 

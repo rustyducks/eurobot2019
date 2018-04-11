@@ -40,22 +40,6 @@ int Communication::sendIHMState(const bool cordState, const bool button1State, c
 	return sendUpMessage(msg);
 }
 
-int Communication::sendActuatorState(const int actuatorId, const int actuatorState){
-	sMessageUp msg;
-	msg.upMsgType = Communication::ACTUATOR_STATE;
-
-	if(actuatorId < 0 || actuatorId > 255){
-		return -10;
-	}
-	if (actuatorState < 0 || actuatorState > 65535){
-		return -11;
-	}
-	msg.upData.actuatorStateMsg.actuatorId = actuatorId;
-	msg.upData.actuatorStateMsg.actuatorValue = actuatorState;
-
-	return sendUpMessage(msg);
-}
-
 int Communication::sendSensorValue(const int sensorId, const int sensorValue){
 	sMessageUp msg;
 	msg.upMsgType = Communication::SENSOR_VALUE;

@@ -25,8 +25,7 @@ class eTypeUp(Enum):
     ACK_DOWN = 0
     ODOM_REPORT = 1
     HMI_STATE = 2
-    ACTUATOR_STATE = 3
-    SENSOR_VALUE = 4
+    SENSOR_VALUE = 3
 
 
 class sAckDown:
@@ -96,20 +95,6 @@ class sHMIState:
         return bitstring.pack('uint:8', self.hmi_state)
 
 
-class sActuatorState:
-    def __init__(self):
-        self.actuator_id = None  # uint:8
-        self.actuator_value = None  # uint:16
-
-    def deserialize(self, bytes_packed):
-        s = bitstring.BitStream(bytes_packed)
-        self.actuator_id, self.actuator_value = s.unpack('uint:8, uintle:16')
-
-    def serialize(self):
-        return bitstring.pack('uint:8, uintle:16', self.actuator_id,
-                              self.actuator_value)
-
-
 class sSensorValue:
     def __init__(self):
         self.sensor_id = None
@@ -126,7 +111,7 @@ class sMessageUp:
     :type type: eTypeUp
     :type up_id: int
     :type checksum: int
-    :type data: sAckDown|sActuatorState|sHMIState|sOdomReport|sSensorValue
+    :type data: sAckDown|sHMIState|sOdomReport|sSensorValue
     """
     def __init__(self):
         self.up_id = None
@@ -144,8 +129,6 @@ class sMessageUp:
 
         if self.type == eTypeUp.ACK_DOWN:
             self.data = sAckDown()
-        elif self.type == eTypeUp.ACTUATOR_STATE:
-            self.data = sActuatorState()
         elif self.type == eTypeUp.HMI_STATE:
             self.data = sHMIState()
         elif self.type == eTypeUp.ODOM_REPORT:

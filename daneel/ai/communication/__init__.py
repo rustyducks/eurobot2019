@@ -1,13 +1,8 @@
 import threading
-
-import bitstring
-from enum import *
 import serial
 import time
 from collections import deque
 from communication.message_definition import *
-
-from RPi import GPIO
 
 SERIAL_BAUDRATE = 115200
 SERIAL_PATH = "/dev/ttyAMA0"
@@ -214,10 +209,7 @@ class Communication:
         :return:
         :rtype:
         """
-        if message.type == eTypeUp.ACTUATOR_STATE:
-            for cb in self._callbacks[eTypeUp.ACTUATOR_STATE]:
-                cb(message.data.actuator_id, message.data.actuator_value)
-        elif message.type == eTypeUp.SENSOR_VALUE:
+        if message.type == eTypeUp.SENSOR_VALUE:
             for cb in self._callbacks[eTypeUp.SENSOR_VALUE]:
                 cb(message.data.sensor_id, message.data.sensor_value)
         elif message.type == eTypeUp.HMI_STATE:
