@@ -6,6 +6,9 @@ from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 LIDAR_SERIAL_PATH = "/dev/ttyACM0"
 LIDAR_SERIAL_BAUDRATE = 115200
 
+BIT10_TO_BATTERY_FACTOR = 0.014774881516587679
+
+
 class ActuatorID(Enum):
     WATER_COLLECTOR_GREEN = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
     WATER_COLLECTOR_ORANGE = 1  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
@@ -18,8 +21,6 @@ class ActuatorID(Enum):
 
 class IO(object):
     def __init__(self, robot):
-        # self._thread_us_reader = USReader()
-        # self._thread_us_reader.start()
         self.robot = robot
         self.cord_state = None
         self.button1_state = None
@@ -32,10 +33,13 @@ class IO(object):
         self.arm_base_state = None
         self.arm_gripper_state = None
         self.score_display_text = None
+        self.battery_power_voltage = None
+        self.battery_signal_voltage = None
         # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
         # self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         # self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
+        self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
         self.stop_green_water_cannon()
         self.stop_green_water_collector()
@@ -48,6 +52,18 @@ class IO(object):
     @property
     def lidar_points(self):
         return lidar_points[:] # returns a copy of the lidar point to avoid modification while iterating over the array
+
+    class SensorId(Enum):
+        BATTERY_SIGNAL = 0
+        BATTERY_POWER = 1
+
+    class SensorState(Enum):
+        STOPPED = 0
+        ON_CHANGE = 1
+        PERIODIC = 2
+
+    def change_sensor_read_state(self, sensor_id: SensorId, sensor_state: SensorState):
+        self.robot.communication.send_sensor_command(sensor_id.value, sensor_state.value)
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -190,6 +206,15 @@ class IO(object):
         self.button1_state = self.ButtonState.RELEASED if button1_state else self.ButtonState.PRESSED
         self.button2_state = self.ButtonState.RELEASED if button2_state else self.ButtonState.PRESSED
         self.led_color = self.LedColor((red_led_state, green_led_state, blue_led_state))
+
+    def _on_sensor_value_receive(self, sensor_id, sensor_value):
+        if sensor_id == self.SensorId.BATTERY_SIGNAL.value:
+            self.battery_signal_voltage = self._bit10_to_battery_voltage(sensor_value)
+        elif sensor_id == self.SensorId.BATTERY_POWER.value:
+            self.battery_power_voltage = self._bit10_to_battery_voltage(sensor_value)
+
+    def _bit10_to_battery_voltage(self, bit10):
+        return bit10 * BIT10_TO_BATTERY_FACTOR
 
     def is_obstacle_in_cone(self, direction, cone_angle, distance):
         for i in range(len(self.lidar_points)):

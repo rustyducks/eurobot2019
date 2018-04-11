@@ -49,8 +49,23 @@ void InputOutputs::init() {
 }
 
 void InputOutputs::initSensors(){
-//	sSensor irCubeLeft;
-//	pinMode(IR_CUBES_LEFT, INPUT);
+	sSensor battery_sig, battery_pwr;
+	pinMode(BAT_SIG, INPUT);
+	pinMode(BAT_POW, INPUT);
+	battery_sig.sensorType = sSensor::ANALOG;
+	battery_pwr.sensorType = sSensor::ANALOG;
+	battery_sig.sensorId = sSensor::BATTERY_SIG;
+	battery_pwr.sensorId = sSensor::BATTERY_POW;
+	battery_sig.sensorPin = BAT_SIG;
+	battery_pwr.sensorPin = BAT_POW;
+	battery_sig.sensorReadState = sSensor::STOPPED;
+	battery_pwr.sensorReadState = sSensor::STOPPED;
+	battery_sig.lastReadTime = 0;
+	battery_pwr.lastReadTime = 0;
+	battery_sig.lastReadValue = 0;
+	battery_pwr.lastReadValue = 0;
+	sensors[registeredSensorsNumber++] = battery_sig;
+	sensors[registeredSensorsNumber++] = battery_pwr;
 //	irCubeLeft.sensorType = sSensor::ANALOG;
 //	irCubeLeft.sensorId = 0;
 //	irCubeLeft.sensorPin = IR_CUBES_LEFT;
@@ -69,10 +84,10 @@ void InputOutputs::run(){
 		sSensor* s = &sensors[i];
 		int value;
 		switch (s->sensorReadState){
-		case STOPPED:
+		case sSensor::STOPPED:
 			continue;
 			break;
-		case ON_CHANGE:
+		case sSensor::ON_CHANGE:
 			value = readSensor(*s);
 			if (value != s->lastReadValue){
 				s->lastReadValue = value;
@@ -81,7 +96,7 @@ void InputOutputs::run(){
 			}
 			continue;
 			break;
-		case PERIODIC:
+		case sSensor::PERIODIC:
 			long now = millis();
 			Serial.println(now);
 			if (now - s->lastReadTime >= sensorPeriodicTime){
@@ -190,7 +205,7 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 			scoreDisplay.showNumberDecEx(actuatorCommand, 0);
 		}
 		else if(actuatorCommand <= 19999){
-			scoreDisplay.showNumberDecEx(actuatorCommand - 10000, 2); //TODO: Maybe change the 2 to 4 or 8
+			scoreDisplay.showNumberDecEx(actuatorCommand - 10000, 255, true);
 		}
 		else if (actuatorCommand == 20001){
 			scoreDisplay.setSegments(SEG_ENAC);
@@ -208,7 +223,7 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 void InputOutputs::handleSensorCommand(int sensorId, int sensorCommand){
 	for (int i = 0; i < registeredSensorsNumber; i++){
 		if (sensors[i].sensorId == sensorId){
-			sensors[i].sensorReadState = static_cast<sSensorReadState>(sensorCommand);
+			sensors[i].sensorReadState = static_cast<sSensor::eSensorReadState>(sensorCommand);
 			break;
 		}
 	}
