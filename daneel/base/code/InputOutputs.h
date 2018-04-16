@@ -65,11 +65,14 @@ private:
 	typedef struct{
 		enum eSensorType{
 			DIGITAL,
-			ANALOG
+			ANALOG,
+			DYNAMIXEL_POSITION
 		};
 		enum eSensorId{
 			BATTERY_SIG = 0,
-			BATTERY_POW = 1
+			BATTERY_POW = 1,
+			ARM_BASE_POSITION = 2,
+			ARM_GRIP_POSITION = 3
 		};
 		typedef enum{
 			STOPPED,

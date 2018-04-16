@@ -49,7 +49,7 @@ void InputOutputs::init() {
 }
 
 void InputOutputs::initSensors(){
-	sSensor battery_sig, battery_pwr;
+	sSensor battery_sig, battery_pwr, arm_base_position, arm_grip_position;
 	pinMode(BAT_SIG, INPUT);
 	pinMode(BAT_POW, INPUT);
 	battery_sig.sensorType = sSensor::ANALOG;
@@ -66,6 +66,14 @@ void InputOutputs::initSensors(){
 	battery_pwr.lastReadValue = 0;
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
+
+	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
+	arm_base_position = {sSensor::DYNAMIXEL_POSITION, sSensor::ARM_BASE_POSITION, sSensor::STOPPED,
+							0, 0, ARM_BASE};
+	arm_grip_position = {sSensor::DYNAMIXEL_POSITION, sSensor::ARM_GRIP_POSITION, sSensor::STOPPED,
+							0, 0, ARM_GRIPPER};
+	sensors[registeredSensorsNumber++] = arm_base_position;
+	sensors[registeredSensorsNumber++] = arm_grip_position;
 //	irCubeLeft.sensorType = sSensor::ANALOG;
 //	irCubeLeft.sensorId = 0;
 //	irCubeLeft.sensorPin = IR_CUBES_LEFT;
@@ -115,6 +123,9 @@ int InputOutputs::readSensor(sSensor& sensor){
 		break;
 	case sSensor::DIGITAL:
 		return digitalRead(sensor.sensorPin);
+		break;
+	case sSensor::DYNAMIXEL_POSITION:
+		return Dynamixel.readPosition(sensor.sensorPin);
 		break;
 	}
 	return 0;

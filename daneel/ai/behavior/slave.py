@@ -79,7 +79,7 @@ class Slave(Behavior):
         elif custom_action_number == 4:
             self.toggle_water_collector("orange")
         elif custom_action_number == 5:
-            if self.robot.io.arm_gripper_state == self.robot.io.ArmGripperState.CLOSED:
+            if abs(self.robot.io.arm_gripper_state - self.robot.io.ArmGripperState.CLOSED.value) < 10:
                 self.robot.io.open_arm_gripper()
             else:
                 self.robot.io.close_arm_gripper()

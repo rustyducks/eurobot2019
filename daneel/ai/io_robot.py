@@ -56,6 +56,8 @@ class IO(object):
     class SensorId(Enum):
         BATTERY_SIGNAL = 0
         BATTERY_POWER = 1
+        ARM_BASE_ANGLE = 2
+        ARM_GRIP_ANGLE = 3
 
     class SensorState(Enum):
         STOPPED = 0
@@ -63,7 +65,7 @@ class IO(object):
         PERIODIC = 2
 
     def change_sensor_read_state(self, sensor_id: SensorId, sensor_state: SensorState):
-        self.robot.communication.send_sensor_command(sensor_id.value, sensor_state.value)
+        return self.robot.communication.send_sensor_command(sensor_id.value, sensor_state.value)
 
     class LedColor(Enum):
         BLACK = (False, False, False)
@@ -129,13 +131,13 @@ class IO(object):
                 print("[IO] Stop orange water collector")
 
     def start_green_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 180) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 130) == 0:
             self.green_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start green water cannon")
 
     def start_orange_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 180) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 130) == 0:
             self.orange_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start orange water cannon")
@@ -160,24 +162,24 @@ class IO(object):
 
     def move_arm_base(self, state: ArmBaseState):
         if state is not None:
-            if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE.value, state.value) == 0:
-                self.arm_base_state = state  # TODO : Update state only when sensor value is sent by teensy
-                if __debug__:
-                    print("[IO] Moved arm base to {}".format(state))
+            if self.change_sensor_read_state(self.SensorId.ARM_BASE_ANGLE, self.SensorState.PERIODIC) == 0:
+                if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE.value, state.value) == 0:
+                    if __debug__:
+                        print("[IO] Moved arm base to {}".format(state))
         else:
             raise AttributeError("None argument passed in move arm base !")
 
     def open_arm_gripper(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.OPEN.value) == 0:
-            self.arm_gripper_state = self.ArmGripperState.OPEN  # TODO : Update state only when sensor value is sent by teensy
-            if __debug__:
-                print("[IO] Arm gripper opened")
+        if self.change_sensor_read_state(self.SensorId.ARM_GRIP_ANGLE, self.SensorState.PERIODIC) == 0:
+            if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.OPEN.value) == 0:
+                if __debug__:
+                    print("[IO] Arm gripper opened")
 
     def close_arm_gripper(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.CLOSED.value) == 0:
-            self.arm_gripper_state = self.ArmGripperState.CLOSED # TODO : Update state only when sensor value is sent by teensy
-            if __debug__:
-                print("[IO] Arm gripper closed")
+        if self.change_sensor_read_state(self.SensorId.ARM_GRIP_ANGLE, self.SensorState.PERIODIC) == 0:
+            if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.CLOSED.value) == 0:
+                if __debug__:
+                    print("[IO] Arm gripper closed")
 
     def score_display_fat(self):
         if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.FAT.value) == 0:
@@ -212,6 +214,10 @@ class IO(object):
             self.battery_signal_voltage = self._bit10_to_battery_voltage(sensor_value)
         elif sensor_id == self.SensorId.BATTERY_POWER.value:
             self.battery_power_voltage = self._bit10_to_battery_voltage(sensor_value)
+        elif sensor_id == self.SensorId.ARM_BASE_ANGLE.value:
+            self.arm_base_state = sensor_value
+        elif sensor_id == self.SensorId.ARM_GRIP_ANGLE.value:
+            self.arm_gripper_state = sensor_value
 
     def _bit10_to_battery_voltage(self, bit10):
         return bit10 * BIT10_TO_BATTERY_FACTOR
