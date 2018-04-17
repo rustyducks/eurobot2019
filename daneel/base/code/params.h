@@ -68,6 +68,9 @@ const int WATER_CANNON_GREEN = 23;
 const int WATER_CANNON_ORANGE = 22;
 const int SCORE_DISPLAY_DIO = 32;
 const int SCORE_DISPLAY_CLK = 31;
+const int BEE_ARM_GREEN = 33;
+const int BEE_ARM_ORANGE = 34;
+#warning "Do not use pin 33 or 34, they are dummy pins, you have to change them."
 const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;
 const int BAT_SIG = A21;

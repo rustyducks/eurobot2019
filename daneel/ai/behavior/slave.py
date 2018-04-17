@@ -27,12 +27,15 @@ class Slave(Behavior):
 
     def loop(self):
         if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
-            if (self._voltage_toggle_time % 10) > 5:
+            if (self._voltage_toggle_time % 13) > 5:
                 self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100), with_two_points=True)
                 self.robot.io.set_led_color(self.robot.io.LedColor.CYAN)
-            else:
+            elif (self._voltage_toggle_time % 13) > 10:
                 self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
                 self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
+            else:
+                self.robot.io.score_display_fat()
+                self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
             self._voltage_toggle_time = time.time()
 
     def go_to_orient(self, agent, *arg):
@@ -89,6 +92,16 @@ class Slave(Behavior):
             self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
         elif custom_action_number == 8:
             self.robot.io.move_arm_base(self.robot.io.ArmBaseState.LOWERED)
+        elif custom_action_number == 9:
+            if self.robot.io.bee_arm_green_state == self.robot.io.BeeArmState.LOWERED:
+                self.robot.io.raise_bee_arm_green()
+            else:
+                self.robot.io.lower_bee_arm_green()
+        elif custom_action_number == 10:
+            if self.robot.io.bee_arm_orange_state == self.robot.io.BeeArmState.LOWERED:
+                self.robot.io.raise_bee_arm_orange()
+            else:
+                self.robot.io.lower_bee_arm_orange()
 
     def handle_ivy_speed_direction(self, agent, *arg):
         x, y, theta = map(lambda f: float(f), arg[0].split(","))

@@ -39,6 +39,12 @@ void InputOutputs::init() {
 	pinMode(WATER_CANNON_ORANGE, OUTPUT);
 	analogWrite(WATER_CANNON_GREEN, 0);
 	analogWrite(WATER_CANNON_ORANGE, 0);
+	pinMode(BEE_ARM_GREEN, OUTPUT);
+	pinMode(BEE_ARM_ORANGE, OUTPUT);
+	beeArmGreen.attach(BEE_ARM_GREEN);
+	beeArmOrange.attach(BEE_ARM_ORANGE);
+	beeArmGreen.write(90);
+	beeArmOrange.write(90);
 	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
@@ -225,6 +231,12 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		}else{
 			scoreDisplay.setBrightness(0, false);
 		}
+		break;
+	case eMsgActuatorId::BEE_ARM_SERVO_GREEN:
+		beeArmGreen.write(actuatorCommand);
+		break;
+	case eMsgActuatorId::BEE_ARM_SERVO_ORANGE:
+		beeArmOrange.write(actuatorCommand);
 		break;
 	default:
 		break;

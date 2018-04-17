@@ -11,6 +11,7 @@
 
 
 #include <libraries/TM1637/TM1637Display.h>
+#include <Servo.h>
 #include <params.h>
 
 class InputOutputs {
@@ -59,7 +60,9 @@ private:
 		WATER_CANNON_DC_MOTOR_ORANGE = 3,
 		ARM_BASE_DYNAMIXEL = 4,
 		ARM_GRIPPER_DYNAMIXEL = 5,
-		SCORE_COUNTER = 6
+		SCORE_COUNTER = 6,
+		BEE_ARM_SERVO_GREEN = 7,
+		BEE_ARM_SERVO_ORANGE = 8
 	}eMsgActuatorId;
 
 	typedef struct{
@@ -102,6 +105,7 @@ private:
 	volatile bool _HMIhasChanged;
 
 	TM1637Display scoreDisplay;
+	Servo beeArmGreen, beeArmOrange;
 };
 
 const uint8_t SEG_ENAC[] = {

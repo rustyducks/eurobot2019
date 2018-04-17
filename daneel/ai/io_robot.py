@@ -17,6 +17,8 @@ class ActuatorID(Enum):
     ARM_BASE = 4         # Dynamixel
     ARM_GRIPPER = 5      # Dynamixel
     SCORE_COUNTER = 6
+    BEE_ARM_GREEN = 7    # Chinese servomotor
+    BEE_ARM_ORANGE = 8   # Chinese servomotor
 
 
 class IO(object):
@@ -35,6 +37,8 @@ class IO(object):
         self.score_display_text = None
         self.battery_power_voltage = None
         self.battery_signal_voltage = None
+        self.bee_arm_green_state = None
+        self.bee_arm_orange_state = None
         # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
         # self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         # self.lidar_thread.start()
@@ -105,6 +109,11 @@ class IO(object):
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
         ENAC = 20001
         FAT = 20002
+
+    class BeeArmState(Enum):
+        # [green side degrees, orange side degrees]
+        RAISED = [90, 90]
+        LOWERED = [140, 140]
 
     def start_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
@@ -202,6 +211,26 @@ class IO(object):
             else:
                 self.score_display_text = str(number)
             print("[IO] Score display displays " + self.score_display_text)
+
+    def raise_bee_arm_green(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_GREEN.value, self.BeeArmState.RAISED.value[0]) == 0:
+            self.bee_arm_green_state = self.BeeArmState.RAISED
+            print("[IO] Green bee arm raised")
+
+    def raise_bee_arm_orange(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_ORANGE.value, self.BeeArmState.RAISED.value[1]) == 0:
+            self.bee_arm_orange_state = self.BeeArmState.RAISED
+            print("[IO] Orange bee arm raised")
+
+    def lower_bee_arm_green(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_GREEN.value, self.BeeArmState.LOWERED.value[0]) == 0:
+            self.bee_arm_green_state = self.BeeArmState.LOWERED
+            print("[IO] Green bee arm lowered")
+
+    def lower_bee_arm_orange(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_ORANGE.value, self.BeeArmState.LOWERED.value[1]) == 0:
+            self.bee_arm_orange_state = self.BeeArmState.LOWERED
+            print("[IO] Orange bee arm lowered")
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT
