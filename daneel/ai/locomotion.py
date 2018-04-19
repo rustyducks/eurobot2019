@@ -3,8 +3,8 @@ import time
 from collections import namedtuple
 from enum import Enum
 
-ACCELERATION_MAX = 20  # mm/s²
-LINEAR_SPEED_MAX = 150  # mm/s
+ACCELERATION_MAX = 150  # mm/s²
+LINEAR_SPEED_MAX = 200  # mm/s
 ADMITTED_POSITION_ERROR = 10  # mm
 
 ROTATION_ACCELERATION_MAX = 0.1  # rad/s²
@@ -23,6 +23,7 @@ def center_radians(value):
 class LocomotionState(Enum):
     POSITION_CONTROL = 0
     DIRECT_SPEED_CONTROL = 1
+    STOPPED = 2
 
 class Locomotion:
     def __init__(self, robot):
@@ -30,8 +31,10 @@ class Locomotion:
         self.x = 0
         self.y = 0
         self.theta = 0
+        self.previous_mode = None
         self.mode = LocomotionState.POSITION_CONTROL
         self.current_point_objective = None  # type: self.PointOrient
+        self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
@@ -88,28 +91,74 @@ class Locomotion:
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
 
-    def set_direct_speed(self, x_speed, y_speed, theta_speed):
+    def handle_obstacle(self, speed, detection_angle, stop_distance):
+        if math.hypot(speed.vx, speed.vy) < 0.01:
+            return
+        a = math.atan2(speed.vy, speed.vx)
+        if self.robot.io.is_obstacle_in_cone(a, detection_angle, stop_distance):
+            if self.mode != LocomotionState.STOPPED:
+                self.stop()
+        else:
+            if self.mode == LocomotionState.STOPPED:
+                self.restart()
+
+
+    def locomotion_loop(self, obstacle_detection=False):
         control_time = time.time()
         if self._last_position_control_time is None:
             delta_time = 0
         else:
             delta_time = control_time - self._last_position_control_time
         self._last_position_control_time = control_time
-        self.mode = LocomotionState.DIRECT_SPEED_CONTROL
-        # self.current_speed = self.comply_speed_constraints(Speed(x_speed, y_speed, theta_speed), delta_time)
-        self.current_speed = Speed(x_speed, y_speed, theta_speed)
+
+        if self.mode == LocomotionState.STOPPED:
+            speed = Speed(0, 0, 0)
+
+        elif self.mode == LocomotionState.POSITION_CONTROL:
+            speed = self.position_control_loop(delta_time)
+        elif self.mode == LocomotionState.DIRECT_SPEED_CONTROL:
+            if self.direct_speed_goal is not None:
+                speed = self.direct_speed_goal
+            else:
+                speed = Speed(0, 0, 0)
+        else:
+            # This should not happen
+            speed = Speed(0, 0, 0)
+        #print("Speed wanted : " + str(speed))
+        #self.current_speed = self.comply_speed_constraints(speed, delta_time)
+        #print("Speed after saturation : " + str(self.current_speed))
+
+        if obstacle_detection:
+            if self.mode == LocomotionState.STOPPED:
+                if self.previous_mode == LocomotionState.POSITION_CONTROL:
+                    wanted_speed = self.position_control_loop(delta_time)
+                elif self.previous_mode == LocomotionState.DIRECT_SPEED_CONTROL:
+                    wanted_speed = self.direct_speed_goal
+                else:
+                    wanted_speed = Speed(0, 0, 0)
+            else:
+                wanted_speed = speed
+            vx_r = wanted_speed.vx * math.cos(self.theta) + wanted_speed.vy * math.sin(self.theta)
+            vy_r = wanted_speed.vx * -math.sin(self.theta) + wanted_speed.vy * math.cos(self.theta)
+            self.handle_obstacle(Speed(vx_r, vy_r, 0), 45, 500)
+        self.current_speed = speed
         self.robot.communication.send_speed_command(*self.current_speed)
 
-    def position_control_loop(self):
-        if self.mode != LocomotionState.POSITION_CONTROL:
-            return
-        control_time = time.time()
-        if self._last_position_control_time is None:
-            delta_time = 0
-        else:
-            delta_time = control_time - self._last_position_control_time
-        self._last_position_control_time = control_time
+    def stop(self):
+        self.previous_mode = self.mode
+        self.mode = LocomotionState.STOPPED
 
+    def restart(self):
+        self.mode = self.previous_mode
+
+    def set_direct_speed(self, x_speed, y_speed, theta_speed):
+        if self.mode == LocomotionState.STOPPED:
+            self.previous_mode = LocomotionState.DIRECT_SPEED_CONTROL
+        else:
+            self.mode = LocomotionState.DIRECT_SPEED_CONTROL
+        self.direct_speed_goal = Speed(x_speed, y_speed, theta_speed)
+
+    def position_control_loop(self, delta_time):
         if self.current_point_objective is not None:
             self.robot.ivy.highlight_point(0, self.current_point_objective.x, self.current_point_objective.y)
             distance_to_objective = self.current_point_objective.lin_distance_to(self.x, self.y)
@@ -153,9 +202,7 @@ class Locomotion:
                 omega, rotation_error_sign))
         else:
             speed_command = Speed(0, 0, 0)
-        # print("Speed : " + str(self.current_speed))
-        self.current_speed = self.comply_speed_constraints(speed_command, delta_time)
-        self.robot.communication.send_speed_command(*self.current_speed)
+        return speed_command
 
     def comply_speed_constraints(self, speed_cmd, dt, alpha_step=0.05):
         if dt == 0:
@@ -164,8 +211,10 @@ class Locomotion:
         # Verify if maximum acceleration is respected
         alpha = alpha_step
         vx, vy, vtheta = speed_cmd
-        while math.hypot(vx - self.current_speed.vx,
-                         vy - self.current_speed.vy) / dt > ACCELERATION_MAX:
+        while math.hypot((vx - self.current_speed.vx) / dt,
+                         (vy - self.current_speed.vy) / dt) > ACCELERATION_MAX:
+            print("diff : {}".format(math.hypot(vx - self.current_speed.vx,
+                         vy - self.current_speed.vy)))
             vx = speed_cmd.vx * (1 - alpha) + self.current_speed.vx * alpha
             vy = speed_cmd.vy * (1 - alpha) + self.current_speed.vy * alpha
             alpha += alpha_step
