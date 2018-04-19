@@ -18,9 +18,9 @@
 #define MOSFET_UR 11
 #define MOSFET_BR 10
 
-#define SUN_PIN MOSFET_UL
+#define SUN_PIN MOSFET_UR
 #define F_PIN MOSFET_BL
-#define A_PIN MOSFET_UR
+#define A_PIN MOSFET_UL
 #define T_PIN MOSFET_BR
 
 #define STEPPER_DIR 8
