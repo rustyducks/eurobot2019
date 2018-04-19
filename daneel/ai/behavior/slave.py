@@ -27,10 +27,10 @@ class Slave(Behavior):
 
     def loop(self):
         if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
-            if (self._voltage_toggle_time % 13) > 5:
+            if (self._voltage_toggle_time % 13) < 5:
                 self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100), with_two_points=True)
                 self.robot.io.set_led_color(self.robot.io.LedColor.CYAN)
-            elif (self._voltage_toggle_time % 13) > 10:
+            elif (self._voltage_toggle_time % 13) < 10:
                 self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
                 self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
             else:
