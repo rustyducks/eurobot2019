@@ -1,9 +1,12 @@
 from enum import *
+import threading, serial
+
+import math
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 
 
-LIDAR_SERIAL_PATH = "/dev/ttyACM0"
+LIDAR_SERIAL_PATH = "/dev/ttyUSB0"
 LIDAR_SERIAL_BAUDRATE = 115200
 
 BIT10_TO_BATTERY_FACTOR = 0.014774881516587679
@@ -39,9 +42,9 @@ class IO(object):
         self.battery_signal_voltage = None
         self.bee_arm_green_state = None
         self.bee_arm_orange_state = None
-        # self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
-        # self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
-        # self.lidar_thread.start()
+        self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
+        self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
+        self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
@@ -252,12 +255,16 @@ class IO(object):
         return bit10 * BIT10_TO_BATTERY_FACTOR
 
     def is_obstacle_in_cone(self, direction, cone_angle, distance):
+        direction = round(math.degrees(direction))
         for i in range(len(self.lidar_points)):
             pt = self.lidar_points[i]
+            if pt is None:
+                return
             a = (pt.azimut - direction + 180) % 360 - 180
             if abs(a) <= cone_angle:
-                print(pt.azimut)
-                print(pt.distance)
+
+                #print(pt.azimut)
+                #print(pt.distance)
                 if pt.valid and not pt.warning and pt.distance < distance:
                     return True
         return False

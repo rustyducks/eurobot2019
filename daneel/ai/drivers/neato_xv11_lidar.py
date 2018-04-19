@@ -8,7 +8,7 @@ import math
 import serial
 
 lidar_points = [None]*360  # type: list[LidarPoint]
-
+packet_per_cyle = int(359/4)  # In order to flush the input on each rotation
 
 class LidarPoint:
     def __init__(self, azimut=0, distance=0, quality=0, valid=False, warning=True, updTour=0, point = None):
@@ -36,10 +36,10 @@ def read_v_2_4(lidar_serial):
     global lidar_points
     init_level = 0
     index = 0
+    cycle = 0
     while True:
         try:
             time.sleep(0.00001)  # do not hog the processor power
-
             if init_level == 0:
                 b = lidar_serial.read(1)
                 # start byte
@@ -84,6 +84,11 @@ def read_v_2_4(lidar_serial):
                     lidar_points[index * 4 + 1] = new_lidar_point(index * 4 + 1, b_data1)
                     lidar_points[index * 4 + 2] = new_lidar_point(index * 4 + 2, b_data2)
                     lidar_points[index * 4 + 3] = new_lidar_point(index * 4 + 3, b_data3)
+
+                    if index == packet_per_cyle:
+                        cycle = (cycle + 1) % 2
+                        if cycle == 0:
+                            lidar_serial.flushInput()
 
                 else:
                     pass
