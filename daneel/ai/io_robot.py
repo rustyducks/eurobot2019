@@ -143,13 +143,13 @@ class IO(object):
                 print("[IO] Stop orange water collector")
 
     def start_green_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 130) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 60) == 0:
             self.green_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start green water cannon")
 
     def start_orange_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 130) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 60) == 0:
             self.orange_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start orange water cannon")
@@ -266,6 +266,15 @@ class IO(object):
                 #print(pt.azimut)
                 #print(pt.distance)
                 if pt.valid and not pt.warning and pt.distance < distance:
+                    x_t = self.robot.locomotion.x + pt.distance * math.cos(
+                        math.radians(pt.azimut) + self.robot.locomotion.theta)
+                    y_t = self.robot.locomotion.y + pt.distance * math.sin(
+                        math.radians(pt.azimut) + self.robot.locomotion.theta)
+                    if not self.robot.map.lidar_table_bb.contains(x_t, y_t):
+                        continue
+                    for mask in self.robot.map.lidar_static_obstacles_bb:
+                        if mask.contains(x_t, y_t):
+                            continue
                     return True
         return False
 

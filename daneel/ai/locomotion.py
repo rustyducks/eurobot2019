@@ -3,11 +3,11 @@ import time
 from collections import namedtuple
 from enum import Enum
 
-ACCELERATION_MAX = 150  # mm/s²
+ACCELERATION_MAX = 300  # mm/s²
 LINEAR_SPEED_MAX = 200  # mm/s
 ADMITTED_POSITION_ERROR = 10  # mm
 
-ROTATION_ACCELERATION_MAX = 0.1  # rad/s²
+ROTATION_ACCELERATION_MAX = 0.8  # rad/s²
 ROTATION_SPEED_MAX = 0.7  # rad/s
 ADMITTED_ANGLE_ERROR = 0.05  # rad
 

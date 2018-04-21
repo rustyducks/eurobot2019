@@ -4,7 +4,7 @@ from ivy.std_api import *
 
 IVY_APP_NAME = "AI_Robot"
 
-NEW_OBSTACLE_REGEXP = "New Obstacle "
+NEW_OBSTACLE_REGEXP = "New Obstacle {}"  # New Obstacle id : 3 type : POLYGON points : 1500,350;1500,650;1000,650;1000,350
 GO_TO_ORIENT_REGEXP = "Go to orient (.*)"
 GO_TO_REGEXP = "Go to linear (.*)"
 NEW_TRAJECTORY_REGEXP = "New trajectory {}"
@@ -27,8 +27,9 @@ class Ivy:
     def on_new_connexion(self, agent, event):
         if agent.agent_name == "Pygargue":
             self.send_robot_position()
-            # for obstacle in self.robot.obstacles:
-            #     IvySendMsg(NEW_OBSTACLE_REGEXP + obstacle.ivy_message())
+            for obstacle in self.robot.map.lidar_static_obstacles_bb:
+                IvySendMsg(NEW_OBSTACLE_REGEXP.format(obstacle.serialize()))
+                print(obstacle.serialize())
 
     def register_callback(self, regexp, callback):
         IvyBindMsg(callback, regexp)
