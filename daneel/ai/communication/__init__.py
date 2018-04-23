@@ -77,6 +77,9 @@ class Communication:
         return self.send_message(msg, max_retries)
 
     def reset_soft_teensy(self, max_retries=1000):
+        if self.mock_communication:
+            print("[Communication] Warning : Teensy communication mocked !")
+            return 0
         msg = sMessageDown()
         msg.type = eTypeDown.RESET
         for i in range(100):

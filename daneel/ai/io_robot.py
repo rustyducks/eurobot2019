@@ -54,6 +54,8 @@ class IO(object):
         self.stop_orange_water_collector()
         self.move_arm_base(self.ArmBaseState.RAISED)
         self.close_arm_gripper()
+        self.raise_bee_arm_orange()
+        self.raise_bee_arm_green()
         self.score_display_fat()
 
     @property
@@ -103,6 +105,7 @@ class IO(object):
     class ArmBaseState(Enum):
         RAISED = 200
         MIDDLE = 385
+        FOR_SWITCH = 400
         LOWERED = 490
 
     class ArmGripperState(Enum):
@@ -115,8 +118,8 @@ class IO(object):
 
     class BeeArmState(Enum):
         # [green side degrees, orange side degrees]
-        RAISED = [90, 90]
-        LOWERED = [140, 140]
+        RAISED = [40, 170]
+        LOWERED = [105, 98]
 
     def start_green_water_collector(self):
         if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
@@ -143,13 +146,13 @@ class IO(object):
                 print("[IO] Stop orange water collector")
 
     def start_green_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 60) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 75) == 0:
             self.green_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start green water cannon")
 
     def start_orange_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 60) == 0:
+        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 75) == 0:
             self.orange_water_cannon_state = self.WaterCannonState.FIRING
             if __debug__:
                 print("[IO] Start orange water cannon")
@@ -171,6 +174,9 @@ class IO(object):
             self.led_color = color
             if __debug__:
                 print("[IO] Led switched to {}".format(color))
+
+    def arm_base_position_is_close(self, state: ArmBaseState):
+        return abs(self.arm_base_state - state.value) <= 10
 
     def move_arm_base(self, state: ArmBaseState):
         if state is not None:

@@ -2,7 +2,7 @@ from communication.message_definition import *
 import robot
 import time
 
-r = robot.Robot(2)
+r = robot.Robot(0)
 # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
 #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
 #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
