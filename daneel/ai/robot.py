@@ -1,5 +1,5 @@
 import sys
-
+import map
 import datetime
 import argparse
 import builtins
@@ -22,6 +22,7 @@ robot = None
 
 class Robot(object):
     def __init__(self, behavior=behaviors["FSMMatch"]):
+        self.map = map.Map(self, "data/obstacles_lidar_mask.yaml")
         self.communication = communication.Communication("/dev/ttyAMA0")
         self.io = IO(self)
         self.locomotion = Locomotion(self)

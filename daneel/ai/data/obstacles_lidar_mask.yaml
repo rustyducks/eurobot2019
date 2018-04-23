@@ -1,9 +1,9 @@
 mask:
   table: # Outside this rectangle, any lidar point will be discarded
-    x_start: -50
-    y_start: -50
-    x_stop: 3050
-    y_stop: 2050
+    x_start: 100
+    y_start: 100
+    x_stop: 2900
+    y_stop: 1900
   static_obstacles: # Inside those rectangles, any lidar point will be discarded
     - x_start: -50  # Green water tank
       y_start: 1950
@@ -16,9 +16,9 @@ mask:
       y_stop: 2400
 
     - x_start: -50 # Green clean water collector
-      y_start: 810
+      y_start: 1100
       x_stop: 150
-      y_stop: 870
+      y_stop: 1220
 
     - x_start: 580 # Orange dirty water collector
       y_start: -50
@@ -31,9 +31,9 @@ mask:
       y_stop: 150
 
     - x_start: 2850 # Orange clean water collector
-      y_start: 810
+      y_start: 1100
       x_stop: 3050
-      y_stop: 870
+      y_stop: 1220
 
     - x_start: -150 # Green beacon support 1
       y_start: 1930

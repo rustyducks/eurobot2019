@@ -1,4 +1,3 @@
-serial
+pyserial
 bitstring
-smbus
 pyyaml

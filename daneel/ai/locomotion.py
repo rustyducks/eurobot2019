@@ -13,6 +13,7 @@ ADMITTED_ANGLE_ERROR = 0.05  # rad
 
 Speed = namedtuple("Speed", ['vx', 'vy', 'vtheta'])
 
+
 def center_radians(value):
     while value <= - math.pi:
         value += 2 * math.pi
@@ -20,10 +21,12 @@ def center_radians(value):
         value -= 2 * math.pi
     return value
 
+
 class LocomotionState(Enum):
     POSITION_CONTROL = 0
     DIRECT_SPEED_CONTROL = 1
     STOPPED = 2
+
 
 class Locomotion:
     def __init__(self, robot):
@@ -102,6 +105,13 @@ class Locomotion:
             if self.mode == LocomotionState.STOPPED:
                 self.restart()
 
+    def is_trajectory_finished(self):
+        if self.mode != LocomotionState.POSITION_CONTROL and self.mode != LocomotionState.STOPPED:
+            return True
+        if self.current_point_objective is None:
+            return True
+        return self.distance_to(self.current_point_objective.x, self.current_point_objective.y) <= ADMITTED_POSITION_ERROR \
+            and abs(self.theta - self.current_point_objective.theta) <= ADMITTED_ANGLE_ERROR
 
     def locomotion_loop(self, obstacle_detection=False):
         control_time = time.time()
@@ -124,9 +134,9 @@ class Locomotion:
         else:
             # This should not happen
             speed = Speed(0, 0, 0)
-        #print("Speed wanted : " + str(speed))
-        #self.current_speed = self.comply_speed_constraints(speed, delta_time)
-        #print("Speed after saturation : " + str(self.current_speed))
+        # print("Speed wanted : " + str(speed))
+        # self.current_speed = self.comply_speed_constraints(speed, delta_time)
+        # print("Speed after saturation : " + str(self.current_speed))
 
         if obstacle_detection:
             if self.mode == LocomotionState.STOPPED:
@@ -174,7 +184,7 @@ class Locomotion:
             # Check if we need to decelerate
             t_stop = current_linear_speed / ACCELERATION_MAX
             stop_length = 2 * (
-            current_linear_speed * t_stop - 1 / 2 * ACCELERATION_MAX * t_stop ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
+                current_linear_speed * t_stop - 1 / 2 * ACCELERATION_MAX * t_stop ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
             # current_speed_alpha = math.atan2(self.current_speed[1], self.current_speed[0])
             planned_stop_point = self.Point(self.x + stop_length * math.cos(alpha),
                                             self.y + stop_length * math.sin(alpha))
@@ -191,11 +201,14 @@ class Locomotion:
             t_rotation_stop = abs(self.current_speed.vtheta) / ROTATION_ACCELERATION_MAX
             planned_stop_angle = center_radians(
                 self.theta + rotation_error_sign * 2.5 * (
-                    abs(self.current_speed.vtheta) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop ** 2))
+                    abs(
+                        self.current_speed.vtheta) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop ** 2))
             self.robot.ivy.highlight_robot_angle(0, self.current_point_objective.theta)
             self.robot.ivy.highlight_robot_angle(1, planned_stop_angle)
-            if abs(center_radians(planned_stop_angle - self.current_point_objective.theta)) <= ADMITTED_ANGLE_ERROR or abs(
-                center_radians(planned_stop_angle - self.theta)) > abs(center_radians(self.current_point_objective.theta - self.theta)):
+            if abs(center_radians(
+                            planned_stop_angle - self.current_point_objective.theta)) <= ADMITTED_ANGLE_ERROR or abs(
+                center_radians(planned_stop_angle - self.theta)) > abs(
+                center_radians(self.current_point_objective.theta - self.theta)):
                 omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
 
             speed_command = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
@@ -214,7 +227,7 @@ class Locomotion:
         while math.hypot((vx - self.current_speed.vx) / dt,
                          (vy - self.current_speed.vy) / dt) > ACCELERATION_MAX:
             print("diff : {}".format(math.hypot(vx - self.current_speed.vx,
-                         vy - self.current_speed.vy)))
+                                                vy - self.current_speed.vy)))
             vx = speed_cmd.vx * (1 - alpha) + self.current_speed.vx * alpha
             vy = speed_cmd.vy * (1 - alpha) + self.current_speed.vy * alpha
             alpha += alpha_step
@@ -234,7 +247,6 @@ class Locomotion:
         self.y = y
         if self.robot.communication.send_theta_repositionning(theta) == 0:
             self.theta = theta
-
 
     class Point:
         def __init__(self, x, y):

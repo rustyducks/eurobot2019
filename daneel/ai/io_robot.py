@@ -272,9 +272,17 @@ class IO(object):
                         math.radians(pt.azimut) + self.robot.locomotion.theta)
                     if not self.robot.map.lidar_table_bb.contains(x_t, y_t):
                         continue
+                    in_mask = False
                     for mask in self.robot.map.lidar_static_obstacles_bb:
                         if mask.contains(x_t, y_t):
-                            continue
+                            self.robot.ivy.highlight_point(50, x_t, y_t)
+                            in_mask = True
+                            break
+                    if in_mask:
+                        break
+                    self.robot.ivy.highlight_point(51, x_t, y_t)
+                    print(x_t, y_t)
+                    print(pt.azimut, pt.distance)
                     return True
         return False
 
