@@ -285,7 +285,7 @@ class IO(object):
                             in_mask = True
                             break
                     if in_mask:
-                        break
+                        continue
                     self.robot.ivy.highlight_point(51, x_t, y_t)
                     print(x_t, y_t)
                     print(pt.azimut, pt.distance)
