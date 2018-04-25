@@ -231,6 +231,7 @@ int Communication::registerSensorCommandCallback(SensorCommandCallback callback)
 	}
 	sensorMsgCallbacks.cb[sensorMsgCallbacks.index] = callback;
 	sensorMsgCallbacks.index++;
+	return 0;
 }
 
 void Communication::recieveMessage(const sMessageDown& msg){
