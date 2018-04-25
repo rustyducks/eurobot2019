@@ -25,6 +25,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.948193164" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -34,6 +35,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1946454525" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -43,6 +45,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.602154765" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
