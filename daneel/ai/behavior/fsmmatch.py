@@ -20,7 +20,7 @@ class FSMMatch(Behavior):
         self.robot = robot
         self.color = None
         self.start_time = None
-        self.state = StateColorSelection(self)
+        self.state = StatePreStartChecks(self)
         self.shutdown_button_press_time = 0
 
     def loop(self):
@@ -96,7 +96,7 @@ class StatePreStartChecks(FSMState):
     def deinit(self):
         self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
         self.robot.io.score_display_fat()
-        
+
 
 class StateColorSelection(FSMState):
     class ColorState(Enum):
@@ -183,7 +183,7 @@ class StateWaterCollectorGreen(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, 30, 0)
         if self.time != 0 and time.time() - self.time >= 20:
-            return StateSwitchTrajectory
+            return StateRepositioningXPreSwitch
 
     def deinit(self):
         self.robot.io.stop_green_water_cannon()
@@ -210,21 +210,86 @@ class StateWaterCollectorOrange(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, -30, 0)
         if self.time != 0 and time.time() - self.time >= 20:
-            return StateEnd
+            return StateRepositioningXPreSwitch
 
     def deinit(self):
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
 
+
+class StateRepositioningXPreSwitch(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.repos_start_time = 0
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(200, 1600, 2 * math.pi / 3)
+        else:
+            self.robot.locomotion.go_to_orient(2800, 1600, math.pi / 3)
+
+    def test(self):
+        if self.repos_start_time == 0 and self.robot.locomotion.is_trajectory_finished():
+            self.robot.io.raise_bee_arm_green()
+            self.robot.io.raise_bee_arm_orange()
+            self.repos_start_time = time.time()
+            if self.behavior.color == Color.GREEN:
+                self.robot.locomotion.set_direct_speed(-30, 0, 0)
+            else:
+                self.robot.locomotion.set_direct_speed(30, 0, 0)
+
+        if self.repos_start_time != 0 and time.time() - self.repos_start_time >= 5:
+            if self.behavior.color == Color.GREEN:
+                self.robot.locomotion.reposition_robot(132, self.robot.locomotion.y, 2*math.pi / 3)
+            else:
+                self.robot.locomotion.reposition_robot(2868, self.robot.locomotion.y, math.pi / 3)
+            return StateRepositionningYPreSwitch
+
+    def deinit(self):
+        pass
+
+
+class StateRepositionningYPreSwitch(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.repos_start_time = 0
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(800, 1650, math.pi/6)
+        else:
+            self.robot.locomotion.go_to_orient(1600, 1650, 5*math.pi/6)
+
+    def test(self):
+        if self.repos_start_time == 0 and self.robot.locomotion.is_trajectory_finished():
+            self.repos_start_time = time.time()
+            self.robot.locomotion.set_direct_speed(0, 30, 0)
+
+        if self.repos_start_time != 0 and time.time() - self.repos_start_time >= 5:
+            if self.behavior.color.GREEN == Color.GREEN:
+                self.robot.locomotion.reposition_robot(self.robot.locomotion.x, 1868, math.pi/6)  # TODO: Verify it
+            else:
+                self.robot.locomotion.reposition_robot(self.robot.locomotion.x, 1868, 5*math.pi/6)  # TODO: Verify it
+            return StateSwitchTrajectory
+
+    def deinit(self):
+        pass
+
+
 class StateSwitchTrajectory(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.io.raise_bee_arm_green()
-        self.robot.locomotion.go_to_orient(1140, 1650, -math.pi / 2)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(1140, 1650, -math.pi / 2)
+        else:
+            self.robot.locomotion.go_to_orient(1860, 1650, -math.pi / 2)
 
     def test(self):
-        if self.robot.locomotion.is_trajectory_finished():
-            self.robot.locomotion.go_to_orient(1140, 1770, -math.pi / 2)
+        if not self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH) and \
+                self.robot.locomotion.is_trajectory_finished():
+            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.FOR_SWITCH)
+
+        if self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH):
+            if self.behavior.color == Color.GREEN:
+                self.robot.locomotion.go_to_orient(1140, 1770, -math.pi / 2)
+            else:
+                self.robot.locomotion.go_to_orient(1860, 1770, -math.pi / 2)
             return StateSwitch
 
     def deinit(self):
