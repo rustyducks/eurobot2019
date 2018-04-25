@@ -178,6 +178,13 @@ void MotorControl::setMotorCommand(int command, int pwmPin, int dirPin) {
 	analogWrite(pwmPin, abs(command));
 }
 
+void MotorControl::stopRepositioning() {
+	analogWrite(MOT1_PWM, 0);
+	analogWrite(MOT2_PWM, 0);
+	analogWrite(MOT3_PWM, 0);
+	repositioning = false;
+}
+
 void MotorControl::reset() {
 	setMotorCommand(0, MOT1_PWM, MOT1_DIR);
 	setMotorCommand(0, MOT2_PWM, MOT2_DIR);
@@ -190,4 +197,27 @@ void MotorControl::reset() {
 		_prevError[i] = 0;
 		prev_cons[i] = 0;
 	}
+}
+
+void MotorControl::reposition(int side) {
+	repositioning = true;
+	if(side == 0) {
+		digitalWrite(MOT1_DIR, HIGH);
+		digitalWrite(MOT3_DIR, LOW);
+		analogWrite(MOT1_PWM, 50);
+		analogWrite(MOT3_PWM, 50);
+	}
+	else if(side == 1) {
+		digitalWrite(MOT1_DIR, HIGH);
+		digitalWrite(MOT2_DIR, LOW);
+		analogWrite(MOT1_PWM, 50);
+		analogWrite(MOT2_PWM, 50);
+	}
+	else if(side == 2) {
+		digitalWrite(MOT2_DIR, HIGH);
+		digitalWrite(MOT3_DIR, LOW);
+		analogWrite(MOT2_PWM, 50);
+		analogWrite(MOT3_PWM, 50);
+	}
+
 }
