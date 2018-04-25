@@ -7,6 +7,8 @@ from behavior import Behavior
 
 END_MATCH_TIME = 100  # in seconds
 
+WARNING_VOLTAGE_THRESHOLD = 11.5  # if signal or power voltage goes under this value, led will be flashing red.
+
 
 class Color(Enum):
     GREEN = "green"
@@ -65,6 +67,36 @@ class FSMState:
     def deinit(self):
         raise NotImplementedError("deinit of this state is not defined yet !")
 
+
+class StatePreStartChecks(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.enter_time = time.time()
+
+    def test(self):
+        if (time.time() - self.enter_time) % 13 < 5:
+            if self.robot.io.battery_signal_voltage <= WARNING_VOLTAGE_THRESHOLD and (time.time() - self.enter_time) % 2 < 1:
+                self.robot.io.set_led_color(self.robot.io.LedColor.RED)
+            else:
+                self.robot.io.set_led_color(self.robot.io.LedColor.CYAN)
+            self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100), with_two_points=True)
+        elif (time.time() - self.enter_time) % 13 < 10:
+            if self.robot.io.battery_power_voltage <= WARNING_VOLTAGE_THRESHOLD and (time.time() - self.enter_time) % 2 < 1:
+                self.robot.io.set_led_color(self.robot.io.LedColor.RED)
+            else:
+                self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
+            self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
+        else:
+            self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
+            self.robot.io.score_display_fat()
+
+        if self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED:
+            return StateColorSelection
+
+    def deinit(self):
+        self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
+        self.robot.io.score_display_fat()
+        
 
 class StateColorSelection(FSMState):
     class ColorState(Enum):
