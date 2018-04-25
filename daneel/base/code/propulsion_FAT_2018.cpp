@@ -86,9 +86,7 @@ void loop()
 #endif
 		odometry.update();
 		extNavigation.update();
-		if(!motorControl.isRepositioning()) {
-			motorControl.control();
-		}
+		motorControl.control();
 
 	}
 

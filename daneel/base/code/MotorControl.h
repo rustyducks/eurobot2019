@@ -11,7 +11,6 @@
 
 #define INT_CLAMP 2000
 
-
 //#include "arm_math.h"
 
 /**
@@ -49,10 +48,6 @@ public:
 	 */
 	void controlHolonomic();
 
-	void reposition(int side);
-
-	void stopRepositioning();
-
 	const arm_matrix_instance_f32* getTargetSpeed() const {
 		return _targetSpeed;
 	}
@@ -73,10 +68,6 @@ public:
 
 	void setMotorCommand(int command, int pwmPin, int dirPin);
 
-	bool isRepositioning() {
-		return repositioning;
-	}
-
 	void reset();
 
 protected:
@@ -93,8 +84,6 @@ protected:
 	int prev_cons[3];
 
 	arm_matrix_instance_f32* _intSpeedError;
-
-	bool repositioning;
 
 };
 
