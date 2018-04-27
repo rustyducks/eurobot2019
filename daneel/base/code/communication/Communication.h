@@ -93,6 +93,14 @@ public:
 
 	void reset();
 
+	unsigned long getTimeSinceLastSpeedMessage() {
+		return millis() - timeLastSpeedMessage;
+	}
+
+	void setTimeLastSpeedMessage(unsigned long time) {
+		timeLastSpeedMessage = time;
+	}
+
 private:
 	static constexpr int linearOdomToMsgAdder = 32768;
 	static constexpr double radianToMsgFactor = 10430.378350470453;
@@ -273,6 +281,8 @@ private:
 	int upMessageIndex;
 	uint8_t lastIdDownMessageRecieved;
 	bool isFirstMessage;
+
+	unsigned long timeLastSpeedMessage;
 
 	SpeedMessageCallbackRegister speedMsgCallbacks;
 	ActuatorMessageCallbackRegister actuatorMsgCallbacks;

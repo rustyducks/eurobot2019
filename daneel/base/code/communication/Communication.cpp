@@ -22,6 +22,7 @@ Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(se
 	}
 	nonAcknowledgedOdomReport.startIndex = 0;
 	nonAcknowledgedOdomReport.writeIndex = 0;
+	timeLastSpeedMessage = 0;
 
 }
 

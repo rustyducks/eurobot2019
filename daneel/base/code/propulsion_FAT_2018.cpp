@@ -134,6 +134,7 @@ void handleActuatorCallback(const Communication::ActuatorCommand msg){
 }
 
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
+	fat::communication.setTimeLastSpeedMessage(millis());
 	extNavigation.setTableSpeedCons(msg.vx, msg.vy, msg.vtheta);
 }
 

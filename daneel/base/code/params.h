@@ -78,6 +78,7 @@ const int BAT_POW = A22;
 
 
 const float POS_REPORT_PERIOD = 0.2;
+const unsigned int TIME_SPEED_FAILSAFE = 1000;
 
 #define HOLONOMIC
 

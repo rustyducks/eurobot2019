@@ -10,6 +10,8 @@
 #include "Odometry.h"
 #include "utilities.h"
 #include "MotorControl.h"
+#include "communication/Communication.h"
+#include "InputOutputs.h"
 
 ExtNavigation extNavigation = ExtNavigation();
 
@@ -23,7 +25,6 @@ ExtNavigation::~ExtNavigation() {
 }
 
 void ExtNavigation::update() {
-	computeRotationMatrix();	//compute the new rotation matrix associated with the new theta
 
 	//instanciate speed (local variable)
 	float32_t data[] = {0,0,0};
@@ -32,13 +33,21 @@ void ExtNavigation::update() {
 	robot_speed.numRows = 3;
 	robot_speed.pData = data;
 
-	//compute speed in the robot reference frame
-	arm_status status = arm_mat_mult_f32(rotation_matrix, table_speed_cons, &robot_speed);
-	if(status != ARM_MATH_SUCCESS) {
-		Serial.print("[ERROR] ExtNavigation::update(): matrix multiplication error : ");
-		Serial.println(status);
-	}
+	if(fat::communication.getTimeSinceLastSpeedMessage() < TIME_SPEED_FAILSAFE) {
 
+		computeRotationMatrix();	//compute the new rotation matrix associated with the new theta
+
+		//compute speed in the robot reference frame
+		arm_status status = arm_mat_mult_f32(rotation_matrix, table_speed_cons, &robot_speed);
+		if(status != ARM_MATH_SUCCESS) {
+			Serial.print("[ERROR] ExtNavigation::update(): matrix multiplication error : ");
+			Serial.println(status);
+		}
+	} else {
+		zeroMatrix(&robot_speed);
+		inputOutputs.HMISetLedColor(1,0,0);
+		Serial.print("[WARNING] Long time since last speed message. Stop for failsafe. ");
+	}
 	//set target speed to the motor controller (robot reference frame)
 	motorControl.setTargetSpeed(&robot_speed);
 }
@@ -48,7 +57,7 @@ void ExtNavigation::computeRotationMatrix() {
 	float32_t cos_t = cos(theta);
 	float32_t sin_t = sin(theta);
 
-	float32_t rot_mat_data[] = {		//TODO : check if it is the correct matrix : it might be the transpose one
+	float32_t rot_mat_data[] = {
 			cos_t, sin_t, 0,
 			-sin_t,  cos_t, 0,
 		    	0,      0, 1
