@@ -27,7 +27,7 @@ class FSMMatch(Behavior):
             self.shutdown_button_press_time = time.time()
         elif self.shutdown_button_press_time != 0 and self.robot.io.button1_state == self.robot.io.ButtonState.RELEASED:
             self.shutdown_button_press_time = 0
-        elif self.shutdown_button_press_time != 0 and time.time() - self.shutdown_button_press_time >= 3:
+        elif self.shutdown_button_press_time != 0 and time.time() - self.shutdown_button_press_time >= 5:
             self.robot.locomotion.stop()
             for i in range(3):
                 self.robot.io.set_led_color(self.robot.io.LedColor.RED)
