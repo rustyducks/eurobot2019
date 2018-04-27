@@ -72,6 +72,7 @@ class StatePreStartChecks(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.enter_time = time.time()
+        self.robot.locomotion.set_direct_speed(0, 0, 0)
 
     def test(self):
         if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
