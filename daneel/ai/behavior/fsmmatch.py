@@ -276,9 +276,11 @@ class StateSwitchTrajectory(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.go_to_orient(1140, 1650, -math.pi / 2)
+            self.robot.locomotion.follow_trajectory([(610, 1800, -math.pi / 2),
+                                                     (1140, 1800, -math.pi / 2)])
         else:
-            self.robot.locomotion.go_to_orient(1860, 1650, -math.pi / 2)
+            self.robot.locomotion.follow_trajectory([(2590, 1800, - math.pi / 2),
+                                                     (1860, 1800, - math.pi / 2)])
 
     def test(self):
         if not self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH) and \
@@ -287,9 +289,9 @@ class StateSwitchTrajectory(FSMState):
 
         if self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH):
             if self.behavior.color == Color.GREEN:
-                self.robot.locomotion.go_to_orient(1140, 1770, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1140, 1880, -math.pi / 2)
             else:
-                self.robot.locomotion.go_to_orient(1860, 1770, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1860, 1880, -math.pi / 2)
             return StateSwitch
 
     def deinit(self):
