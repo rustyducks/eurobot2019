@@ -184,7 +184,7 @@ class StateWaterCollectorGreen(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, 30, 0)
         if self.time != 0 and time.time() - self.time >= 20:
-            return StateRepositioningXPreSwitch
+            return StateSwitchTrajectory
 
     def deinit(self):
         self.robot.io.stop_green_water_cannon()
@@ -211,7 +211,7 @@ class StateWaterCollectorOrange(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, -30, 0)
         if self.time != 0 and time.time() - self.time >= 20:
-            return StateRepositioningXPreSwitch
+            return StateSwitchTrajectory
 
     def deinit(self):
         self.robot.io.stop_orange_water_cannon()
