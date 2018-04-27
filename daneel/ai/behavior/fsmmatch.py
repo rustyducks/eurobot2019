@@ -71,6 +71,8 @@ class FSMState:
 class StatePreStartChecks(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.PERIODIC)
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.PERIODIC)
         self.enter_time = time.time()
         self.robot.locomotion.set_direct_speed(0, 0, 0)
 
@@ -96,6 +98,8 @@ class StatePreStartChecks(FSMState):
             return StateColorSelection
 
     def deinit(self):
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.STOPPED)
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.STOPPED)
         self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
         self.robot.io.score_display_fat()
 
