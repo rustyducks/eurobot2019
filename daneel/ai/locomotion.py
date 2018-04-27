@@ -12,6 +12,7 @@ ROTATION_SPEED_MAX = 0.7  # rad/s
 ADMITTED_ANGLE_ERROR = 0.05  # rad
 
 Speed = namedtuple("Speed", ['vx', 'vy', 'vtheta'])
+GoalPoint = namedtuple("GoalPoint", ['goal_point', 'goal_speed'])
 
 
 def center_radians(value):
@@ -36,7 +37,14 @@ class Locomotion:
         self.theta = 0
         self.previous_mode = None
         self.mode = LocomotionState.POSITION_CONTROL
+
+        # Position Control
+        # self.trajectory[0].goal_point must be equal to self.current_point_objective
+        self.trajectory = []  # type: list[GoalPoint]
         self.current_point_objective = None  # type: self.PointOrient
+        self.position_control_speed_goal = 0
+
+        #Direct speed control
         self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
@@ -89,7 +97,10 @@ class Locomotion:
 
     def go_to_orient(self, x, y, theta):
         self.mode = LocomotionState.POSITION_CONTROL
-        self.current_point_objective = self.PointOrient(x, y, center_radians(theta))
+        self.trajectory.clear()
+        self.trajectory.append(GoalPoint(self.PointOrient(x, y, center_radians(theta)), 0.))
+        self.current_point_objective = self.trajectory[0].goal_point
+        self.position_control_speed_goal = self.trajectory[0].goal_speed
 
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
@@ -105,13 +116,20 @@ class Locomotion:
             if self.mode == LocomotionState.STOPPED:
                 self.restart()
 
-    def is_trajectory_finished(self):
+    def is_at_point_orient(self, point=None):
+        if point is None:
+            point = self.current_point_objective
         if self.mode != LocomotionState.POSITION_CONTROL and self.mode != LocomotionState.STOPPED:
             return True
-        if self.current_point_objective is None:
+        if point is None:
             return True
-        return self.distance_to(self.current_point_objective.x, self.current_point_objective.y) <= ADMITTED_POSITION_ERROR \
-            and abs(self.theta - self.current_point_objective.theta) <= ADMITTED_ANGLE_ERROR
+        return self.distance_to(point.x, point.y) <= ADMITTED_POSITION_ERROR \
+            and abs(self.theta - point.theta) <= ADMITTED_ANGLE_ERROR
+
+    def is_trajectory_finished(self):
+        if len(self.trajectory) == 0:
+            return self.is_at_point_orient()
+        return False
 
     def locomotion_loop(self, obstacle_detection=False):
         control_time = time.time()
@@ -169,6 +187,15 @@ class Locomotion:
         self.direct_speed_goal = Speed(x_speed, y_speed, theta_speed)
 
     def position_control_loop(self, delta_time):
+        if len(self.trajectory) > 0:
+            if self.is_at_point_orient():
+                # We reached a point in the trajectory, remove it.
+                self.trajectory.pop(0)
+                if len(self.trajectory) > 0:
+                    # Go to next point in the trajectory
+                    self.current_point_objective = self.trajectory[0].goal_point
+                    self.position_control_speed_goal = self.trajectory[0].goal_speed
+
         if self.current_point_objective is not None:
             self.robot.ivy.highlight_point(0, self.current_point_objective.x, self.current_point_objective.y)
             distance_to_objective = self.current_point_objective.lin_distance_to(self.x, self.y)
@@ -182,18 +209,19 @@ class Locomotion:
             new_speed = min((LINEAR_SPEED_MAX, current_linear_speed + delta_time * ACCELERATION_MAX))
 
             # Check if we need to decelerate
-            t_stop = current_linear_speed / ACCELERATION_MAX
-            stop_length = 2 * (
-                current_linear_speed * t_stop - 1 / 2 * ACCELERATION_MAX * t_stop ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
-            # current_speed_alpha = math.atan2(self.current_speed[1], self.current_speed[0])
-            planned_stop_point = self.Point(self.x + stop_length * math.cos(alpha),
-                                            self.y + stop_length * math.sin(alpha))
-            self.robot.ivy.highlight_point(1, planned_stop_point.x, planned_stop_point.y)
-            planned_stop_error = planned_stop_point.lin_distance_to_point(self.current_point_objective)
-            if planned_stop_error <= ADMITTED_POSITION_ERROR or planned_stop_point.lin_distance_to(self.x,
-                                                                                                   self.y) > distance_to_objective:
-                # Deceleration time
-                new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
+            if new_speed > self.position_control_speed_goal:
+                t_reach_speed = (current_linear_speed - self.position_control_speed_goal) / ACCELERATION_MAX
+                reach_speed_length = 2 * (
+                    current_linear_speed * t_reach_speed - 1 / 2 * ACCELERATION_MAX * t_reach_speed ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
+                # current_speed_alpha = math.atan2(self.current_speed[1], self.current_speed[0])
+                planned_stop_point = self.Point(self.x + reach_speed_length * math.cos(alpha),
+                                                self.y + reach_speed_length * math.sin(alpha))
+                self.robot.ivy.highlight_point(1, planned_stop_point.x, planned_stop_point.y)
+                planned_stop_error = planned_stop_point.lin_distance_to_point(self.current_point_objective)
+                if planned_stop_error <= ADMITTED_POSITION_ERROR or planned_stop_point.lin_distance_to(self.x,
+                                                                                                       self.y) > distance_to_objective:
+                    # Deceleration time
+                    new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
 
             # Rotation part
             omega = min((ROTATION_SPEED_MAX, abs(self.current_speed.vtheta) + delta_time * ROTATION_ACCELERATION_MAX))
@@ -248,6 +276,41 @@ class Locomotion:
         if self.robot.communication.send_theta_repositionning(theta) == 0:
             self.theta = theta
 
+    def follow_trajectory(self, points_list):
+        """
+
+        :param points_list:
+        :type points_list: list[tuple[int, int]]|list[Locomotion.PointOrient]
+        :return:
+        """
+        self.mode = LocomotionState.POSITION_CONTROL
+        self.trajectory.clear()
+        if len(points_list) > 0:
+            for i, pt in enumerate(points_list):
+                if i != len(points_list) - 1:
+                    xe = points_list[i + 1][0]
+                    ye = points_list[i + 1][1]
+
+                    if i == 0:
+                        xs = self.x
+                        ys = self.y
+                    else:
+                        xs = points_list[i - 1][0]
+                        ys = points_list[i - 1][1]
+                    a1 = math.atan2(pt[1] - ys, pt[0] - xs)
+                    a2 = math.atan2(ye - pt[1], xe - pt[0])
+                    angle = center_radians(abs(a1) - abs(a2))
+                    if abs(angle) >= math.pi / 2:
+                        goal_speed = 0.
+                    else:
+                        goal_speed = LINEAR_SPEED_MAX * (1 - abs(angle) / (math.pi / 2))
+                else:
+                    goal_speed = 0.
+
+                self.trajectory.append(GoalPoint(self.PointOrient(pt[0], pt[1], pt[2]), goal_speed))
+        self.current_point_objective = self.trajectory[0].goal_point
+        self.position_control_speed_goal = self.trajectory[0].goal_speed
+
     class Point:
         def __init__(self, x, y):
             self.x = x
@@ -259,7 +322,19 @@ class Locomotion:
         def lin_distance_to(self, x, y):
             return math.hypot(x - self.x, y - self.y)
 
+        def __getitem__(self, item):
+            if item == 0 or item == 'x':
+                return self.x
+            elif item == 1 or item == 'y':
+                return self.y
+
     class PointOrient(Point):
         def __init__(self, x, y, theta=0):
             super().__init__(x, y)
             self.theta = theta
+
+        def __getitem__(self, item):
+            if item == 2 or item == "theta":
+                return self.theta
+            else:
+                return super(Locomotion.PointOrient, self).__getitem__(item)
