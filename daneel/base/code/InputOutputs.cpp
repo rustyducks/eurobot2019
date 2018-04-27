@@ -55,7 +55,7 @@ void InputOutputs::init() {
 }
 
 void InputOutputs::initSensors(){
-	sSensor battery_sig, battery_pwr, arm_base_position, arm_grip_position;
+	sSensor battery_sig, battery_pwr;
 	pinMode(BAT_SIG, INPUT);
 	pinMode(BAT_POW, INPUT);
 	battery_sig.sensorType = sSensor::ANALOG;
@@ -74,12 +74,6 @@ void InputOutputs::initSensors(){
 	sensors[registeredSensorsNumber++] = battery_pwr;
 
 	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
-	arm_base_position = {sSensor::DYNAMIXEL_POSITION, sSensor::ARM_BASE_POSITION, sSensor::STOPPED,
-							0, 0, ARM_BASE};
-	arm_grip_position = {sSensor::DYNAMIXEL_POSITION, sSensor::ARM_GRIP_POSITION, sSensor::STOPPED,
-							0, 0, ARM_GRIPPER};
-	sensors[registeredSensorsNumber++] = arm_base_position;
-	sensors[registeredSensorsNumber++] = arm_grip_position;
 //	irCubeLeft.sensorType = sSensor::ANALOG;
 //	irCubeLeft.sensorId = 0;
 //	irCubeLeft.sensorPin = IR_CUBES_LEFT;
@@ -184,18 +178,6 @@ void InputOutputs::deliverWater(bool enable, int dynamixelId, bool direction) {
 	}
 }
 
-void InputOutputs::moveArmBase(int degree){
-	Dynamixel.setEndless(ARM_BASE, false);
-	Dynamixel.moveSpeed(ARM_BASE, degree, ARM_BASE_SPEED);
-	// TODO : Activate dynamixel sensor sending to AI.
-}
-
-void InputOutputs::moveArmGripper(int degree){
-	Dynamixel.setEndless(ARM_GRIPPER, false);
-	Dynamixel.move(ARM_GRIPPER, degree);
-	// TODO : Activate dynamixel sensor sending to AI.
-}
-
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
 	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_GREEN:
@@ -209,12 +191,6 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		break;
 	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_ORANGE:
 		analogWrite(WATER_CANNON_ORANGE, actuatorCommand);
-		break;
-	case eMsgActuatorId::ARM_BASE_DYNAMIXEL:
-		moveArmBase(actuatorCommand);
-		break;
-	case eMsgActuatorId::ARM_GRIPPER_DYNAMIXEL:
-		moveArmGripper(actuatorCommand);
 		break;
 	case eMsgActuatorId::SCORE_COUNTER:
 		scoreDisplay.setBrightness(7, true);

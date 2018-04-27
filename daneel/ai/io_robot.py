@@ -17,11 +17,9 @@ class ActuatorID(Enum):
     WATER_COLLECTOR_ORANGE = 1  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
     WATER_CANNON_GREEN = 2     # DC motor
     WATER_CANNON_ORANGE = 3    # DC motor
-    ARM_BASE = 4         # Dynamixel
-    ARM_GRIPPER = 5      # Dynamixel
-    SCORE_COUNTER = 6
-    BEE_ARM_GREEN = 7    # Chinese servomotor
-    BEE_ARM_ORANGE = 8   # Chinese servomotor
+    SCORE_COUNTER = 4
+    BEE_ARM_GREEN = 5    # Chinese servomotor
+    BEE_ARM_ORANGE = 6   # Chinese servomotor
 
 
 class IO(object):
@@ -35,8 +33,6 @@ class IO(object):
         self.green_water_cannon_state = None
         self.orange_water_collector_state = None
         self.orange_water_cannon_state = None
-        self.arm_base_state = None
-        self.arm_gripper_state = None
         self.score_display_text = None
         self.battery_power_voltage = None
         self.battery_signal_voltage = None
@@ -52,8 +48,6 @@ class IO(object):
         self.stop_green_water_collector()
         self.stop_orange_water_cannon()
         self.stop_orange_water_collector()
-        self.move_arm_base(self.ArmBaseState.RAISED)
-        self.close_arm_gripper()
         self.raise_bee_arm_orange()
         self.raise_bee_arm_green()
         self.score_display_fat()
@@ -65,8 +59,6 @@ class IO(object):
     class SensorId(Enum):
         BATTERY_SIGNAL = 0
         BATTERY_POWER = 1
-        ARM_BASE_ANGLE = 2
-        ARM_GRIP_ANGLE = 3
 
     class SensorState(Enum):
         STOPPED = 0
@@ -101,16 +93,6 @@ class IO(object):
     class WaterCannonState(Enum):
         FIRING = "firing"
         STOPPED = "stopped"
-
-    class ArmBaseState(Enum):
-        RAISED = 200
-        MIDDLE = 385
-        FOR_SWITCH = 400
-        LOWERED = 490
-
-    class ArmGripperState(Enum):
-        OPEN = 400
-        CLOSED = 518
 
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
         ENAC = 20001
@@ -175,30 +157,6 @@ class IO(object):
             if __debug__:
                 print("[IO] Led switched to {}".format(color))
 
-    def arm_base_position_is_close(self, state: ArmBaseState):
-        return abs(self.arm_base_state - state.value) <= 10
-
-    def move_arm_base(self, state: ArmBaseState):
-        if state is not None:
-            if self.change_sensor_read_state(self.SensorId.ARM_BASE_ANGLE, self.SensorState.PERIODIC) == 0:
-                if self.robot.communication.send_actuator_command(ActuatorID.ARM_BASE.value, state.value) == 0:
-                    if __debug__:
-                        print("[IO] Moved arm base to {}".format(state))
-        else:
-            raise AttributeError("None argument passed in move arm base !")
-
-    def open_arm_gripper(self):
-        if self.change_sensor_read_state(self.SensorId.ARM_GRIP_ANGLE, self.SensorState.PERIODIC) == 0:
-            if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.OPEN.value) == 0:
-                if __debug__:
-                    print("[IO] Arm gripper opened")
-
-    def close_arm_gripper(self):
-        if self.change_sensor_read_state(self.SensorId.ARM_GRIP_ANGLE, self.SensorState.PERIODIC) == 0:
-            if self.robot.communication.send_actuator_command(ActuatorID.ARM_GRIPPER.value, self.ArmGripperState.CLOSED.value) == 0:
-                if __debug__:
-                    print("[IO] Arm gripper closed")
-
     def score_display_fat(self):
         if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.FAT.value) == 0:
             self.score_display_text = "FAT"
@@ -252,10 +210,6 @@ class IO(object):
             self.battery_signal_voltage = self._bit10_to_battery_voltage(sensor_value)
         elif sensor_id == self.SensorId.BATTERY_POWER.value:
             self.battery_power_voltage = self._bit10_to_battery_voltage(sensor_value)
-        elif sensor_id == self.SensorId.ARM_BASE_ANGLE.value:
-            self.arm_base_state = sensor_value
-        elif sensor_id == self.SensorId.ARM_GRIP_ANGLE.value:
-            self.arm_gripper_state = sensor_value
 
     def _bit10_to_battery_voltage(self, bit10):
         return bit10 * BIT10_TO_BATTERY_FACTOR

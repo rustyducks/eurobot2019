@@ -31,9 +31,6 @@ public:
 	bool HMIGetCordState();
 	void HMISendState();
 
-	void moveArmBase(int degree);
-	void moveArmGripper(int degree);
-
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
 	void deliverWater(bool enable, int dynamixelId, bool direction);
 
@@ -58,11 +55,9 @@ private:
 		WATER_DELIVERING_DYNAMIXEL_ORANGE = 1,
 		WATER_CANNON_DC_MOTOR_GREEN = 2,
 		WATER_CANNON_DC_MOTOR_ORANGE = 3,
-		ARM_BASE_DYNAMIXEL = 4,
-		ARM_GRIPPER_DYNAMIXEL = 5,
-		SCORE_COUNTER = 6,
-		BEE_ARM_SERVO_GREEN = 7,
-		BEE_ARM_SERVO_ORANGE = 8
+		SCORE_COUNTER = 4,
+		BEE_ARM_SERVO_GREEN = 5,
+		BEE_ARM_SERVO_ORANGE = 6
 	}eMsgActuatorId;
 
 	typedef struct{
@@ -73,9 +68,7 @@ private:
 		};
 		enum eSensorId{
 			BATTERY_SIG = 0,
-			BATTERY_POW = 1,
-			ARM_BASE_POSITION = 2,
-			ARM_GRIP_POSITION = 3
+			BATTERY_POW = 1
 		};
 		typedef enum{
 			STOPPED,

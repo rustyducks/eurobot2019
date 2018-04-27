@@ -191,11 +191,7 @@ class StateSwitchTrajectory(FSMState):
         self.robot.locomotion.go_to_orient(1140, 1650, -math.pi / 2)
 
     def test(self):
-        if not self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH) and \
-                self.robot.locomotion.is_trajectory_finished():
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.FOR_SWITCH)
-
-        if self.robot.io.arm_base_position_is_close(self.robot.io.ArmBaseState.FOR_SWITCH):
+        if self.robot.locomotion.is_trajectory_finished():
             self.robot.locomotion.go_to_orient(1140, 1770, -math.pi / 2)
             return StateSwitch
 
@@ -211,8 +207,7 @@ class StateSwitch(FSMState):
             return StateEnd
 
     def deinit(self):
-        self.robot.io.move_arm_base(self.robot.io.ArmBaseState.RAISED)
-
+        pass
 
 class StateEnd(FSMState):
     def __init__(self, behavior):
