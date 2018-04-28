@@ -138,6 +138,7 @@ class StateColorSelection(FSMState):
             self.robot.locomotion.reposition_robot(154, 1650, 2 * math.pi / 3)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
+
 class StatePreMatch(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
@@ -148,6 +149,7 @@ class StatePreMatch(FSMState):
 
     def deinit(self):
         self.behavior.start_match()
+
 
 class StateWaterCollectorTrajectory(FSMState):
     def __init__(self, behavior):
@@ -168,6 +170,7 @@ class StateWaterCollectorTrajectory(FSMState):
 
     def deinit(self):
         pass
+
 
 class StateWaterCollectorGreen(FSMState):
     def __init__(self, behavior):
@@ -221,6 +224,7 @@ class StateWaterCollectorOrange(FSMState):
     def deinit(self):
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
+
 
 class StateRepositioningXPreSwitch(FSMState):
     def __init__(self, behavior):
@@ -281,16 +285,18 @@ class StateSwitchTrajectory(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
+            self.robot.io.raise_bee_arm_green()
             self.robot.locomotion.follow_trajectory([(610, 1800, -math.pi / 2),
-                                                     (1140, 1800, -math.pi / 2)])
+                                                     (1060, 1800, -math.pi / 2)])
         else:
+            self.robot.io.raise_bee_arm_orange()
             self.robot.locomotion.follow_trajectory([(2590, 1800, - math.pi / 2),
                                                      (1860, 1800, - math.pi / 2)])
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
             if self.behavior.color == Color.GREEN:
-                self.robot.locomotion.go_to_orient(1140, 1880, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1060, 1940, -math.pi / 2)
             else:
                 self.robot.locomotion.go_to_orient(1860, 1880, -math.pi / 2)
             return StateSwitch
@@ -298,15 +304,71 @@ class StateSwitchTrajectory(FSMState):
     def deinit(self):
         pass
 
+
 class StateSwitch(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
+            return StateBeeTrajectory
+
+    def deinit(self):
+        pass
+
+
+class StateBeeTrajectory(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.follow_trajectory([(1200, 1300, -math.pi / 2),
+                                                     (350,   400,  math.pi / 2),
+                                                     (160,   150,  math.pi / 2)])
+        else:
+            self.robot.locomotion.follow_trajectory([(1800, 1300, -math.pi / 2),
+                                                     (2650, 400, math.pi / 2),
+                                                     (2840, 150, math.pi / 2)])
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
+            return StateBee
+
+    def deinit(self):
+        pass
+
+
+class StateBee(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.lower_bee_arm_green()
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(400, 150, math.pi / 2)
+        else:
+            self.robot.locomotion.go_to_orient(2600, 150, math.pi / 2)
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
+            return StateTrajectoryCubes
+
+    def deinit(self):
+        self.robot.io.raise_bee_arm_green()
+        pass
+
+
+class StateTrajectoryCubes(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(300, 600, math.pi / 6)
+        else:
+            self.robot.locomotion.go_to_orient(2700, 600, 5 * math.pi / 6)
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
             return StateEnd
 
     def deinit(self):
+        self.robot.io.raise_bee_arm_green()
         pass
 
 class StateEnd(FSMState):
