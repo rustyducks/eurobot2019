@@ -340,10 +340,11 @@ class StateBeeTrajectory(FSMState):
 class StateBee(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.io.lower_bee_arm_green()
         if self.behavior.color == Color.GREEN:
+            self.robot.io.lower_bee_arm_green()
             self.robot.locomotion.go_to_orient(400, 150, math.pi / 2)
         else:
+            self.robot.io.lower_bee_arm_orange()
             self.robot.locomotion.go_to_orient(2600, 150, math.pi / 2)
 
     def test(self):
@@ -352,6 +353,7 @@ class StateBee(FSMState):
 
     def deinit(self):
         self.robot.io.raise_bee_arm_green()
+        self.robot.io.raise_bee_arm_orange()
         pass
 
 
@@ -368,17 +370,17 @@ class StateTrajectoryCubes(FSMState):
             return StateEnd
 
     def deinit(self):
-        self.robot.io.raise_bee_arm_green()
         pass
 
 class StateEnd(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.behavior = behavior
-        self.behavior.robot.locomotion.set_direct_speed(0,0,0)
-        self.behavior.robot.locomotion.reposition_robot(0, 0, 0)  # To stop recalage if any
-        self.behavior.robot.io.stop_green_water_collector()
-        self.behavior.robot.io.stop_green_water_cannon()
+        self.robot.locomotion.set_direct_speed(0, 0, 0)
+        self.robot.locomotion.reposition_robot(0, 0, 0)  # To stop recalage if any
+        self.robot.io.stop_orange_water_collector()
+        self.robot.io.stop_orange_water_cannon()
+        self.robot.io.stop_green_water_collector()
+        self.robot.io.stop_green_water_cannon()
 
     def test(self):
         pass
