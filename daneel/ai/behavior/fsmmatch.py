@@ -20,6 +20,7 @@ class FSMMatch(Behavior):
         self.robot = robot
         self.color = None
         self.start_time = None
+        self.score = 0
         self.state = StatePreStartChecks(self)
         self.shutdown_button_press_time = 0
 
@@ -149,6 +150,8 @@ class StatePreMatch(FSMState):
 
     def deinit(self):
         self.behavior.start_match()
+        self.behavior.score = 0
+        self.robot.io.score_display_number(self.behavior.score)
 
 
 class StateWaterCollectorTrajectory(FSMState):
@@ -183,6 +186,8 @@ class StateWaterCollectorGreen(FSMState):
     def test(self):
         if self.time == 0 and self.robot.locomotion.is_trajectory_finished():
             self.time = time.time()
+            self.behavior.score += 10
+            self.robot.io.score_display_number(self.behavior.score)
         if self.time != 0 and (time.time() - self.time) % 4 <= 1:
             self.robot.locomotion.set_direct_speed(-30, 0, 0)
         elif self.time != 0 and (time.time() - self.time) % 4 <= 2:
@@ -197,6 +202,8 @@ class StateWaterCollectorGreen(FSMState):
     def deinit(self):
         self.robot.io.stop_green_water_cannon()
         self.robot.io.stop_green_water_collector()
+        self.behavior.score += 5 * 8
+        self.robot.io.score_display_number(self.behavior.score)
 
 
 class StateWaterCollectorOrange(FSMState):
@@ -210,6 +217,8 @@ class StateWaterCollectorOrange(FSMState):
     def test(self):
         if self.time == 0 and self.robot.locomotion.is_trajectory_finished():
             self.time = time.time()
+            self.behavior.score += 10
+            self.robot.io.score_display_number(self.behavior.score)
         if self.time != 0 and (time.time() - self.time) % 4 <= 1:
             self.robot.locomotion.set_direct_speed(30, 0, 0)
         elif self.time != 0 and (time.time() - self.time) % 4 <= 2:
@@ -224,6 +233,8 @@ class StateWaterCollectorOrange(FSMState):
     def deinit(self):
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
+        self.behavior.score += 5 * 8
+        self.robot.io.score_display_number(self.behavior.score)
 
 
 class StateRepositioningXPreSwitch(FSMState):
@@ -311,6 +322,8 @@ class StateSwitch(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
+            self.behavior.score += 25
+            self.robot.io.score_display_number(self.behavior.score)
             return StateBeeTrajectory
 
     def deinit(self):
@@ -349,6 +362,8 @@ class StateBee(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
+            self.behavior.score += 50
+            self.robot.io.score_display_number(self.behavior.score)
             return StateTrajectoryCubes
 
     def deinit(self):
