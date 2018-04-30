@@ -150,7 +150,7 @@ class StatePreMatch(FSMState):
 
     def deinit(self):
         self.behavior.start_match()
-        self.behavior.score = 0
+        self.behavior.score = 10  # Pannal + bee present
         self.robot.io.score_display_number(self.behavior.score)
 
 
