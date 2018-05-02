@@ -126,6 +126,17 @@ class Locomotion:
         return self.distance_to(point.x, point.y) <= ADMITTED_POSITION_ERROR \
             and abs(self.theta - point.theta) <= ADMITTED_ANGLE_ERROR
 
+    def is_trajectory_next_point_needed(self):
+        if self.is_at_point_orient():
+            return True
+        else:
+            if self.distance_to(self.current_point_objective.x, self.current_point_objective.y) <= 3 * ADMITTED_POSITION_ERROR and \
+                    self.trajectory[0].goal_speed > 0.1:
+                rp_x = self.current_point_objective.x - self.x
+                rp_y = self.current_point_objective.y - self.y
+                speed_dot_rp = self.current_speed.vy * rp_x + self.current_speed.vy * rp_y
+                return speed_dot_rp <= 0  # If speed is in not in the same direction as the point, proceed to next point
+
     def is_trajectory_finished(self):
         if len(self.trajectory) == 0:
             return self.is_at_point_orient()
@@ -188,7 +199,7 @@ class Locomotion:
 
     def position_control_loop(self, delta_time):
         if len(self.trajectory) > 0:
-            if self.is_at_point_orient():
+            if self.is_trajectory_next_point_needed():
                 # We reached a point in the trajectory, remove it.
                 self.trajectory.pop(0)
                 if len(self.trajectory) > 0:
