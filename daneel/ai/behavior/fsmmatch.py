@@ -301,15 +301,15 @@ class StateSwitchTrajectory(FSMState):
                                                      (1060, 1800, -math.pi / 2)])
         else:
             self.robot.io.raise_bee_arm_orange()
-            self.robot.locomotion.follow_trajectory([(2590, 1800, - math.pi / 2),
-                                                     (1860, 1800, - math.pi / 2)])
+            self.robot.locomotion.follow_trajectory([(2390, 1800, - math.pi / 2),
+                                                     (1940, 1800, - math.pi / 2)])
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
             if self.behavior.color == Color.GREEN:
                 self.robot.locomotion.go_to_orient(1060, 1940, -math.pi / 2)
             else:
-                self.robot.locomotion.go_to_orient(1860, 1880, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1940, 1880, -math.pi / 2)
             return StateSwitch
 
     def deinit(self):
@@ -376,9 +376,9 @@ class StateTrajectoryCubes(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.go_to_orient(850, 1400, math.pi / 6)
+            self.robot.locomotion.follow_trajectory([(350, 250, math.pi/2), (850, 1400, math.pi / 6)])
         else:
-            self.robot.locomotion.go_to_orient(2150, 1400, 5 * math.pi / 6)
+            self.robot.locomotion.follow_trajectory([(2650, 250, math.pi/2), (2150, 1400, 5 * math.pi / 6)])
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
@@ -392,9 +392,9 @@ class StateCubes(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.go_to_orient(850, 1700, math.pi / 6)
+            self.robot.locomotion.go_to_orient(850, 1780, math.pi / 6)
         else:
-            self.robot.locomotion.go_to_orient(2150, 1700, 5 * math.pi / 6)
+            self.robot.locomotion.go_to_orient(2150, 1780, 5 * math.pi / 6)
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
