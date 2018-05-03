@@ -400,6 +400,40 @@ class StateCubes(FSMState):
         if self.robot.locomotion.is_trajectory_finished():
             self.behavior.score += 1 * 5
             self.robot.io.score_display_number(self.behavior.score)
+            return StateTrajectoryCubes2
+
+    def deinit(self):
+        pass
+
+
+class StateTrajectoryCubes2(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.follow_trajectory([(800, 500, math.pi / 12), (250, 700, math.pi / 12)])
+        else:
+            self.robot.locomotion.follow_trajectory([(2600, 500, 11 * math.pi / 12), (2750, 700, 11 * math.pi / 12)])
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
+            return StateCubes2
+
+    def deinit(self):
+        pass
+
+
+class StateCubes2(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(700, 1780, math.pi / 12)
+        else:
+            self.robot.locomotion.go_to_orient(2300, 1780, 11 * math.pi / 12)
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
+            self.behavior.score += 1 * 5
+            self.robot.io.score_display_number(self.behavior.score)
             return StateEnd
 
     def deinit(self):
