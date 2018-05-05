@@ -1,8 +1,9 @@
 from communication.message_definition import *
 import robot
 import time
+import behavior
 
-r = robot.Robot(0)
+r = robot.Robot(behavior.Behaviors.FSMMatch.value)
 # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
 #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
 #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
@@ -12,11 +13,13 @@ r.communication.register_callback(eTypeUp.HMI_STATE, lambda cord, b1, b2, lr, lg
 # r.communication.register_callback(eTypeUp.SENSOR_VALUE, lambda i, v: print("Sensor ID : {}, Sensor Value : {}".format(i, v)))
 
 last_behavior_time = time.time()
+r.io.change_sensor_read_state(r.io.SensorId.BALL_COUNTER_ORANGE, r.io.SensorState.PERIODIC)
 while 1:
     time.sleep(0.01)
     r.communication.check_message()
     r.locomotion.locomotion_loop(obstacle_detection=True)
     if time.time() - last_behavior_time >= 1:
+        print(r.io.ball_count_orange)
         r.behavior.loop()
         last_behavior_time = time.time()
     # print([l.distance for l in r.io.lidar_points])
