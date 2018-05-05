@@ -20,15 +20,15 @@ mask:
       x_stop: 190
       y_stop: 1200
 
-    - x_start: 520 # Orange dirty water collector
+    - x_start: 500 # Orange dirty water collector
       y_start: -50
-      x_stop: 680
-      y_stop: 180
+      x_stop: 700
+      y_stop: 200
 
-    - x_start: 2320 # Green dirty water collector
+    - x_start: 2300 # Green dirty water collector
       y_start: -50
-      x_stop: 2480
-      y_stop: 180
+      x_stop: 2500
+      y_stop: 200
 
     - x_start: 2810 # Orange clean water collector
       y_start: 1050

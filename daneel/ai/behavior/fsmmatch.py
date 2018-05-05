@@ -181,7 +181,10 @@ class StateWaterCollectorGreen(FSMState):
         self.time = 0
         self.robot.io.start_green_water_cannon()
         self.robot.io.start_green_water_collector()
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_GREEN,
+                                               self.robot.io.SensorState.ON_CHANGE)
         self.robot.locomotion.go_to_orient(190, 1210, 2 * math.pi / 3)
+        self.old_count = 0
 
     def test(self):
         if self.time == 0 and self.robot.locomotion.is_trajectory_finished():
@@ -196,13 +199,19 @@ class StateWaterCollectorGreen(FSMState):
             self.robot.locomotion.set_direct_speed(30, 0, 0)
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, 30, 0)
-        if self.time != 0 and time.time() - self.time >= 20:
+        if self.robot.io.ball_count_green != self.old_count:
+            self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
+            self.robot.io.score_display_number(self.behavior.score)
+            self.old_count = self.robot.io.ball_count_green
+        if self.robot.io.ball_count_green >= 8 or (self.time != 0 and time.time() - self.time >= 20):
             return StateSwitchTrajectory
 
     def deinit(self):
         self.robot.io.stop_green_water_cannon()
         self.robot.io.stop_green_water_collector()
-        self.behavior.score += 5 * 8
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_GREEN,
+                                               self.robot.io.SensorState.STOPPED)
+        # self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -212,7 +221,10 @@ class StateWaterCollectorOrange(FSMState):
         self.time = 0
         self.robot.io.start_orange_water_cannon()
         self.robot.io.start_orange_water_collector()
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_ORANGE,
+                                               self.robot.io.SensorState.ON_CHANGE)
         self.robot.locomotion.go_to_orient(2810, 1210, 1.2)
+        self.old_count = 0
 
     def test(self):
         if self.time == 0 and self.robot.locomotion.is_trajectory_finished():
@@ -227,13 +239,19 @@ class StateWaterCollectorOrange(FSMState):
             self.robot.locomotion.set_direct_speed(-30, 0, 0)
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, -30, 0)
-        if self.time != 0 and time.time() - self.time >= 20:
+        if self.robot.io.ball_count_orange != self.old_count:
+            self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
+            self.robot.io.score_display_number(self.behavior.score)
+            self.old_count = self.robot.io.ball_count_orange
+        if self.robot.io.ball_count_orange >= 8 or (self.time != 0 and time.time() - self.time >= 20):
             return StateSwitchTrajectory
 
     def deinit(self):
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_ORANGE,
+                                               self.robot.io.SensorState.STOPPED)
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
-        self.behavior.score += 5 * 8
+        # self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -410,9 +428,13 @@ class StateTrajectoryCubes2(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.follow_trajectory([(800, 500, math.pi / 12), (250, 700, math.pi / 12)])
+            self.robot.locomotion.follow_trajectory([(800, 600, math.pi / 12),
+                                                     (250, 600, math.pi/12),
+                                                     (250, 700, math.pi / 12)])
         else:
-            self.robot.locomotion.follow_trajectory([(2600, 500, 11 * math.pi / 12), (2750, 700, 11 * math.pi / 12)])
+            self.robot.locomotion.follow_trajectory([(2600, 600, 11 * math.pi / 12),
+                                                     (2750, 600, 11 * math.pi / 12),
+                                                     (2750, 700, 11 * math.pi / 12)])
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
@@ -426,9 +448,9 @@ class StateCubes2(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.go_to_orient(700, 1780, math.pi / 12)
+            self.robot.locomotion.go_to_orient(500, 1780, math.pi / 12)
         else:
-            self.robot.locomotion.go_to_orient(2300, 1780, 11 * math.pi / 12)
+            self.robot.locomotion.go_to_orient(2500, 1780, 11 * math.pi / 12)
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():

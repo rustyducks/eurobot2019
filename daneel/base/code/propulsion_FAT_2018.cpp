@@ -31,6 +31,7 @@ void handleSensorCommandCallback(const Communication::SensorCommand cmd);
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 Metro IOsTime = Metro((unsigned long)(IO_REPORT_PERIOD*1000));
+Metro BallDetectorTime = Metro((unsigned long)(100));
 
 //Metro testTime = Metro(4000);
 //
@@ -100,6 +101,10 @@ void loop()
 		inputOutputs.run();
 	}
 
+	if (BallDetectorTime.check()){
+		inputOutputs.updateBallDetector();
+	}
+
 //	if(testTime.check()) {
 //		//motorControl.setTargetSpeed(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
 //		extNavigation.setTableSpeedCons(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
@@ -146,6 +151,7 @@ void resetCallback(){
 	simulator.reset();
 #endif
 	communication.reset();
+	inputOutputs.reset();
 }
 
 void handleRepositionningCallback(const Communication::Repositionning msg){

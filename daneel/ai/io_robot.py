@@ -38,6 +38,8 @@ class IO(object):
         self.battery_signal_voltage = None
         self.bee_arm_green_state = None
         self.bee_arm_orange_state = None
+        self.ball_count_orange = 0
+        self.ball_count_green = 0
         self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
         self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         self.lidar_thread.start()
@@ -59,6 +61,8 @@ class IO(object):
     class SensorId(Enum):
         BATTERY_SIGNAL = 0
         BATTERY_POWER = 1
+        BALL_COUNTER_GREEN = 2
+        BALL_COUNTER_ORANGE = 3
 
     class SensorState(Enum):
         STOPPED = 0
@@ -210,6 +214,10 @@ class IO(object):
             self.battery_signal_voltage = self._bit10_to_battery_voltage(sensor_value)
         elif sensor_id == self.SensorId.BATTERY_POWER.value:
             self.battery_power_voltage = self._bit10_to_battery_voltage(sensor_value)
+        elif sensor_id == self.SensorId.BALL_COUNTER_GREEN.value:
+            self.ball_count_green = sensor_value
+        elif sensor_id == self.SensorId.BALL_COUNTER_ORANGE.value:
+            self.ball_count_orange = sensor_value
 
     def _bit10_to_battery_voltage(self, bit10):
         return bit10 * BIT10_TO_BATTERY_FACTOR

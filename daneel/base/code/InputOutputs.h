@@ -12,6 +12,7 @@
 
 #include <libraries/TM1637/TM1637Display.h>
 #include <Servo.h>
+#include <BallDetector.h>
 #include <params.h>
 
 class InputOutputs {
@@ -22,6 +23,8 @@ public:
 	void init();
 
 	void run();
+
+	void reset();
 
 	void HMISetLedColor(int red, int green, int blue);
 
@@ -47,6 +50,9 @@ public:
 		_HMIhasChanged = hmIhasChanged;
 	}
 
+	void updateBallDetector();
+
+
 private:
 	static constexpr int maxSensorNumber = 20;
 	static constexpr int sensorPeriodicTime = 100; // ms
@@ -64,11 +70,14 @@ private:
 		enum eSensorType{
 			DIGITAL,
 			ANALOG,
-			DYNAMIXEL_POSITION
+			DYNAMIXEL_POSITION,
+			BALL_DETECTOR
 		};
 		enum eSensorId{
 			BATTERY_SIG = 0,
-			BATTERY_POW = 1
+			BATTERY_POW = 1,
+			BALL_DETECTOR_GREEN = 2,
+			BALL_DETECTOR_ORANGE = 3
 		};
 		typedef enum{
 			STOPPED,
@@ -99,6 +108,7 @@ private:
 
 	TM1637Display scoreDisplay;
 	Servo beeArmGreen, beeArmOrange;
+	BallDetector ballDetectorGreen, ballDetectorOrange;
 };
 
 const uint8_t SEG_ENAC[] = {

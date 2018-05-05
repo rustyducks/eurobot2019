@@ -19,7 +19,8 @@ void ioHMIhasChanged();
 InputOutputs::InputOutputs(): registeredSensorsNumber(0),_button1Pressed(false),
 		_button2Pressed(false), _cordIn(false), _redLEDOn(false), _greenLEDOn(false),
 		_blueLEDOn(false), _HMIhasChanged(false),
-		scoreDisplay(TM1637Display(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO)){
+		scoreDisplay(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO), ballDetectorGreen(BALL_DETECTOR_GREEN),
+		ballDetectorOrange(BALL_DETECTOR_ORANGE){
 
 }
 
@@ -55,7 +56,7 @@ void InputOutputs::init() {
 }
 
 void InputOutputs::initSensors(){
-	sSensor battery_sig, battery_pwr;
+	sSensor battery_sig, battery_pwr, ball_detector_green, ball_detector_orange;
 	pinMode(BAT_SIG, INPUT);
 	pinMode(BAT_POW, INPUT);
 	battery_sig.sensorType = sSensor::ANALOG;
@@ -73,6 +74,14 @@ void InputOutputs::initSensors(){
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
 
+	ball_detector_green = {sSensor::BALL_DETECTOR, sSensor::BALL_DETECTOR_GREEN, sSensor::STOPPED,
+			0, 0, BALL_DETECTOR_GREEN};
+	sensors[registeredSensorsNumber++] = ball_detector_green;
+
+	ball_detector_orange = {sSensor::BALL_DETECTOR, sSensor::BALL_DETECTOR_ORANGE, sSensor::STOPPED,
+		0, 0, BALL_DETECTOR_ORANGE};
+	sensors[registeredSensorsNumber++] = ball_detector_orange;
+
 	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
 //	irCubeLeft.sensorType = sSensor::ANALOG;
 //	irCubeLeft.sensorId = 0;
@@ -82,6 +91,17 @@ void InputOutputs::initSensors(){
 //	irCubeLeft.lastReadValue = 0;
 //	sensors[registeredSensorsNumber] = irCubeLeft;
 //	registeredSensorsNumber++;
+}
+
+void InputOutputs::reset(){
+	for (int i = 0; i < registeredSensorsNumber; i++){
+		sSensor s = sensors[i];
+		s.lastReadTime = 0;
+		s.lastReadValue = 0;
+		s.sensorReadState = sSensor::STOPPED;
+	}
+	ballDetectorGreen.reset();
+	ballDetectorOrange.reset();
 }
 
 void InputOutputs::run(){
@@ -112,6 +132,7 @@ void InputOutputs::run(){
 				s->lastReadTime = now;
 				communication.sendSensorValue(s->sensorId, s->lastReadValue);
 			}
+			break;
 		}
 	}
 }
@@ -127,8 +148,20 @@ int InputOutputs::readSensor(sSensor& sensor){
 	case sSensor::DYNAMIXEL_POSITION:
 		return Dynamixel.readPosition(sensor.sensorPin);
 		break;
+	case sSensor::BALL_DETECTOR:
+		if (sensor.sensorId == sSensor::BALL_DETECTOR_GREEN){
+			return ballDetectorGreen.getNumberOfBalls();
+		}else{
+			return ballDetectorOrange.getNumberOfBalls();
+		}
+		break;
 	}
 	return 0;
+}
+
+void InputOutputs::updateBallDetector(){
+	ballDetectorGreen.detect();
+	ballDetectorOrange.detect();
 }
 
 bool InputOutputs::HMIGetButton1State() {
