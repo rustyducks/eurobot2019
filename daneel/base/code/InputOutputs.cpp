@@ -22,6 +22,9 @@ InputOutputs::InputOutputs(): registeredSensorsNumber(0),_button1Pressed(false),
 		scoreDisplay(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO), ballDetectorGreen(BALL_DETECTOR_GREEN),
 		ballDetectorOrange(BALL_DETECTOR_ORANGE){
 
+	ballDetectorGreen.setThresholds(BALL_DETECTOR_NO_BALL_THR_GREEN, BALL_DETECTOR_BALL_THR_GREEN);
+	ballDetectorOrange.setThresholds(BALL_DETECTOR_NO_BALL_THR_ORANGE, BALL_DETECTOR_BALL_THR_ORANGE);
+
 }
 
 InputOutputs::~InputOutputs() {

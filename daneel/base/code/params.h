@@ -73,6 +73,10 @@ const bool DYNA_TURN_CW = false;
 const bool DYNA_TURN_CCW = true;
 const int BAT_SIG = A21;
 const int BAT_POW = A22;
+const int BALL_DETECTOR_BALL_THR_GREEN = 950;
+const int BALL_DETECTOR_NO_BALL_THR_GREEN = 750;
+const int BALL_DETECTOR_BALL_THR_ORANGE = 500;
+const int BALL_DETECTOR_NO_BALL_THR_ORANGE = 200;
 /* END ------------------------- IOs ----------------------------------*/
 
 

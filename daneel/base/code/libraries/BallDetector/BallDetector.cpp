@@ -8,8 +8,8 @@
 #include <BallDetector.h>
 #include <Arduino.h>
 
-BallDetector::BallDetector(uint8_t readPin): state(eState::NO_BALL), ballNumber(0),
-		readPin(readPin){
+BallDetector::BallDetector(uint8_t readPin):ballDetectedThreshold(0), noBallDetectedThreshold(0),
+		state(eState::NO_BALL), ballNumber(0), readPin(readPin){
 
 	pinMode(readPin, INPUT);
 }
@@ -19,12 +19,12 @@ void BallDetector::detect(){
 //	Serial.println(analogRead(readPin));
 	switch(state){
 	case eState::NO_BALL:
-		if (analogRead(readPin) >= BALL_DETECTED_THRESHOLD){
+		if (analogRead(readPin) >= ballDetectedThreshold){
 			state = eState::BALL;
 		}
 		break;
 	case eState::BALL:
-		if (analogRead(readPin) <= NO_BALL_DETECTED_THRESHOLD){
+		if (analogRead(readPin) <= noBallDetectedThreshold){
 			state = eState::NO_BALL;
 			ballNumber++;
 		}
@@ -33,9 +33,12 @@ void BallDetector::detect(){
 }
 
 unsigned int BallDetector::getNumberOfBalls(){
-//	Serial.print("Balls : ");
-//	Serial.println(ballNumber);
 	return ballNumber;
+}
+
+void BallDetector::setThresholds(int noBallThreshold, int ballThreshold){
+	noBallDetectedThreshold = noBallThreshold;
+	ballDetectedThreshold = ballThreshold;
 }
 
 void BallDetector::reset(){

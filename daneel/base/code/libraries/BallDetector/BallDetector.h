@@ -15,16 +15,16 @@ public:
 	BallDetector(uint8_t readPin);
 	void detect();
 	void reset();
+	void setThresholds(int noBallThreshold, int ballThreshold);
 	unsigned int getNumberOfBalls();
 	virtual ~BallDetector();
 private:
-	static constexpr int BALL_DETECTED_THRESHOLD = 500;
-	static constexpr int NO_BALL_DETECTED_THRESHOLD = 200;
-
 	enum eState{
 		NO_BALL,
 		BALL
 	};
+	int ballDetectedThreshold;
+	int noBallDetectedThreshold;
 	eState state;
 	unsigned int ballNumber;
 	uint8_t readPin;
