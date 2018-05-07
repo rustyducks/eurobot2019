@@ -16,9 +16,9 @@ GoalPoint = namedtuple("GoalPoint", ['goal_point', 'goal_speed'])
 
 
 def center_radians(value):
-    while value <= - math.pi:
+    while value < - math.pi:
         value += 2 * math.pi
-    while value > math.pi:
+    while value >= math.pi:
         value -= 2 * math.pi
     return value
 
@@ -124,7 +124,7 @@ class Locomotion:
         if point is None:
             return True
         return self.distance_to(point.x, point.y) <= ADMITTED_POSITION_ERROR \
-            and abs(self.theta - point.theta) <= ADMITTED_ANGLE_ERROR
+            and abs(center_radians(self.theta - point.theta)) <= ADMITTED_ANGLE_ERROR
 
     def is_trajectory_next_point_needed(self):
         if self.is_at_point_orient():
@@ -247,7 +247,7 @@ class Locomotion:
             if abs(center_radians(
                             planned_stop_angle - self.current_point_objective.theta)) <= ADMITTED_ANGLE_ERROR or abs(
                 center_radians(planned_stop_angle - self.theta)) > abs(
-                center_radians(self.current_point_objective.theta - self.theta)):
+                    center_radians(self.current_point_objective.theta - self.theta)):
                 omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
 
             speed_command = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(

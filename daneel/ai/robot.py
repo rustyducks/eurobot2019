@@ -62,6 +62,7 @@ def main():
         robot.locomotion.locomotion_loop(obstacle_detection=True)
         if time.time() - last_behavior_time >= 1:
             robot.behavior.loop()
+            last_behavior_time = time.time()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("AI option parser", formatter_class=argparse.RawTextHelpFormatter)
@@ -77,11 +78,11 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--teensy_serial', type=str, default=TEENSY_SERIAL_PATH_DEFAULT,
                         help="Path to serial plugged to Teensy.")
     parsed_args = parser.parse_args()
-    if __debug__:
-        with open(TRACE_FILE, 'w') as sys.stdout:
-            main()
-    else:
-        main()
+    # if __debug__:
+    #     with open(TRACE_FILE, 'w') as sys.stdout:
+    #         main()
+    # else:
+    main()
 
 
 def new_hmi_state_callback(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
