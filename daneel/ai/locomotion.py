@@ -27,6 +27,7 @@ class LocomotionState(Enum):
     POSITION_CONTROL = 0
     DIRECT_SPEED_CONTROL = 1
     STOPPED = 2
+    REPOSITIONING = 3
 
 
 class Locomotion:
@@ -44,8 +45,18 @@ class Locomotion:
         self.current_point_objective = None  # type: self.PointOrient
         self.position_control_speed_goal = 0
 
-        #Direct speed control
+        # Direct speed control
         self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
+
+        # Repositioning control
+        self.is_repositioning_ended = False
+        self.repositioning_speed_goal = Speed(0, 0, 0)
+        self.registered_repositioning_position = self.Point(0, 0)  # for theta repositioning
+        self.reposition_first_channel = 0
+        self.repositioning_state = 0
+        self.repositioning_line_orientation = 0
+        self.repositioning_final_position = (0, 0)
+
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
@@ -160,6 +171,12 @@ class Locomotion:
                 speed = self.direct_speed_goal
             else:
                 speed = Speed(0, 0, 0)
+        elif self.mode == LocomotionState.REPOSITIONING:
+            if self.repositioning_speed_goal is not None and not self.is_repositioning_ended:
+                speed = self.repositioning_speed_goal
+                self.reposition_loop()
+            else:
+                speed = Speed(0, 0, 0)
         else:
             # This should not happen
             speed = Speed(0, 0, 0)
@@ -173,6 +190,8 @@ class Locomotion:
                     wanted_speed = self.position_control_loop(delta_time)
                 elif self.previous_mode == LocomotionState.DIRECT_SPEED_CONTROL:
                     wanted_speed = self.direct_speed_goal
+                elif self.previous_mode == LocomotionState.REPOSITIONING:
+                    wanted_speed = self.repositioning_speed_goal
                 else:
                     wanted_speed = Speed(0, 0, 0)
             else:
@@ -196,6 +215,66 @@ class Locomotion:
         else:
             self.mode = LocomotionState.DIRECT_SPEED_CONTROL
         self.direct_speed_goal = Speed(x_speed, y_speed, theta_speed)
+
+    def start_repositionning(self, x_speed, y_speed, theta_speed, final_position, line_orientation):
+        if self.mode == LocomotionState.STOPPED:
+            self.previous_mode = LocomotionState.REPOSITIONING
+        else:
+            self.mode = LocomotionState.REPOSITIONING
+        self.repositioning_state = 0
+        self.robot.io.line_detector.reset()
+        self.repositioning_speed_goal = Speed(x_speed, y_speed, theta_speed)
+        self.repositioning_line_orientation = line_orientation
+        self.repositioning_final_position = final_position
+        self.is_repositioning_ended = False
+
+    def reposition_loop(self):
+        self.robot.io.line_detector.sense()
+        if self.repositioning_state == 0:
+            if self.robot.io.line_detector.states[1] == self.robot.io.line_detector.State.ON_WHITE:
+                self.repositioning_state = 1
+                self.registered_repositioning_position = self.Point(self.x, self.y)
+                self.reposition_first_channel = 1
+            elif self.robot.io.line_detector.states[7] == self.robot.io.line_detector.State.ON_WHITE:
+                self.repositioning_state = 1
+                self.registered_repositioning_position = self.Point(self.x, self.y)
+                self.reposition_first_channel = 7
+        if self.repositioning_state == 1:
+            if self.reposition_first_channel == 1 and \
+                    self.robot.io.line_detector.states[7] == self.robot.io.line_detector.State.ON_WHITE:
+                alpha = -math.atan2(self.registered_repositioning_position.lin_distance_to(self.x, self.y),
+                                    45)  # distance between sensor 1 and 8 is 45
+                print("Condition 1 : alpha = {}".format(alpha))
+                if self.repositioning_final_position[0] is not None:
+                    self.reposition_robot(self.repositioning_final_position[0] + 55 * math.sin(alpha),
+                                          self.y,
+                                          center_radians(alpha + self.repositioning_line_orientation))
+                elif self.repositioning_final_position[1] is not None:
+                    self.reposition_robot(self.x,
+                                          self.repositioning_final_position[1] - 55 * math.sin(alpha),
+                                          center_radians(alpha + self.repositioning_line_orientation)
+                                          )
+                else:
+                    self.reposition_robot(self.x, self.y, center_radians(alpha + self.repositioning_line_orientation))
+                self.is_repositioning_ended = True
+            elif self.reposition_first_channel == 7 and \
+                    self.robot.io.line_detector.states[1] == self.robot.io.line_detector.State.ON_WHITE:
+                alpha = math.atan2(self.registered_repositioning_position.lin_distance_to(self.x, self.y),
+                                    45)
+                print("Condition 2 : alpha = {}".format(alpha))
+                if self.repositioning_final_position[0] is not None:
+                    self.reposition_robot(self.repositioning_final_position[0] + 100 * math.sin(alpha),
+                                          self.y,
+                                          center_radians(alpha + self.repositioning_line_orientation))
+                elif self.repositioning_final_position[1] is not None:
+                    self.reposition_robot(self.x,
+                                          self.repositioning_final_position[1] - 100 * math.sin(alpha),
+                                          center_radians(alpha + self.repositioning_line_orientation)
+                                          )
+                else:
+                    self.reposition_robot(self.x, self.y, center_radians(alpha + self.repositioning_line_orientation))
+                self.is_repositioning_ended = True
+
 
     def position_control_loop(self, delta_time):
         if len(self.trajectory) > 0:
