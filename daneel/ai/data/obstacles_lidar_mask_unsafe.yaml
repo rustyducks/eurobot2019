@@ -18,22 +18,22 @@ mask:
     - x_start: -50 # Green clean water collector
       y_start: 1050
       x_stop: 190
-      y_stop: 1200
+      y_stop: 1250
 
-    - x_start: 500 # Orange dirty water collector
+    - x_start: 450 # Orange dirty water collector
       y_start: -50
-      x_stop: 700
-      y_stop: 200
+      x_stop: 750
+      y_stop: 250
 
-    - x_start: 2300 # Green dirty water collector
+    - x_start: 2250 # Green dirty water collector
       y_start: -50
-      x_stop: 2500
-      y_stop: 200
+      x_stop: 2550
+      y_stop: 250
 
     - x_start: 2810 # Orange clean water collector
       y_start: 1050
       x_stop: 3050
-      y_stop: 1200
+      y_stop: 1250
 
     - x_start: -150 # Green beacon support 1
       y_start: 1930
