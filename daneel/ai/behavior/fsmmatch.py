@@ -353,10 +353,10 @@ class StateBeeTrajectory(FSMState):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
             self.robot.locomotion.follow_trajectory([(1200, 1300, math.pi),
-                                                     (700,   500,  math.pi / 2)])
+                                                     (750,   500,  math.pi / 2)])
         else:
             self.robot.locomotion.follow_trajectory([(1800, 1300, 0.),
-                                                     (2300, 500, math.pi / 2)])
+                                                     (2250, 500, math.pi / 2)])
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
