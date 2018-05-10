@@ -179,6 +179,7 @@ class StateWaterCollectorGreen(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.time = 0
+        self.stop_time = 0
         self.robot.io.start_green_water_cannon()
         self.robot.io.start_green_water_collector()
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_GREEN,
@@ -203,7 +204,10 @@ class StateWaterCollectorGreen(FSMState):
             self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
             self.robot.io.score_display_number(self.behavior.score)
             self.old_count = self.robot.io.ball_count_green
-        if self.robot.io.ball_count_green >= 8 or (self.time != 0 and time.time() - self.time >= 20):
+        if self.stop_time == 0 and self.robot.io.ball_count_green >= 8:
+            self.stop_time = time.time()
+        if (self.stop_time != 0 and time.time() - self.stop_time > 2) \
+                or (self.time != 0 and time.time() - self.time >= 20):
             return StateSwitchTrajectory
 
     def deinit(self):
@@ -219,6 +223,7 @@ class StateWaterCollectorOrange(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.time = 0
+        self.stop_time = 0
         self.robot.io.start_orange_water_cannon()
         self.robot.io.start_orange_water_collector()
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_ORANGE,
@@ -243,7 +248,10 @@ class StateWaterCollectorOrange(FSMState):
             self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
             self.robot.io.score_display_number(self.behavior.score)
             self.old_count = self.robot.io.ball_count_orange
-        if self.robot.io.ball_count_orange >= 8 or (self.time != 0 and time.time() - self.time >= 20):
+        if self.stop_time == 0 and self.robot.io.ball_count_orange >= 8:
+            self.stop_time = time.time()
+        if (self.stop_time != 0 and time.time() - self.stop_time > 2) \
+                or (self.time != 0 and time.time() - self.time >= 20):
             return StateSwitchTrajectory
 
     def deinit(self):
