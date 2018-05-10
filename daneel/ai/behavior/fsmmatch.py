@@ -369,13 +369,14 @@ class StateBeeTrajectory(FSMState):
 class StateRepositioningPreBee(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.repos_start_time = time.time()
         if self.behavior.color == Color.GREEN:
             self.robot.locomotion.start_repositionning(-30, 0, 0, (610, None), math.pi/2)
         else:
             self.robot.locomotion.start_repositionning(30, 0, 0, (2390, None), math.pi/2)
 
     def test(self):
-        if self.robot.locomotion.is_repositioning_ended:
+        if self.robot.locomotion.is_repositioning_ended or time.time() - self.repos_start_time >= 15:
             return StateBeeTrajectory2
 
 
