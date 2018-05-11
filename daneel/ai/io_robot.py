@@ -4,6 +4,7 @@ import threading, serial
 import math
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
+from drivers.line_detector_cny70 import LineDetector
 
 
 LIDAR_SERIAL_PATH = "/dev/ttyUSB0"
@@ -43,6 +44,7 @@ class IO(object):
         self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
         self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         self.lidar_thread.start()
+        self.line_detector = LineDetector()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
@@ -249,8 +251,8 @@ class IO(object):
                     if in_mask:
                         continue
                     self.robot.ivy.highlight_point(51, x_t, y_t)
-                    print(x_t, y_t)
-                    print(pt.azimut, pt.distance)
+                    # print(x_t, y_t)
+                    # print(pt.azimut, pt.distance)
                     return True
         return False
 
