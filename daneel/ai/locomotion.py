@@ -198,7 +198,7 @@ class Locomotion:
                 wanted_speed = speed
             vx_r = wanted_speed.vx * math.cos(self.theta) + wanted_speed.vy * math.sin(self.theta)
             vy_r = wanted_speed.vx * -math.sin(self.theta) + wanted_speed.vy * math.cos(self.theta)
-            self.handle_obstacle(Speed(vx_r, vy_r, 0), 45, 500)
+            self.handle_obstacle(Speed(vx_r, vy_r, 0), 35, 350)
         self.current_speed = speed
         self.robot.communication.send_speed_command(*self.current_speed)
 

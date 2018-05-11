@@ -15,7 +15,7 @@ robot = None
 
 BEHAVIOR_DEFAULT = Behaviors.FSMMatch.value
 IVY_ADDRESS_DEFAULT = "192.168.1.255:2010"
-LIDAR_MASK_FILE = "data/obstacles_lidar_mask_unsafe.yaml"
+LIDAR_MASK_FILE = "data/obstacles_lidar_mask_very_unsafe.yaml"
 TEENSY_SERIAL_PATH_DEFAULT = "/dev/ttyAMA0"
 
 

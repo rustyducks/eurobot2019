@@ -201,8 +201,9 @@ class StateWaterCollectorGreen(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, 30, 0)
         if self.robot.io.ball_count_green != self.old_count:
-            self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
-            self.robot.io.score_display_number(self.behavior.score)
+            # self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
+            # self.robot.io.score_display_number(self.behavior.score)
+            print("[FSMMatch] Ball passed : {}".format(self.robot.io.ball_count_green))
             self.old_count = self.robot.io.ball_count_green
         if self.stop_time == 0 and self.robot.io.ball_count_green >= 8:
             self.stop_time = time.time()
@@ -215,7 +216,7 @@ class StateWaterCollectorGreen(FSMState):
         self.robot.io.stop_green_water_collector()
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_GREEN,
                                                self.robot.io.SensorState.STOPPED)
-        # self.behavior.score += 5 * 8
+        self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -245,8 +246,9 @@ class StateWaterCollectorOrange(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, -30, 0)
         if self.robot.io.ball_count_orange != self.old_count:
-            self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
-            self.robot.io.score_display_number(self.behavior.score)
+            # self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
+            # self.robot.io.score_display_number(self.behavior.score)
+            print("[FSMMatch] Ball passed : {}".format(self.robot.io.ball_count_orange))
             self.old_count = self.robot.io.ball_count_orange
         if self.stop_time == 0 and self.robot.io.ball_count_orange >= 8:
             self.stop_time = time.time()
@@ -259,7 +261,7 @@ class StateWaterCollectorOrange(FSMState):
                                                self.robot.io.SensorState.STOPPED)
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
-        # self.behavior.score += 5 * 8
+        self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
