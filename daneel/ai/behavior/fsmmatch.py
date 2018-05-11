@@ -301,9 +301,9 @@ class StateRepositioningXPreSwitch(FSMState):
     def test(self):
         if self.robot.locomotion.is_repositioning_ended or time.time() - self.repos_start_time >= 15:
             if self.behavior.color == Color.GREEN:
-                self.robot.locomotion.go_to_orient(1130, 1940, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1130, 1960, -math.pi / 2)
             else:
-                self.robot.locomotion.go_to_orient(1870, 1940, -math.pi / 2)
+                self.robot.locomotion.go_to_orient(1870, 1960, -math.pi / 2)
             return StateSwitch
 
     def deinit(self):
@@ -390,9 +390,9 @@ class StateBeeTrajectory2(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.GREEN:
-            self.robot.locomotion.go_to_orient(150, 150, math.pi/2)
+            self.robot.locomotion.go_to_orient(180, 150, math.pi/2)
         else:
-            self.robot.locomotion.go_to_orient(2850, 150, math.pi / 2)
+            self.robot.locomotion.go_to_orient(2820, 150, math.pi / 2)
 
     def test(self):
         if self.robot.locomotion.is_trajectory_finished():
