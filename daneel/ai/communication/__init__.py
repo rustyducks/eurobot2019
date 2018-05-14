@@ -45,19 +45,20 @@ class Communication:
         """
         /!\ Blocking command (try to send the message until it has been received)
         Send an HMI (LED) command to the teensy.
-        :param red_led_cmd: Should red LED be on or off.
-        :type red_led_cmd: bool
-        :param green_led_cmd: Should green LED be on or off.
-        :type green_led_cmd: bool
-        :param blue_led_cmd: Should blue LED be on or off.
-        :type blue_led_cmd: bool
+        :param red_led_cmd: Red value (0 - 255, then casted to 3 bits)
+        :type red_led_cmd: int
+        :param green_led_cmd: Green value (0 - 255, then casted to 3 bits)
+        :type green_led_cmd: int
+        :param blue_led_cmd: Blue value (0 - 255, then casted to 2 bits)
+        :type blue_led_cmd: int
         :return: 0 if message has been sent, -1 if max retries has been reached
         :rtype:
         """
         msg = sMessageDown()
         msg.type = eTypeDown.HMI_COMMAND
         msg.data = sHMICommand()
-        msg.data.hmi_command = red_led_cmd << 7 | green_led_cmd << 6 | blue_led_cmd << 5
+        msg.data.hmi_command = (red_led_cmd & 0b11100000) | (green_led_cmd >> 3 & 0b00011100) | (blue_led_cmd >> 6
+                                                                                                 & 0b00000011)
         return self.send_message(msg, max_retries)
 
     def send_actuator_command(self, actuator_id, actuator_value, max_retries=1000):

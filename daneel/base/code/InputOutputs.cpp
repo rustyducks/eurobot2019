@@ -186,9 +186,9 @@ void InputOutputs::HMISetLedColor(int red, int green, int blue){
 	_redLEDOn = red;
 	_greenLEDOn = green;
 	_blueLEDOn = blue;
-	digitalWrite(LED_RED, _redLEDOn ? HIGH : LOW);
-	digitalWrite(LED_GREEN, _greenLEDOn ? HIGH : LOW);
-	digitalWrite(LED_BLUE, _blueLEDOn ? HIGH : LOW);
+	analogWrite(LED_RED, red);
+	analogWrite(LED_GREEN, green);
+	analogWrite(LED_BLUE, blue);
 	HMISendState();
 }
 

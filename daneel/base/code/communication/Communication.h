@@ -40,9 +40,9 @@ public:
 	};
 
 	struct HMICommand{
-		bool redLedCommand;
-		bool greenLedCommand;
-		bool blueLedCommand;
+		uint8_t redLedCommand;
+		uint8_t greenLedCommand;
+		uint8_t blueLedCommand;
 	};
 
 	struct Repositionning{
@@ -112,9 +112,9 @@ private:
 	static constexpr int upMsgHeaderSize = 3;  // Number of bytes discarded for checksum computation
 	static constexpr int downMsgMaxSize = 9;
 	static constexpr int downMsgHeaderSize = 3; // Number of bytes discarded for checksum computation
-	static constexpr unsigned char hmiCommandRedMask = 1 << 7;
-	static constexpr unsigned char hmiCommandGreenMask = 1 << 6;
-	static constexpr unsigned char hmiCommandBlueMask = 1 << 5;
+	static constexpr unsigned char hmiCommandRedMask = 7 << 5;
+	static constexpr unsigned char hmiCommandGreenMask = 7 << 2;
+	static constexpr unsigned char hmiCommandBlueMask = 3;
 	static constexpr unsigned int maxCallbackPerMessageType = 10;
 	static constexpr unsigned int maxNonAckMessageStored = 50;
 	static constexpr unsigned int maxNonAckOdomReportStored = 40;

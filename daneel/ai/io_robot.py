@@ -75,14 +75,15 @@ class IO(object):
         return self.robot.communication.send_sensor_command(sensor_id.value, sensor_state.value)
 
     class LedColor(Enum):
-        BLACK = (False, False, False)
-        RED = (True, False, False)
-        GREEN = (False, True, False)
-        BLUE = (False, False, True)
-        YELLOW = (True, True, False)
-        PURPLE = (True, False, True)
-        CYAN = (False, True, True)
-        WHITE = (True, True, True)
+        BLACK = (0, 0, 0)
+        RED = (255, 0, 0)
+        GREEN = (0, 255, 0)
+        BLUE = (0, 0, 255)
+        YELLOW = (255, 255, 0)
+        PURPLE = (255, 0, 255)
+        CYAN = (0, 255, 255)
+        ORANGE = (255, 127, 0)
+        WHITE = (255, 255, 255)
 
     class CordState(Enum):
         IN = "in"
@@ -158,7 +159,9 @@ class IO(object):
                 print("[IO] Stop orange water cannon")
 
     def set_led_color(self, color):
-        if self.robot.communication.send_hmi_command(*color.value) == 0:
+        if isinstance(color, self.LedColor):
+            color = color.value
+        if self.robot.communication.send_hmi_command(*color) == 0:
             self.led_color = color
             if __debug__:
                 print("[IO] Led switched to {}".format(color))

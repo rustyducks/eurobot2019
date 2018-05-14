@@ -297,9 +297,9 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		}
 		break;
 	case HMI_CMD:
-		hmiCommand.redLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask;
-		hmiCommand.greenLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask;
-		hmiCommand.blueLedCommand = msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask;
+		hmiCommand.redLedCommand = (msg.downData.hmiCmdMsg.hmiCmd & hmiCommandRedMask) >> 5 / 7 * 255;
+		hmiCommand.greenLedCommand = (msg.downData.hmiCmdMsg.hmiCmd & hmiCommandGreenMask) >> 2 / 7 * 255;
+		hmiCommand.blueLedCommand = (msg.downData.hmiCmdMsg.hmiCmd & hmiCommandBlueMask) / 7 * 255;
 		for (unsigned int i=0; i < HMIMsgCallbacks.index; i++){
 			HMIMsgCallbacks.cb[i](hmiCommand);
 		}
