@@ -201,8 +201,8 @@ class StateWaterCollectorGreen(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, 30, 0)
         if self.robot.io.ball_count_green != self.old_count:
-            # self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
-            # self.robot.io.score_display_number(self.behavior.score)
+            self.behavior.score += 5 * (self.robot.io.ball_count_green - self.old_count)
+            self.robot.io.score_display_number(self.behavior.score)
             print("[FSMMatch] Ball passed : {}".format(self.robot.io.ball_count_green))
             self.old_count = self.robot.io.ball_count_green
         if self.stop_time == 0 and self.robot.io.ball_count_green >= 8:
@@ -216,7 +216,8 @@ class StateWaterCollectorGreen(FSMState):
         self.robot.io.stop_green_water_collector()
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BALL_COUNTER_GREEN,
                                                self.robot.io.SensorState.STOPPED)
-        self.behavior.score += 5 * 8
+        if self.old_count == 0:
+            self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -246,8 +247,8 @@ class StateWaterCollectorOrange(FSMState):
         elif self.time != 0 and (time.time() - self.time) % 4 <= 4:
             self.robot.locomotion.set_direct_speed(0, -30, 0)
         if self.robot.io.ball_count_orange != self.old_count:
-            # self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
-            # self.robot.io.score_display_number(self.behavior.score)
+            self.behavior.score += 5 * (self.robot.io.ball_count_orange - self.old_count)
+            self.robot.io.score_display_number(self.behavior.score)
             print("[FSMMatch] Ball passed : {}".format(self.robot.io.ball_count_orange))
             self.old_count = self.robot.io.ball_count_orange
         if self.stop_time == 0 and self.robot.io.ball_count_orange >= 8:
@@ -261,7 +262,8 @@ class StateWaterCollectorOrange(FSMState):
                                                self.robot.io.SensorState.STOPPED)
         self.robot.io.stop_orange_water_cannon()
         self.robot.io.stop_orange_water_collector()
-        self.behavior.score += 5 * 8
+        if self.old_count == 0:
+            self.behavior.score += 5 * 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -381,7 +383,6 @@ class StateRepositioningPreBee(FSMState):
         if self.robot.locomotion.is_repositioning_ended or time.time() - self.repos_start_time >= 15:
             return StateBeeTrajectory2
 
-
     def deinit(self):
         pass
 
@@ -490,6 +491,38 @@ class StateCubes2(FSMState):
         if self.robot.locomotion.is_trajectory_finished():
             self.behavior.score += 1 * 5
             self.robot.io.score_display_number(self.behavior.score)
+            return StateSwitchAntiRCVATrajectory
+
+    def deinit(self):
+        pass
+
+
+class StateSwitchAntiRCVATrajectory(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.go_to_orient(500, 1580, math.pi / 12)
+        else:
+            self.robot.locomotion.go_to_orient(2500, 1580, 11 * math.pi / 12)
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
+            return StateSwitchAntiRCVA
+
+    def deinit(self):
+        pass
+
+
+class StateSwitchAntiRCVA(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.GREEN:
+            self.robot.locomotion.follow_trajectory([(1130, 1580, math.pi), (1130, 2300, math.pi)])
+        else:
+            self.robot.locomotion.follow_trajectory([(1870, 1580, math.pi), (1870, 2300, math.pi)])
+
+    def test(self):
+        if self.robot.locomotion.is_trajectory_finished():
             return StateEnd
 
     def deinit(self):
