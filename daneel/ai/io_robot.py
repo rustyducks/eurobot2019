@@ -1,3 +1,8 @@
+"""
+Created on 29 July 2012
+@author: Guilhem Buisan
+"""
+
 from enum import *
 import threading, serial
 
