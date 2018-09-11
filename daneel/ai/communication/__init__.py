@@ -315,9 +315,9 @@ class Communication:
             cord_state = bool(message.data.hmi_state & (1 << 7))
             button1_state = bool(message.data.hmi_state & (1 << 6))
             button2_state = bool(message.data.hmi_state & (1 << 5))
-            red_led_state = bool(message.data.hmi_state & (1 << 4))
-            green_led_state = bool(message.data.hmi_state & (1 << 3))
-            blue_led_state = bool(message.data.hmi_state & (1 << 2))
+            red_led_state = 255 if bool(message.data.hmi_state & (1 << 4)) else 0
+            green_led_state = 255 if bool(message.data.hmi_state & (1 << 3)) else 0
+            blue_led_state = 255 if bool(message.data.hmi_state & (1 << 2)) else 0
             for cb in self._callbacks[eTypeUp.HMI_STATE]:
                 cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
         elif message.type == eTypeUp.ODOM_REPORT:

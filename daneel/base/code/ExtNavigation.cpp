@@ -45,7 +45,7 @@ void ExtNavigation::update() {
 		}
 	} else {
 		zeroMatrix(&robot_speed);
-		inputOutputs.HMISetLedColor(1,0,0);
+		inputOutputs.HMISetLedColor(255,0,0);
 		Serial.print("[WARNING] Long time since last speed message. Stop for failsafe. ");
 	}
 	//set target speed to the motor controller (robot reference frame)

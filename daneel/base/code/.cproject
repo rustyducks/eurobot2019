@@ -20,6 +20,7 @@
 							<tool id="io.sloeber.tool.sketch.compiler.cpp.434486672" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
 								<option id="io.sloeber.compiler.cpp.sketch.option.incpath.1904622676" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/utility}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
@@ -32,6 +33,7 @@
 							<tool id="io.sloeber.tool.compiler.c.254436363" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c">
 								<option id="io.sloeber.compiler.c.sketch.option.incpath.1114674478" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
@@ -42,6 +44,7 @@
 							<tool id="io.sloeber.tool.sketch.compiler.s.1489427378" name="Arduino Assembler" superClass="io.sloeber.tool.sketch.compiler.s">
 								<option id="io.sloeber.compiler.asm.sketch.option.incpath.2042240432" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
