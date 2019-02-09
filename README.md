@@ -1,2 +1,2 @@
-# FAT_2018
-Code for the FAT 2018 team
+# Eurobot 2019
+Code for the Eurobot 2019 competition. Made with love by the Rusty Ducks.
