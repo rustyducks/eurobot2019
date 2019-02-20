@@ -54,7 +54,6 @@ const int BUTTON1 = 20;
 /* END ------------------------- HMI ----------------------------------*/
 
 /* BEGIN ----------------------- IOs ----------------------------------*/
-const HardwareSerial RASPI_COMMUNICATION_SERIAL = Serial1;
 const int RASPI_COMMUNICATION_BAUDRATE = 115200;
 const int DYNAMIXEL_CONTROL = 35;
 const float IO_REPORT_PERIOD = 0.5;
