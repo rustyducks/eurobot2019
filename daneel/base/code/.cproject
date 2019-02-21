@@ -16,39 +16,39 @@
 					<folderInfo id="io.sloeber.core.toolChain.release.799604675.1075938526" name="/" resourcePath="">
 						<toolChain id="io.sloeber.core.toolChain.release.725348337" name="Arduino Toolchain (edition Sloeber)" superClass="io.sloeber.core.toolChain.release">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.1701094791" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>
-							<builder buildPath="${workspace_loc:/propulsion_FAT_2018}/Release" id="io.sloeber.sketch.builder.952899806" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
+							<builder buildPath="${workspace_loc:/propulsion_rustyDuck_2019}/Release" id="io.sloeber.sketch.builder.952899806" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
 							<tool id="io.sloeber.tool.sketch.compiler.cpp.434486672" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
 								<option id="io.sloeber.compiler.cpp.sketch.option.incpath.1904622676" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/BallDetector}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/utility}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Metro}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.948193164" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
 							<tool id="io.sloeber.tool.compiler.c.254436363" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c">
 								<option id="io.sloeber.compiler.c.sketch.option.incpath.1114674478" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/BallDetector}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/TM1637}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Metro}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1946454525" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
 							<tool id="io.sloeber.tool.sketch.compiler.s.1489427378" name="Arduino Assembler" superClass="io.sloeber.tool.sketch.compiler.s">
 								<option id="io.sloeber.compiler.asm.sketch.option.incpath.2042240432" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/BallDetector}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/TM1637}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Metro}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/DynamixelSerial5}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_FAT_2018/libraries/Servo}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/BallDetector}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/TM1637}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Metro}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.602154765" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -67,7 +67,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="propulsion_FAT_2018.null.1276489553" name="propulsion_FAT_2018"/>
+		<project id="propulsion_rustyDuck_2019.null.1276489553" name="propulsion_rustyDuck_2019"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
@@ -75,7 +75,7 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/propulsion_FAT_2018"/>
+			<resource resourceType="PROJECT" workspacePath="/propulsion_rustyDuck_2019"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>

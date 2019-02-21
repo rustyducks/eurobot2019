@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>propulsion_FAT_2018</name>
+	<name>propulsion_rustyDuck_2019</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -34,17 +34,23 @@
 		<link>
 			<name>core/core</name>
 			<type>2</type>
-			<location>/usr/share/arduino-1.8.5/hardware/teensy/avr/cores/teensy3</location>
+			<locationURI>$%7BTEENSY_LOC%7D/avr/cores/teensy3</locationURI>
 		</link>
 		<link>
 			<name>libraries/Metro</name>
 			<type>2</type>
-			<location>/usr/share/arduino-1.8.5/hardware/teensy/avr/libraries/Metro</location>
+			<locationURI>$%7BTEENSY_LOC%7D/avr/libraries/Metro</locationURI>
 		</link>
 		<link>
 			<name>libraries/Servo</name>
 			<type>2</type>
-			<location>/usr/share/arduino-1.8.5/hardware/teensy/avr/libraries/Servo</location>
+			<locationURI>$%7BTEENSY_LOC%7D/avr/libraries/Servo</locationURI>
 		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>TEENSY_LOC</name>
+			<value>file:/usr/share/arduino-1.8.5/hardware/teensy</value>
+		</variable>
+	</variableList>
 </projectDescription>
