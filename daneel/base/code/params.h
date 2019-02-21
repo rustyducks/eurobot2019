@@ -15,10 +15,11 @@
 const int LED_PIN = 13;
 
 /* BEGIN -----------------Motors & Odometry-------------------------- */
-const int MOT3_PWM = 2;
-const int MOT3_DIR = 3;
-const int MOT3_ENCA = 11;
-const int MOT3_ENCB = 12;
+
+//const int MOT3_PWM = 2;
+//const int MOT3_DIR = 3;
+//const int MOT3_ENCA = 11;
+//const int MOT3_ENCB = 12;
 
 const int MOT1_PWM = 4;
 const int MOT1_DIR = 5;
@@ -36,11 +37,8 @@ const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
 const float32_t INC_PER_MM = 7.554804140138556;
-
-#define HOLONOMIC
+const float32_t WHEELBASE = 200;		//todo change this
 const float CONTROL_PERIOD = 0.05;
-
-const float32_t ROBOT_RADIUS = 185.0;
 
 /* END ------------------- Motors & Odometry --------------------------*/
 
@@ -82,16 +80,5 @@ const int BALL_DETECTOR_NO_BALL_THR_ORANGE = 200;
 
 const float POS_REPORT_PERIOD = 0.2;
 const unsigned int TIME_SPEED_FAILSAFE = 1000;
-
-#define HOLONOMIC
-
-#if defined(HOLONOMIC)
-
-extern arm_matrix_instance_f32 Dplus;
-extern arm_matrix_instance_f32 D;
-
-#else
-#error "No Robot type defined (TRIKE, DIFFERENTIAL or HOLONOMIC)"
-#endif
 
 #endif /* PARAMS_H_ */

@@ -9,7 +9,7 @@
 #include "utilities.h"
 #include "ExtNavigation.h"
 #include "InputOutputs.h"
-//#include "DynamixelSerial5.h"
+
 #ifdef SIMULATOR
 #include "Simulator.h"
 #endif
@@ -21,7 +21,7 @@ unsigned long blinkTime;
 void handleLEDCallback(const Communication::HMICommand msg);
 void testHMICallback(const Communication::HMICommand msg);  // Forward declaration
 void testActuatorCallback(const Communication::ActuatorCommand msg);
-void setNewTableSpeedCallback(const Communication::SpeedCommand msg);
+void setNewSpeedCallback(const Communication::SpeedCommand msg);
 void handleActuatorCallback(const Communication::ActuatorCommand msg);
 void resetCallback();
 void handleRepositionningCallback(const Communication::Repositionning msg);
@@ -65,7 +65,7 @@ void setup()
 	communication.registerHMICommandCallback(handleLEDCallback);
 	communication.registerActuatorCommandCallback(testActuatorCallback);
 	communication.registerActuatorCommandCallback(handleActuatorCallback);
-	communication.registerSpeedCommandCallback(setNewTableSpeedCallback);
+	communication.registerSpeedCommandCallback(setNewSpeedCallback);
 	communication.registerResetCallback(resetCallback);
 	communication.registerRepositionningCallback(handleRepositionningCallback);
 	communication.registerSensorCommandCallback(handleSensorCommandCallback);
@@ -92,9 +92,9 @@ void loop()
 	}
 
 	if(posReportTme.check()) {
-		communication.sendOdometryReport(odometry.getMoveDelta()->pData[0], odometry.getMoveDelta()->pData[1],
-				odometry.getMoveDelta()->pData[2]);
-		odometry.resetMoveDelta();
+		//TODO update comm
+		//communication.sendOdometryReport(odometry.getMoveDelta()->pData[0], odometry.getMoveDelta()->pData[1],
+				//odometry.getMoveDelta()->pData[2]);
 	}
 
 	if(IOsTime.check()) {
@@ -140,7 +140,7 @@ void handleActuatorCallback(const Communication::ActuatorCommand msg){
 
 void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
 	fat::communication.setTimeLastSpeedMessage(millis());
-	extNavigation.setTableSpeedCons(msg.vx, msg.vy, msg.vtheta);
+	extNavigation.setSpeedCons(msg.vx, msg.vtheta);
 }
 
 void resetCallback(){
@@ -155,13 +155,17 @@ void resetCallback(){
 }
 
 void handleRepositionningCallback(const Communication::Repositionning msg){
-	odometry.recalerTheta(msg.theta);
-	Serial.print("Received (with non ack added) : ");
-	Serial.println(msg.theta);
-	Serial.print("Set theta to : ");
-	Serial.println(odometry.getTheta());
+//	odometry.recalerTheta(msg.theta);
+//	Serial.print("Received (with non ack added) : ");
+//	Serial.println(msg.theta);
+//	Serial.print("Set theta to : ");
+//	Serial.println(odometry.getTheta());
 }
 
 void handleSensorCommandCallback(Communication::SensorCommand cmd){
 	inputOutputs.handleSensorCommand(cmd.sensorId, cmd.sensorCommand);
+}
+
+void setNewSpeedCallback(const Communication::SpeedCommand msg) {
+
 }
