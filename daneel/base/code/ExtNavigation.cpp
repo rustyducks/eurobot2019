@@ -29,8 +29,8 @@ void ExtNavigation::update() {
 	float omega_setpoint;
 
 	if(fat::communication.getTimeSinceLastSpeedMessage() < TIME_SPEED_FAILSAFE) {
-		speed_setpoint = _omega_setpoint;
-		omega_setpoint = _speed_setpoint;
+		speed_setpoint = _speed_setpoint;
+		omega_setpoint = _omega_setpoint;
 	} else {
 		speed_setpoint = 0;
 		omega_setpoint = 0;

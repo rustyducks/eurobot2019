@@ -14,7 +14,7 @@
 #include "Simulator.h"
 #endif
 
-#define sig(x) (x) > 0 ? 1 : 0
+#define sig(x) (x) > 0 ? 0 : 1
 
 MotorControl motorControl = MotorControl();
 
@@ -22,10 +22,10 @@ MotorControl::MotorControl() {
 	_intError_speed = _prevError_speed = _intError_omega = _prevError_omega = 0;
 	_speed_setpoint = _omega_setpoint = 0;
 
-	KP_SPEED = 1;
-	KI_SPEED = 0;
+	KP_SPEED = 0.6;
+	KI_SPEED = 0.2;
 	KD_SPEED = 0;
-	KP_OMEGA = 1;
+	KP_OMEGA = 0.1;
 	KI_OMEGA = 0;
 	KD_OMEGA = 0;
 }

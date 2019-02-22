@@ -57,13 +57,7 @@ private:
 	static constexpr int maxSensorNumber = 20;
 	static constexpr int sensorPeriodicTime = 100; // ms
 	typedef enum{
-		WATER_DELIVERING_DYNAMIXEL_GREEN = 0,
-		WATER_DELIVERING_DYNAMIXEL_ORANGE = 1,
-		WATER_CANNON_DC_MOTOR_GREEN = 2,
-		WATER_CANNON_DC_MOTOR_ORANGE = 3,
 		SCORE_COUNTER = 4,
-		BEE_ARM_SERVO_GREEN = 5,
-		BEE_ARM_SERVO_ORANGE = 6
 	}eMsgActuatorId;
 
 	typedef struct{
@@ -71,13 +65,10 @@ private:
 			DIGITAL,
 			ANALOG,
 			DYNAMIXEL_POSITION,
-			BALL_DETECTOR
 		};
 		enum eSensorId{
 			BATTERY_SIG = 0,
 			BATTERY_POW = 1,
-			BALL_DETECTOR_GREEN = 2,
-			BALL_DETECTOR_ORANGE = 3
 		};
 		typedef enum{
 			STOPPED,
@@ -107,8 +98,6 @@ private:
 	volatile bool _HMIhasChanged;
 
 	TM1637Display scoreDisplay;
-	Servo beeArmGreen, beeArmOrange;
-	BallDetector ballDetectorGreen, ballDetectorOrange;
 };
 
 const uint8_t SEG_ENAC[] = {

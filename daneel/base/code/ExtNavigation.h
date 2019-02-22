@@ -28,9 +28,9 @@ public:
 	 * \param vy  speed along the Y axis in mm/s
 	 * \param w   rotation speed in rd/s
 	 */
-	void setSpeedCons(float32_t vx, float32_t w) {
-		_speed_setpoint = vx;
-		_omega_setpoint = w;
+	void setSpeedCons(float32_t speed, float32_t omega) {
+		_speed_setpoint = speed;
+		_omega_setpoint = omega;
 	}
 
 	void reset();

@@ -19,11 +19,7 @@ void ioHMIhasChanged();
 InputOutputs::InputOutputs(): registeredSensorsNumber(0),_button1Pressed(false),
 		_button2Pressed(false), _cordIn(false), _redLEDOn(false), _greenLEDOn(false),
 		_blueLEDOn(false), _HMIhasChanged(false),
-		scoreDisplay(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO), ballDetectorGreen(BALL_DETECTOR_GREEN),
-		ballDetectorOrange(BALL_DETECTOR_ORANGE){
-
-	ballDetectorGreen.setThresholds(BALL_DETECTOR_NO_BALL_THR_GREEN, BALL_DETECTOR_BALL_THR_GREEN);
-	ballDetectorOrange.setThresholds(BALL_DETECTOR_NO_BALL_THR_ORANGE, BALL_DETECTOR_BALL_THR_ORANGE);
+		scoreDisplay(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO){
 
 }
 
@@ -36,22 +32,12 @@ void InputOutputs::init() {
 	pinMode(LED_RED, OUTPUT);
 	pinMode(LED_GREEN, OUTPUT);
 	pinMode(LED_BLUE, OUTPUT);
-	pinMode(CORD, INPUT_PULLUP);
+	//pinMode(CORD, INPUT_PULLUP);
 	pinMode(BUTTON1, INPUT_PULLUP);
-	pinMode(BUTTON2, INPUT_PULLUP);
-	pinMode(WATER_CANNON_GREEN, OUTPUT);
-	pinMode(WATER_CANNON_ORANGE, OUTPUT);
-	analogWrite(WATER_CANNON_GREEN, 0);
-	analogWrite(WATER_CANNON_ORANGE, 0);
-	pinMode(BEE_ARM_GREEN, OUTPUT);
-	pinMode(BEE_ARM_ORANGE, OUTPUT);
-	beeArmGreen.attach(BEE_ARM_GREEN);
-	beeArmOrange.attach(BEE_ARM_ORANGE);
-	beeArmGreen.write(90);
-	beeArmOrange.write(90);
-	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
+	//pinMode(BUTTON2, INPUT_PULLUP);
+	//attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
-	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
+	//attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
 
 	initSensors();
 
@@ -77,12 +63,8 @@ void InputOutputs::initSensors(){
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
 
-	ball_detector_green = {sSensor::BALL_DETECTOR, sSensor::BALL_DETECTOR_GREEN, sSensor::STOPPED,
-			0, 0, BALL_DETECTOR_GREEN};
 	sensors[registeredSensorsNumber++] = ball_detector_green;
 
-	ball_detector_orange = {sSensor::BALL_DETECTOR, sSensor::BALL_DETECTOR_ORANGE, sSensor::STOPPED,
-		0, 0, BALL_DETECTOR_ORANGE};
 	sensors[registeredSensorsNumber++] = ball_detector_orange;
 
 	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
@@ -103,8 +85,6 @@ void InputOutputs::reset(){
 		s.lastReadValue = 0;
 		s.sensorReadState = sSensor::STOPPED;
 	}
-	ballDetectorGreen.reset();
-	ballDetectorOrange.reset();
 }
 
 void InputOutputs::run(){
@@ -151,20 +131,11 @@ int InputOutputs::readSensor(sSensor& sensor){
 	case sSensor::DYNAMIXEL_POSITION:
 		return Dynamixel.readPosition(sensor.sensorPin);
 		break;
-	case sSensor::BALL_DETECTOR:
-		if (sensor.sensorId == sSensor::BALL_DETECTOR_GREEN){
-			return ballDetectorGreen.getNumberOfBalls();
-		}else{
-			return ballDetectorOrange.getNumberOfBalls();
-		}
-		break;
 	}
 	return 0;
 }
 
 void InputOutputs::updateBallDetector(){
-	ballDetectorGreen.detect();
-	ballDetectorOrange.detect();
 }
 
 bool InputOutputs::HMIGetButton1State() {
@@ -173,12 +144,12 @@ bool InputOutputs::HMIGetButton1State() {
 }
 
 bool InputOutputs::HMIGetButton2State() {
-	_button2Pressed = digitalRead(BUTTON2);
+	//_button2Pressed = digitalRead(BUTTON2);
 	return _button2Pressed;
 }
 
 bool InputOutputs::HMIGetCordState() {
-	_cordIn = digitalRead(CORD);
+	//_cordIn = digitalRead(CORD);
 	return _cordIn;
 }
 
@@ -193,9 +164,9 @@ void InputOutputs::HMISetLedColor(int red, int green, int blue){
 }
 
 void InputOutputs::HMISendState(){
-	_cordIn = digitalRead(CORD);
+	//_cordIn = digitalRead(CORD);
 	_button1Pressed = digitalRead(BUTTON1);
-	_button2Pressed = digitalRead(BUTTON2);
+	//_button2Pressed = digitalRead(BUTTON2);
 	_HMIhasChanged = false;
 	communication.sendIHMState(_cordIn, _button1Pressed, _button2Pressed, _redLEDOn, _greenLEDOn, _blueLEDOn);
 }
@@ -216,18 +187,6 @@ void InputOutputs::deliverWater(bool enable, int dynamixelId, bool direction) {
 
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
-	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_GREEN:
-		deliverWater(actuatorCommand, WATER_DELIVERER_GREEN, DYNA_TURN_CCW);
-		break;
-	case eMsgActuatorId::WATER_DELIVERING_DYNAMIXEL_ORANGE:
-		deliverWater(actuatorCommand, WATER_DELIVERER_ORANGE, DYNA_TURN_CW);
-		break;
-	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_GREEN:
-		analogWrite(WATER_CANNON_GREEN, actuatorCommand);
-		break;
-	case eMsgActuatorId::WATER_CANNON_DC_MOTOR_ORANGE:
-		analogWrite(WATER_CANNON_ORANGE, actuatorCommand);
-		break;
 	case eMsgActuatorId::SCORE_COUNTER:
 		scoreDisplay.setBrightness(7, true);
 		if (actuatorCommand <= 9999){
@@ -243,12 +202,6 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		}else{
 			scoreDisplay.setBrightness(0, false);
 		}
-		break;
-	case eMsgActuatorId::BEE_ARM_SERVO_GREEN:
-		beeArmGreen.write(actuatorCommand);
-		break;
-	case eMsgActuatorId::BEE_ARM_SERVO_ORANGE:
-		beeArmOrange.write(actuatorCommand);
 		break;
 	default:
 		break;

@@ -51,6 +51,54 @@ public:
 
 	void reset();
 
+	float32_t getKdOmega() const {
+		return KD_OMEGA;
+	}
+
+	void setKdOmega(float32_t kdOmega) {
+		KD_OMEGA = kdOmega;
+	}
+
+	float32_t getKdSpeed() const {
+		return KD_SPEED;
+	}
+
+	void setKdSpeed(float32_t kdSpeed) {
+		KD_SPEED = kdSpeed;
+	}
+
+	float32_t getKiOmega() const {
+		return KI_OMEGA;
+	}
+
+	void setKiOmega(float32_t kiOmega) {
+		KI_OMEGA = kiOmega;
+	}
+
+	float32_t getKiSpeed() const {
+		return KI_SPEED;
+	}
+
+	void setKiSpeed(float32_t kiSpeed) {
+		KI_SPEED = kiSpeed;
+	}
+
+	float32_t getKpOmega() const {
+		return KP_OMEGA;
+	}
+
+	void setKpOmega(float32_t kpOmega) {
+		KP_OMEGA = kpOmega;
+	}
+
+	float32_t getKpSpeed() const {
+		return KP_SPEED;
+	}
+
+	void setKpSpeed(float32_t kpSpeed) {
+		KP_SPEED = kpSpeed;
+	}
+
 protected:
 
 	float _speed_setpoint;

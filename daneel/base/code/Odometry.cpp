@@ -33,8 +33,8 @@ void Odometry::update() {
 	_incr1 = _incr2 = 0;
 	sei();
 
-	float length = ((float)(incr1+incr2)/2.0)/INC_PER_MM;
-	float angle = ((float)(incr1-incr2)/INC_PER_MM)/WHEELBASE;
+	float length = ((float)(-incr1+incr2)/2.0)/INC_PER_MM;		//opposite sign on incr1 because motors are mirrored
+	float angle = ((float)(incr1+incr2)/INC_PER_MM)/WHEELBASE;  //opposite sign on incr1 because motors are mirrored
 
 	_x = _x + length*cos(_theta + angle/2.0);
 	_y = _y + length*sin(_theta + angle/2.0);
