@@ -9,7 +9,7 @@
 #define COMMUNICATION_COMMUNICATION_H_
 
 //#ifndef DEBUG_COMM
-//#define DEBUG_COMM 0
+//#define DEBUG_COMM 1
 //#endif
 
 #include <cstdint>
@@ -46,6 +46,8 @@ public:
 	};
 
 	struct Repositionning{
+		double x;
+		double y;
 		double theta;
 	};
 
@@ -61,8 +63,10 @@ public:
 	typedef void (*ResetCallback)(void);
 	typedef void (*SensorCommandCallback)(SensorCommand);
 
-	Communication(HardwareSerial serial, uint32_t baudrate);
+	Communication(HardwareSerial& serial, uint32_t baudrate);
 	virtual ~Communication();
+
+	void init();
 
 	/**
 	 * Functions used to send messages
@@ -72,7 +76,7 @@ public:
 	int sendIHMState(const bool cordState, const bool button1State, const bool button2State, const bool redLedState,
 			const bool greenLedState, const bool blueLedState);
 	int sendActuatorState(const int actuatorId, const int actuatorState);
-	int sendOdometryReport(const int dx, const int dy, const double dtheta);
+	int sendOdometryPosition(const double x, const double y, const double theta);
 	int sendSensorValue(const int sensorId, const int sensorValue);
 
 	/*
@@ -102,16 +106,18 @@ public:
 	}
 
 private:
-	static constexpr int linearOdomToMsgAdder = 32768;
-	static constexpr double radianToMsgFactor = 10430.378350470453;
+	static constexpr double linearPositionToMsgFactor = 4;  // [-8192; 8191.75]mm, resolution : 0.25 mm
+	static constexpr int linearPositionToMsgAdder = 8192;
+	static constexpr double radianToMsgFactor = 10430.378350470453;  // [-pi; pi-res]rad, resolution : 9.587379924285257e-05 rad =>  0.0054931640625 deg
 	static constexpr double radianToMsgAdder = M_PI;
-	static constexpr double angularSpeedToMsgFactor = 1043.0378350470453;
-	static constexpr double angularSpeedToMsgAdder = 10 * M_PI;
-	static constexpr int linearSpeedToMsgAdder = 32768;
-	static constexpr int upMsgMaxSize = 11;
-	static constexpr int upMsgHeaderSize = 3;  // Number of bytes discarded for checksum computation
-	static constexpr int downMsgMaxSize = 9;
-	static constexpr int downMsgHeaderSize = 3; // Number of bytes discarded for checksum computation
+	static constexpr double linearSpeedToMsgFactor = 32.768;
+	static constexpr int linearSpeedToMsgAdder = 1000;
+	static constexpr double angularSpeedToMsgFactor = 2607.5945876176133;  // [-1000
+	static constexpr double angularSpeedToMsgAdder = 4 * M_PI;
+	static constexpr int upMsgMaxSize = 10;
+	static constexpr int upMsgHeaderSize = 4;  // Number of bytes discarded for checksum computation
+	static constexpr int downMsgMaxSize = 10;
+	static constexpr int downMsgHeaderSize = 4; // Number of bytes discarded for checksum computation
 	static constexpr unsigned char hmiCommandRedMask = 7 << 5;
 	static constexpr unsigned char hmiCommandGreenMask = 7 << 2;
 	static constexpr unsigned char hmiCommandBlueMask = 3;
@@ -128,11 +134,9 @@ private:
 		uint8_t ackDownMsgId;
 	}sAckDown;
 	typedef struct __attribute__((packed)){
-		uint8_t previousReportId;
-		uint8_t newReportId;
-		uint16_t dx;
-		uint16_t dy;
-		uint16_t dtheta;
+		uint16_t x;
+		uint16_t y;
+		uint16_t theta;
 	}sOdomReportMsg;
 	typedef struct __attribute__((packed)){
 		uint8_t HMIState;
@@ -151,6 +155,7 @@ private:
 	typedef struct __attribute__((packed)){
 		uint8_t upMsgId;
 		eUpMessageType upMsgType :8;
+		uint8_t dataSize;
 		uint8_t checksum;
 		uMessageUpData upData;
 	}sMessageUp;
@@ -164,21 +169,16 @@ private:
 	//========Start Down Messages definitions======
 	typedef enum __attribute__((packed)){
 		ACK_UP,
-		ACK_ODOM_REPORT,
 		SPEED_CMD,
 		ACTUATOR_CMD,
 		HMI_CMD,
 		RESET,
-		THETA_REPOSITIONING,
+		REPOSITIONING,
 		SENSOR_CMD
 	}eDownMessageType;
 	typedef struct __attribute__((packed)){
 		uint8_t ackUpMsgId;
 	}sAckUp;
-	typedef struct __attribute__((packed)){
-		uint8_t ackUpMsgId;
-		uint8_t ackOdomReportId;
-	}sAckOdomReport;
 	typedef struct __attribute__((packed)){
 		uint16_t vx;
 		uint16_t vy;
@@ -192,24 +192,26 @@ private:
 		uint8_t hmiCmd;
 	}sHMICmd;
 	typedef struct __attribute__((packed)){
+		uint16_t xRepositioning;
+		uint16_t yRepositioning;
 		uint16_t thetaRepositioning;
-	}sThetaRepositioning;
+	}sRepositioning;
 	typedef struct __attribute__((packed)){
 		uint8_t sensorId;
 		uint8_t sensorState;
 	}sSensorCmd;
 	typedef union __attribute__((packed)){
 		sAckUp ackMsg;
-		sAckOdomReport ackOdomReportMsg;
 		sSpeedCmd speedCmdMsg;
 		sActuatorCmd actuatorCmdMsg;
 		sHMICmd hmiCmdMsg;
-		sThetaRepositioning thetaRepositioningMsg;
+		sRepositioning repositioningMsg;
 		sSensorCmd sensorCmdMsg;
 	}uMessageDownData;
 	typedef struct __attribute__((packed)){
 		uint8_t downMsgId;
 		eDownMessageType downMsgType :8;
+		uint8_t dataSize;
 		uint8_t checksum;
 		uMessageDownData downData;
 	}sMessageDown;
@@ -220,19 +222,6 @@ private:
 	}uRawMessageDown;
 	//========End Down Messages definitions==========
 
-
-	struct sOdomReportStorage{
-		uint8_t odomId;
-		double dx;
-		double dy;
-		double dtheta;
-	};
-
-	struct sOdomReportBuffer{
-		unsigned int startIndex;
-		unsigned int writeIndex;
-		sOdomReportStorage data[maxNonAckOdomReportStored];
-	};
 
 	typedef struct{
 		SpeedCommandCallback cb[maxCallbackPerMessageType];
@@ -274,10 +263,14 @@ private:
 		uRawMessageUp message;
 	};
 
+	enum eState{
+		WAITING,
+		HEADER_RECEIVED
+	};
 
-	HardwareSerial serial;
-	int odomReportIndex;
-	int lastOdomReportIndexAcknowledged;
+
+	HardwareSerial& serial;
+	int baudrate;
 	int upMessageIndex;
 	uint8_t lastIdDownMessageRecieved;
 	bool isFirstMessage;
@@ -297,8 +290,10 @@ private:
 	uint8_t computeDownChecksum(const sMessageDown& msg);
 	int storeNewSentMessage(unsigned long time, const uRawMessageUp msg);
 	int removeAcknowledgedMessage(uint8_t acknowledgedId);
+	uint8_t getMessageSize(const sMessageUp& msg);
 	sUpMessageStorage toBeAcknowledged[maxNonAckMessageStored];
-	sOdomReportBuffer nonAcknowledgedOdomReport;
+	eState state;
+	uRawMessageDown receivingMsg;
 };
 
 extern Communication communication;

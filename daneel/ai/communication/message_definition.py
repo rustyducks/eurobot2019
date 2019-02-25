@@ -2,17 +2,20 @@ from enum import Enum
 import bitstring
 
 
-UP_MESSAGE_SIZE = 11  # maximum size of a up message (teensy -> raspi) in bytes
-UP_HEADER_SIZE = 3  # size of the header (all except the data) of an up message
-DOWN_MESSAGE_SIZE = 9  # maximum size of a down message (raspi -> teensy) in bytes
+UP_MESSAGE_SIZE = 10  # maximum size of a up message (teensy -> raspi) in bytes
+UP_HEADER_SIZE = 4  # size of the header (all except the data) of an up message
+DOWN_MESSAGE_SIZE = 10  # maximum size of a down message (raspi -> teensy) in bytes
+DOWN_HEADER_SIZE = 4  # size of the header (all except the data) of a down message
 
 # Data converters (from and to what is sent over the wire and what is used as data).
-LINEAR_ODOM_TO_MSG_ADDER = 32768
-LINEAR_SPEED_TO_MSG_ADDER = 32768
-ANGULAR_SPEED_TO_MSG_FACTOR = 1043.0378350470453
-ANGULAR_SPEED_TO_MSG_ADDER = 10 * 3.14159265358979323846
+LINEAR_POSITION_TO_MSG_FACTOR = 4
+LINEAR_POSITION_TO_MSG_ADDER = 8192
 RADIAN_TO_MSG_FACTOR = 10430.378350470453
 RADIAN_TO_MSG_ADDER = 3.14159265358979323846
+LINEAR_SPEED_TO_MSG_FACTOR = 32.768
+LINEAR_SPEED_TO_MSG_ADDER = 1000
+ANGULAR_SPEED_TO_MSG_FACTOR = 2607.5945876176133
+ANGULAR_SPEED_TO_MSG_ADDER = 4 * 3.14159265358979323846
 
 
 class DeserializationException(Exception):
@@ -74,45 +77,42 @@ class sAckDown:
 
 class sOdomReport:
     def __init__(self):
-        self.previous_report_id = None  # uint:8
-        self.new_report_id = None  # uint:8
-        self._dx = None  # uint:16
-        self._dy = None  # uint:16
-        self._dtheta = None  # uint:16
+        self._x = None  # uint:16
+        self._y = None  # uint:16
+        self._theta = None  # uint:16
 
     @property
-    def dx(self):
-        return self._dx - LINEAR_ODOM_TO_MSG_ADDER
+    def x(self):
+        return self._x / LINEAR_POSITION_TO_MSG_FACTOR - LINEAR_POSITION_TO_MSG_ADDER
 
-    @dx.setter
-    def dx(self, dx):
-        self._dx = dx + LINEAR_ODOM_TO_MSG_ADDER
-
-    @property
-    def dy(self):
-        return self._dy - LINEAR_ODOM_TO_MSG_ADDER
-
-    @dy.setter
-    def dy(self, dy):
-        self._dy = dy + LINEAR_ODOM_TO_MSG_ADDER
+    @x.setter
+    def x(self, x):
+        self._x = (x + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR
 
     @property
-    def dtheta(self):
-        return self._dtheta / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+    def y(self):
+        return self._y / LINEAR_POSITION_TO_MSG_FACTOR - LINEAR_POSITION_TO_MSG_ADDER
 
-    @dtheta.setter
-    def dtheta(self, dtheta):
-        self._dtheta = (dtheta + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR
+    @y.setter
+    def y(self, y):
+        self._y = (y + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR
+
+    @property
+    def theta(self):
+        return self._theta / RADIAN_TO_MSG_FACTOR - RADIAN_TO_MSG_ADDER
+
+    @theta.setter
+    def theta(self, theta):
+        self._theta = (theta + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR
 
     def deserialize(self, bytes_packed):
         s = bitstring.BitStream(bytes_packed)
-        self.previous_report_id, self.new_report_id, self._dx, self._dy, self._dtheta = s.unpack(
-            'uint:8, uint:8, uintle:16, uintle:16, uintle:16')
+        self._x, self._y, self._theta = s.unpack(
+            'uintle:16, uintle:16, uintle:16')
 
     def serialize(self):
         return bitstring.pack('uint:8, uint:8, uintle:16, uintle:16, uintle:16',
-                              self.previous_report_id, self.new_report_id,
-                              self._dx, self._dy, self._dtheta)
+                              self._x, self._y, self._theta)
 
 
 class sHMIState:
@@ -148,17 +148,19 @@ class sMessageUp:
     def __init__(self):
         self.up_id = None
         self.type = None
+        self.data_size = None
         self.checksum = None
         self.data = None
 
-    def deserialize(self, packed):
+    def deserialize_header(self, packed):
         header = bitstring.BitStream(packed[0:UP_HEADER_SIZE])
         try:
-            self.up_id, type_value, self.data = header.unpack('uint:8, uint:8, uint:8')
+            self.up_id, type_value, self.data_size, self.checksum = header.unpack('uint:8, uint:8, uint:8, uint:8')
             self.type = eTypeUp(type_value)
         except ValueError as e:
             raise DeserializationException("Can't deserialize up message header : {}".format(str(e)))
 
+    def deserialize_data(self, packed):
         if self.type == eTypeUp.ACK_DOWN:
             self.data = sAckDown()
         elif self.type == eTypeUp.HMI_STATE:
@@ -168,24 +170,29 @@ class sMessageUp:
         elif self.type == eTypeUp.SENSOR_VALUE:
             self.data = sSensorValue()
         try:
-            self.data.deserialize(packed[UP_HEADER_SIZE:])
+            self.data.deserialize(packed[0:self.data_size])
         except ValueError as e:
             raise DeserializationException("Can't deserialize up message payload : {}".format(str(e)))
+
+    def deserialize(self, packed):
+        self.deserialize_header(packed)
+        self.deserialize(packed[UP_HEADER_SIZE:])
 
     def serialize(self):
 
         ser2 = None
         if self.data is not None:
             ser2 = self.data.serialize()
+            self.data_size = len(ser2.tobytes())
             self.checksum = 0
             for octet in ser2.tobytes():
                 self.checksum ^= octet
             self.checksum = self.checksum % 0xFF
 
-        ser = bitstring.pack('uint:8, uint:8, uint:8', self.up_id, self.type.value, self.checksum)
+        ser = bitstring.pack('uint:8, uint:8, uint:8, uint:8',
+                             self.up_id, self.type.value, self.data_size, self.checksum)
         serialized_msg = ser + ser2
-        pad = bitstring.pack('pad:{}'.format((DOWN_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
-        return serialized_msg + pad
+        return serialized_msg
 
 
 # ====== End up message declaration
@@ -194,13 +201,12 @@ class sMessageUp:
 
 class eTypeDown(Enum):
     ACK_UP = 0
-    ACK_ODOM_REPORT = 1
-    SPEED_COMMAND = 2
-    ACTUATOR_COMMAND = 3
-    HMI_COMMAND = 4
-    RESET = 5
-    THETA_REPOSITIONING = 6
-    SENSOR_COMMAND = 7
+    SPEED_COMMAND = 1
+    ACTUATOR_COMMAND = 2
+    HMI_COMMAND = 3
+    RESET = 4
+    REPOSITIONING = 5
+    SENSOR_COMMAND = 6
 
 
 class sAckUp:
@@ -211,15 +217,6 @@ class sAckUp:
         return bitstring.pack('uint:8', self.ack_up_id)
 
 
-class sAckOdomReport:
-    def __init__(self):
-        self.ack_up_id = None  # uint:8
-        self.ack_odom_report_id = None  # uint:8
-
-    def serialize(self):
-        return bitstring.pack('uint:8, uint:8', self.ack_up_id, self.ack_odom_report_id)
-
-
 class sSpeedCommand:
     def __init__(self):
         self._vx = None  # uint:16
@@ -228,19 +225,19 @@ class sSpeedCommand:
 
     @property
     def vx(self):
-        return self._vx - LINEAR_SPEED_TO_MSG_ADDER
+        return self._vx / LINEAR_SPEED_TO_MSG_FACTOR - LINEAR_SPEED_TO_MSG_ADDER
 
     @vx.setter
     def vx(self, vx):
-        self._vx = vx + LINEAR_SPEED_TO_MSG_ADDER
+        self._vx = round((vx + LINEAR_SPEED_TO_MSG_ADDER) * LINEAR_SPEED_TO_MSG_FACTOR)
 
     @property
     def vy(self):
-        return self._vy - LINEAR_SPEED_TO_MSG_ADDER
+        return self._vy / LINEAR_SPEED_TO_MSG_FACTOR - LINEAR_SPEED_TO_MSG_ADDER
 
     @vy.setter
     def vy(self, vy):
-        self._vy = vy + LINEAR_SPEED_TO_MSG_ADDER
+        self._vy = round((vy + LINEAR_SPEED_TO_MSG_ADDER) * LINEAR_SPEED_TO_MSG_FACTOR)
 
     @property
     def vtheta(self):
@@ -248,7 +245,7 @@ class sSpeedCommand:
 
     @vtheta.setter
     def vtheta(self, vtheta):
-        self._vtheta = (vtheta + ANGULAR_SPEED_TO_MSG_ADDER) * ANGULAR_SPEED_TO_MSG_FACTOR
+        self._vtheta = round((vtheta + ANGULAR_SPEED_TO_MSG_ADDER) * ANGULAR_SPEED_TO_MSG_FACTOR)
 
     def serialize(self):
         return bitstring.pack('uintle:16, uintle:16, uintle:16', self._vx, self._vy,
@@ -272,9 +269,27 @@ class sHMICommand:
         return bitstring.pack('uint:8', self.hmi_command)
 
 
-class sThetaRepositioning:
+class sRepositioning:
     def __init__(self):
+        self._x_repositioning = None
+        self._y_repositioning = None
         self._theta_repositioning = None
+
+    @property
+    def x_repositioning(self):
+        return self._x_repositioning / LINEAR_POSITION_TO_MSG_FACTOR - LINEAR_POSITION_TO_MSG_ADDER
+
+    @x_repositioning.setter
+    def x_repositioning(self, value):
+        self._x_repositioning = round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR)
+
+    @property
+    def y_repositioning(self):
+        return self._y_repositioning / LINEAR_POSITION_TO_MSG_FACTOR - LINEAR_POSITION_TO_MSG_ADDER
+
+    @y_repositioning.setter
+    def y_repositioning(self, value):
+        self._y_repositioning = round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR)
 
     @property
     def theta_repositioning(self):
@@ -285,7 +300,8 @@ class sThetaRepositioning:
         self._theta_repositioning = round((value + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR)
 
     def serialize(self):
-        return bitstring.pack('uintle:16', self._theta_repositioning)
+        return bitstring.pack('uintle:16, uintle:16, uintle:16',
+                              self._x_repositioning, self._y_repositioning, self._theta_repositioning)
 
 
 class sSensorCommand:
@@ -296,17 +312,19 @@ class sSensorCommand:
     def serialize(self):
         return bitstring.pack('uint:8, uint:8', self.sensor_id, self.sensor_state)
 
+
 class sMessageDown:
     """
     Class defining the down (raspi -> teensy) messages
     :type type: eTypeDown
     :type down_id: int
     :type checksum: int
-    :type data: sAckOdomReport|sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand|sThetaRepositioning
+    :type data: sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand|sRepositioning
     """
     def __init__(self):
         self.down_id = 0  # :8
         self.type = None  # :8
+        self.data_size = 0  # :8
         self.checksum = 0  # :8
         self.data = None
 
@@ -315,7 +333,7 @@ class sMessageDown:
         ser2 = None
         if self.data is not None:
             ser2 = self.data.serialize()
-
+            self.data_size = len(ser2.tobytes())
             self.checksum = 0
 
             for octet in ser2.tobytes():
@@ -323,10 +341,9 @@ class sMessageDown:
 
         self.checksum = self.checksum % 0xFF
 
-        ser = bitstring.pack('uint:8, uint:8, uint:8', self.down_id, self.type.value, self.checksum)
+        ser = bitstring.pack('uint:8, uint:8, uint:8, uint:8', self.down_id, self.type.value, self.data_size, self.checksum)
         serialized_msg = ser + ser2
-        pad = bitstring.pack('pad:{}'.format((DOWN_MESSAGE_SIZE - len(serialized_msg.tobytes())) * 8))
-        return serialized_msg + pad
+        return serialized_msg
 
 
 # ====== End down message declaration

@@ -18,6 +18,9 @@ class Communication:
     """
     Class handling communication between ai and the Teensy.
     """
+    STATE_IDLE = 0
+    STATE_HEADER_RECEIVED = 1
+
     def __init__(self, serial_path=SERIAL_PATH, baudrate=SERIAL_BAUDRATE):
         """
         ctor of the communication class
@@ -30,6 +33,9 @@ class Communication:
         self._serial_port = serial.Serial(serial_path, baudrate)
         self._current_msg_id = 0  # type: int
         self._mailbox = deque()
+        self._tmp_msg = sMessageUp()
+        self._state = self.STATE_IDLE
+        self._last_start_byte = None
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
         self._callbacks = {msg_type: [] for msg_type in eTypeUp}
         self._serial_lock = threading.Lock()
@@ -166,19 +172,25 @@ class Communication:
             return 0
         msg = sMessageDown()
         msg.type = eTypeDown.RESET
+        self._serial_lock.acquire()
         for i in range(100):
-             self._serial_port.read_all()
-             time.sleep(0.01)
+            self._serial_port.read_all()
+            time.sleep(0.01)
+        self._serial_lock.release()
         ret = self.send_message(msg, max_retries)
         if ret == 0:
             self._current_msg_id = 0
             self._mailbox = deque()
         return ret
 
-    def send_theta_repositioning(self, theta, max_retries=1000):
+    def send_repositioning(self, x, y, theta, max_retries=1000):
         """
         Send an angular repositioning command to the Teensy,
 
+        :param x: the x coordinate of the robot
+        :type x: float
+        :param y: the y coordinate of the robot
+        :type y: float
         :param theta: the angle of the robot (direct around an ascending z axis, and from x table axis.)
         :type theta: float
         :param max_retries: number of times to retry if the sending fails (default = 1000)
@@ -187,8 +199,10 @@ class Communication:
         :rtype: int
         """
         msg = sMessageDown()
-        msg.type = eTypeDown.THETA_REPOSITIONING
-        msg.data = sThetaRepositioning()
+        msg.type = eTypeDown.REPOSITIONING
+        msg.data = sRepositioning()
+        msg.data.x_repositioning = x
+        msg.data.y_repositioning = y
         msg.data.theta_repositioning = theta
         return self.send_message(msg, max_retries)
 
@@ -212,29 +226,17 @@ class Communication:
         serialized = msg.serialize().tobytes()
         for i in range(max_retries):
             # print(serialized)
-            self._serial_port.write(serialized)
+            self._serial_port.write(b'\xff\xff' + serialized)
+            print("Sending :", b'\xff\xff' + serialized)
             time_sent = int(round(time.time() * 1000))
-            while self._serial_port.in_waiting < UP_MESSAGE_SIZE:
-                if int(round(time.time() * 1000)) - time_sent > SERIAL_SEND_TIMEOUT:
-                    break  # waiting for ack
-            if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
-                packed = self._serial_port.read(UP_MESSAGE_SIZE)
-                up_msg = sMessageUp()
-                try:
-                    up_msg.deserialize(packed)
-                except DeserializationException as e:
-                    print("[Comm] Message synchronisation lost : Trying to re synchronise")
-                    while not self._serial_port.in_waiting:
-                        time.sleep(0.1)
-                    self._serial_port.read(1)  # Read one byte and retry. Until synchro is ok.
-                    continue
-
-                self._handle_acknowledgement(up_msg)
-                if up_msg.type == eTypeUp.ACK_DOWN:
-                    self._serial_lock.release()
-                    return 0  # success
-                else:
-                    self._mailbox.append(up_msg)  # if it is not an ACK or a NONACK, store it to deliver later
+            while int(round(time.time() * 1000)) - time_sent < SERIAL_SEND_TIMEOUT:
+                msg = self._read_message()
+                if msg is not None:
+                    if msg.type == eTypeUp.ACK_DOWN:
+                        self._serial_lock.release()
+                        return 0  # success
+                    else:
+                        self._mailbox.append(msg)  # if it is not an ACK or a NONACK, store it to deliver later
         self._serial_lock.release()
         return -1  # failure
 
@@ -246,26 +248,54 @@ class Communication:
         ack.data = sAckUp()
         ack.data.ack_up_id = id_to_acknowledge
         serialized = ack.serialize().tobytes()
-        self._serial_port.write(serialized)
-
-    def _send_odometry_report_acknowledgment(self, msg_id, odom_id):
-        ack = sMessageDown()
-        ack.down_id = self._current_msg_id
-        self._current_msg_id = (self._current_msg_id + 1) % 256
-        ack.type = eTypeDown.ACK_ODOM_REPORT
-        ack.data = sAckOdomReport()
-        ack.data.ack_up_id = msg_id
-        ack.data.ack_odom_report_id = odom_id
-        serialized = ack.serialize().tobytes()
-        self._serial_port.write(serialized)
+        self._serial_port.write(b'\xff\xff' + serialized)
+        print("Sending :", b'\xff\xff' + serialized)
 
     def _handle_acknowledgement(self, msg):
         if msg.type == eTypeUp.ACK_DOWN:
             return
-        elif msg.type == eTypeUp.ODOM_REPORT:
-            self._send_odometry_report_acknowledgment(msg.up_id, msg.data.new_report_id)
         else:
             self._send_acknowledgment(msg.up_id)
+
+    def _read_message(self, max_read=1):
+        if self.mock_communication:
+            return
+
+        for i in range(max_read):
+            if self._state == self.STATE_IDLE:
+                if self._last_start_byte is None and self._serial_port.in_waiting >= 1:
+                    self._last_start_byte = self._serial_port.read(1)[0]
+                if self._serial_port.in_waiting >= UP_HEADER_SIZE + 1:
+                    start_byte = self._serial_port.read(1)[0]
+                    if self._last_start_byte == 0xFF and start_byte == 0xFF:
+                        try:
+                            packed_header = self._serial_port.read(UP_HEADER_SIZE)
+                            self._last_start_byte = None
+                            self._tmp_msg.deserialize_header(packed_header)
+                        except DeserializationException as e:
+                            print("[Comm] Message synchronisation lost : Trying to re synchronise : {}".format(e))
+                            continue
+                        else:
+                            self._state = self.STATE_HEADER_RECEIVED
+                    else:
+                        self._last_start_byte = start_byte
+
+            if self._state == self.STATE_HEADER_RECEIVED:
+                if self._serial_port.in_waiting >= self._tmp_msg.data_size:
+                    self._state = self.STATE_IDLE
+                    packed_data = self._serial_port.read(self._tmp_msg.data_size)
+                    msg = sMessageUp()
+                    try:
+                        msg.up_id = self._tmp_msg.up_id
+                        msg.type = self._tmp_msg.type
+                        msg.data_size = self._tmp_msg.data_size
+                        msg.checksum = self._tmp_msg.checksum
+                        msg.deserialize_data(packed_data)
+                    except DeserializationException as e:
+                        print("[Comm] Cannot deserialize data : {}".format(e))
+                        continue
+                    self._handle_acknowledgement(msg)
+                    return msg
 
     def check_message(self, max_read=1):
         """
@@ -275,25 +305,13 @@ class Communication:
         :return: The oldest message non read
         :rtype: sMessageUp
         """
-        if self.mock_communication:
-            return
 
         self._serial_lock.acquire()
-        for i in range(max_read):
-            if self._serial_port.in_waiting >= UP_MESSAGE_SIZE:
-                try:
-                    packed = self._serial_port.read(UP_MESSAGE_SIZE)
-                    up_msg = sMessageUp()
-                    up_msg.deserialize(packed)
-                except DeserializationException as e:
-                    print("[Comm] Message synchronisation lost : Trying to re synchronise")
-                    while not self._serial_port.in_waiting:
-                        time.sleep(0.1)
-                    self._serial_port.read(1)  # Read one byte and retry. Until synchro is ok.
-                    continue
-                self._handle_acknowledgement(up_msg)
-                self._mailbox.append(up_msg)
+        msg = self._read_message(max_read)
         self._serial_lock.release()
+        if msg is not None:
+            if msg.type != eTypeUp.ACK_DOWN:
+                self._mailbox.append(msg)
 
         for i in range(max_read):
             if len(self._mailbox) > 0:
@@ -323,8 +341,7 @@ class Communication:
         elif message.type == eTypeUp.ODOM_REPORT:
 
             for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
-                cb(message.data.previous_report_id, message.data.new_report_id, message.data.dx, message.data.dy,
-                   message.data.dtheta)
+                cb(message.data.x, message.data.y,
+                   message.data.theta)
         elif message.type == eTypeUp.ACK_DOWN:
             pass
-

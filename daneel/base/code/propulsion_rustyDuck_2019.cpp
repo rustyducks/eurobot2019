@@ -50,6 +50,7 @@ void setup()
 	initOdometry();
 	motorControl.init();
 	inputOutputs.init();
+	communication.init();
 	Serial.begin(115200);
 	//while(!Serial.available());
 	Serial.println("Start");
@@ -80,6 +81,7 @@ void loop()
 		blinkTime = millis();
 	}
 	communication.checkMessages();
+
 
 	if(controlTime.check()) {
 #ifdef SIMULATOR
@@ -138,7 +140,14 @@ void handleActuatorCallback(const Communication::ActuatorCommand msg){
 	//Dynamixel.ledStatus(msg.actuatorId, msg.actuatorCommand);
 }
 
-void setNewTableSpeedCallback(const Communication::SpeedCommand msg){
+void setNewSpeedCallback(const Communication::SpeedCommand msg){
+	Serial.print("New speed: ");
+	Serial.print("vx: ");
+	Serial.print(msg.vx);
+	Serial.print("\tvy: ");
+	Serial.print(msg.vy);
+	Serial.print("\tvtheta: ");
+	Serial.println(msg.vtheta);
 	fat::communication.setTimeLastSpeedMessage(millis());
 	extNavigation.setSpeedCons(msg.vx, msg.vtheta);
 }
@@ -155,11 +164,13 @@ void resetCallback(){
 }
 
 void handleRepositionningCallback(const Communication::Repositionning msg){
-//	odometry.recalerTheta(msg.theta);
-//	Serial.print("Received (with non ack added) : ");
-//	Serial.println(msg.theta);
-//	Serial.print("Set theta to : ");
-//	Serial.println(odometry.getTheta());
+	Serial.print("Repositioning: ");
+	Serial.print("x: ");
+	Serial.print(msg.x);
+	Serial.print("\ty: ");
+	Serial.print(msg.y);
+	Serial.print("\ttheta: ");
+	Serial.print(msg.theta);
 }
 
 void handleSensorCommandCallback(Communication::SensorCommand cmd){

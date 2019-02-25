@@ -10,24 +10,23 @@
 using namespace std;
 namespace fat {
 
-Communication communication = Communication(RASPI_COMMUNICATION_SERIAL, RASPI_COMMUNICATION_BAUDRATE);
+Communication communication = Communication(Serial1, RASPI_COMMUNICATION_BAUDRATE);
 
 
-Communication::Communication(HardwareSerial serial, uint32_t baudrate):serial(serial), odomReportIndex(0),
-		lastOdomReportIndexAcknowledged(0),upMessageIndex(0), lastIdDownMessageRecieved(0),
-		isFirstMessage(true){
-	this->serial.begin(baudrate);
+Communication::Communication(HardwareSerial& serial, uint32_t baudrate):serial(serial), baudrate(baudrate),
+		upMessageIndex(0), lastIdDownMessageRecieved(0), isFirstMessage(true), state(WAITING){
 	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
 		toBeAcknowledged[i].sendTime = 0;
 	}
-	nonAcknowledgedOdomReport.startIndex = 0;
-	nonAcknowledgedOdomReport.writeIndex = 0;
 	timeLastSpeedMessage = 0;
-
 }
 
 Communication::~Communication() {
 	// TODO Auto-generated destructor stub
+}
+
+void Communication::init(){
+	this->serial.begin(baudrate);
 }
 
 int Communication::sendIHMState(const bool cordState, const bool button1State, const bool button2State,
@@ -56,57 +55,34 @@ int Communication::sendSensorValue(const int sensorId, const int sensorValue){
 	return sendUpMessage(msg);
 }
 
-int Communication::sendOdometryReport(const int dx, const int dy, const double dtheta){
+int Communication::sendOdometryPosition(const double x, const double y, const double theta){
 	sMessageUp msg;
-	sOdomReportStorage odomReport;
-	int cumuleddx = dx, cumuleddy = dy;
-	double cumuleddtheta = dtheta;
 
-	odomReportIndex = (odomReportIndex + 1) % 256;
-	odomReport = {(uint8_t)odomReportIndex, (double)dx, (double)dy, (double)dtheta};
+	int msgx = round((x + linearPositionToMsgAdder) * linearPositionToMsgFactor);
+	int msgy = round((y + linearPositionToMsgAdder) * linearPositionToMsgFactor);
+	int msgtheta = round((theta + radianToMsgAdder) * radianToMsgFactor);
 
-	for (unsigned int i = 0; i < (nonAcknowledgedOdomReport.writeIndex -
-		nonAcknowledgedOdomReport.startIndex + maxNonAckOdomReportStored) % maxNonAckOdomReportStored; i++){
-		// we must have lastOdomAck < odomId < odomReportIndex to add it in the report (but maybe check if the mod. is correct)
-		cumuleddx += nonAcknowledgedOdomReport.data[(nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored].dx;
-		cumuleddy += nonAcknowledgedOdomReport.data[(nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored].dy;
-		cumuleddtheta += nonAcknowledgedOdomReport.data[(nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored].dtheta;
-	}
-
-	nonAcknowledgedOdomReport.data[nonAcknowledgedOdomReport.writeIndex] = odomReport;
-	nonAcknowledgedOdomReport.writeIndex = (nonAcknowledgedOdomReport.writeIndex + 1) % maxNonAckOdomReportStored;
-
-	int msgdx = cumuleddx + linearOdomToMsgAdder;
-	int msgdy = cumuleddy + linearOdomToMsgAdder;
-	int msgdtheta = round((cumuleddtheta + radianToMsgAdder) * radianToMsgFactor);
-
-	if (msgdx < 0 || msgdx > 65535){
+	if (msgx < 0 || msgx > 65535){
 		return -10;
 	}
-	if (msgdy < 0 || msgdy > 65535){
+	if (msgy < 0 || msgy > 65535){
 		return -11;
 	}
-	if (msgdtheta < 0 || msgdtheta > 65535){
+	if (msgtheta < 0 || msgtheta > 65535){
 		return -12;
 	}
 	msg.upMsgType = Communication::ODOM_REPORT;
-	msg.upData.odomReportMsg.previousReportId = lastOdomReportIndexAcknowledged;
-	msg.upData.odomReportMsg.newReportId = odomReportIndex;
-	msg.upData.odomReportMsg.dx = msgdx;
-	msg.upData.odomReportMsg.dy = msgdy;
-	msg.upData.odomReportMsg.dtheta = msgdtheta;
+	msg.upData.odomReportMsg.x = msgx;
+	msg.upData.odomReportMsg.y = msgy;
+	msg.upData.odomReportMsg.theta = msgtheta;
 
 #if DEBUG_COMM
-	Serial.print("Sending Odom Report : from (");
-	Serial.print(lastOdomReportIndexAcknowledged);
+	Serial.print("Sending Odom Report: ");
+	Serial.print(x);
 	Serial.print("; ");
-	Serial.print(odomReportIndex);
+	Serial.print(y);
 	Serial.print("; ");
-	Serial.print(cumuleddx);
-	Serial.print("; ");
-	Serial.print(cumuleddy);
-	Serial.print("; ");
-	Serial.print(cumuleddtheta);
+	Serial.print(theta);
 #endif
 
 	return sendUpMessage(msg);
@@ -141,28 +117,66 @@ int Communication::removeAcknowledgedMessage(uint8_t acknowledgedId){
 
 int Communication::sendUpMessage(const sMessageUp& msg){
 	uRawMessageUp rawMessage;
+	byte txPacket[100];
+	int s = 0;
 	int storageSuccess;
-	for (int i = 0; i < upMsgMaxSize; i++){
-		rawMessage.bytes[i] = 0;
-	}
+
 	rawMessage.messageUp = msg;
+	rawMessage.messageUp.dataSize = getMessageSize(msg);
 	rawMessage.messageUp.checksum = computeUpChecksum(msg);
 	rawMessage.messageUp.upMsgId = upMessageIndex;
+
+	txPacket[s++] = 0xFF;
+	txPacket[s++] = 0xFF;
+	for (int i = 0; i < rawMessage.messageUp.dataSize + upMsgHeaderSize; i++){
+		txPacket[s++] = rawMessage.bytes[i];
+	}
+
+
+#if DEBUG_COMM
+	Serial.println("Sending packet:");
+	for (int i = 0; i < s; i++){
+		Serial.print(txPacket[i]);
+	}
+	Serial.println();
+#endif
+
+	serial.write(txPacket, s);
+
+	if (msg.upMsgType == ACK_DOWN){
+		return 0;
+	}
 	upMessageIndex++;
-	serial.write(rawMessage.bytes, upMsgMaxSize);
 	storageSuccess = storeNewSentMessage(millis(), rawMessage);
 	// Todo : Handle resend on timeout if ack is not recieved -> Delete stored message on ack recieve and update send time on resend.
 	return storageSuccess;
 }
 
+uint8_t Communication::getMessageSize(const sMessageUp& msg){
+	switch(msg.upMsgType){
+	case ACK_DOWN:
+		return sizeof(sAckDown);
+		break;
+	case ODOM_REPORT:
+		return sizeof(sOdomReportMsg);
+		break;
+	case HMI_STATE:
+		return sizeof(sHMIStateMsg);
+		break;
+	case SENSOR_VALUE:
+		return sizeof(sSensorValueMsg);
+		break;
+	default:
+		return 0;
+		break;
+	}
+}
+
 uint8_t Communication::computeUpChecksum(const sMessageUp& msg){
 	uRawMessageUp rawMessage;
 	unsigned char checksum = 0;
-	for (int i = 0; i < upMsgMaxSize; i++){
-		rawMessage.bytes[i] = 0;
-	}
 	rawMessage.messageUp = msg;
-	for (int i = upMsgHeaderSize; i < upMsgMaxSize; i++){
+	for (int i = upMsgHeaderSize; i < msg.dataSize + upMsgHeaderSize; i++){
 		checksum = (checksum ^ rawMessage.bytes[i]) % 256;
 	}
 	return checksum;
@@ -171,11 +185,8 @@ uint8_t Communication::computeUpChecksum(const sMessageUp& msg){
 uint8_t Communication::computeDownChecksum(const sMessageDown& msg){
 	uRawMessageDown rawMessage;
 	unsigned char checksum = 0;
-	for (int i = 0; i < downMsgMaxSize; i++){
-		rawMessage.bytes[i] = 0;
-	}
 	rawMessage.messageDown = msg;
-	for (int i = downMsgHeaderSize; i < downMsgMaxSize; i++){
+	for (int i = downMsgHeaderSize; i < msg.dataSize + downMsgHeaderSize; i++){
 		checksum = (checksum ^ rawMessage.bytes[i]) % 256;
 	}
 	return checksum;
@@ -236,54 +247,20 @@ int Communication::registerSensorCommandCallback(SensorCommandCallback callback)
 }
 
 void Communication::recieveMessage(const sMessageDown& msg){
-	vector<sOdomReportStorage>::iterator nonAckOdomReportItr;
 	SpeedCommand speedCommand;
 	ActuatorCommand actuatorCommand;
 	HMICommand hmiCommand;
-	Repositionning thetaRepositioning;
+	Repositionning repositioning;
 	SensorCommand sensorCommand;
 
 	switch(msg.downMsgType){
 	case ACK_UP:
 		removeAcknowledgedMessage(msg.downData.ackMsg.ackUpMsgId);
 		break;
-	case ACK_ODOM_REPORT:
-#if DEBUG_COMM
-		Serial.print("New Ack Odom : ");
-#endif
-		removeAcknowledgedMessage(msg.downData.ackOdomReportMsg.ackUpMsgId);
 
-		unsigned int index;
-		for (unsigned int i = 0; i < (nonAcknowledgedOdomReport.writeIndex -
-				nonAcknowledgedOdomReport.startIndex + maxNonAckOdomReportStored) % maxNonAckOdomReportStored; i++){
-			index = (nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored;
-			//Not sure... We want to delete "all" the stored id that are < acknowledged received one.
-#if DEBUG_COMM
-			Serial.print("Difference in odom indices : ");
-			Serial.println((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256);
-#endif
-			if ((msg.downData.ackOdomReportMsg.ackOdomReportId - nonAcknowledgedOdomReport.data[index].odomId + 256) % 256 == 	0 ){
-				nonAcknowledgedOdomReport.startIndex = index + 1;
-#if DEBUG_COMM
-			Serial.print("Wanted new index found : ");
-			Serial.println(index);
-#endif
-				break;
-			}
-		}
-		lastOdomReportIndexAcknowledged = msg.downData.ackOdomReportMsg.ackOdomReportId;
-
-#if DEBUG_COMM
-		Serial.print("AckOdom : ");
-		Serial.print(msg.downData.ackOdomReportMsg.ackOdomReportId);
-		Serial.print(" new index : ");
-		Serial.println(nonAcknowledgedOdomReport.startIndex);
-#endif
-
-		break;
 	case SPEED_CMD:
-		speedCommand.vx = msg.downData.speedCmdMsg.vx - linearSpeedToMsgAdder;  // Todo : Maybe scale linear speed
- 		speedCommand.vy = msg.downData.speedCmdMsg.vy - linearSpeedToMsgAdder;
+		speedCommand.vx = msg.downData.speedCmdMsg.vx / linearSpeedToMsgFactor - linearSpeedToMsgAdder;
+ 		speedCommand.vy = msg.downData.speedCmdMsg.vy /linearSpeedToMsgFactor - linearSpeedToMsgAdder;
  		speedCommand.vtheta = msg.downData.speedCmdMsg.vtheta / angularSpeedToMsgFactor - angularSpeedToMsgAdder;
  		for (unsigned int i=0; i < speedMsgCallbacks.index; i++){
 			speedMsgCallbacks.cb[i](speedCommand);
@@ -309,15 +286,12 @@ void Communication::recieveMessage(const sMessageDown& msg){
 			resetCallbacks.cb[i]();
 		}
 		break;
-	case THETA_REPOSITIONING:
-		thetaRepositioning.theta = msg.downData.thetaRepositioningMsg.thetaRepositioning / radianToMsgFactor - radianToMsgAdder;
-		for (unsigned int i = 0; i < (nonAcknowledgedOdomReport.writeIndex -
-			nonAcknowledgedOdomReport.startIndex + maxNonAckOdomReportStored) % maxNonAckOdomReportStored; i++){
-			// Adds all the non acknowledged odometry report. They cannot have been taken into account by the AI.
-			thetaRepositioning.theta += nonAcknowledgedOdomReport.data[(nonAcknowledgedOdomReport.startIndex + i) % maxNonAckOdomReportStored].dtheta;
-		}
+	case REPOSITIONING:
+		repositioning.x = msg.downData.repositioningMsg.xRepositioning / linearPositionToMsgFactor - linearPositionToMsgAdder;
+		repositioning.y = msg.downData.repositioningMsg.yRepositioning / linearPositionToMsgFactor - linearPositionToMsgAdder;
+		repositioning.theta = msg.downData.repositioningMsg.thetaRepositioning / radianToMsgFactor - radianToMsgAdder;
 		for (unsigned int i = 0; i < repositioningCallbacks.index; i++){
-			repositioningCallbacks.cb[i](thetaRepositioning);
+			repositioningCallbacks.cb[i](repositioning);
 		}
 		break;
 	case SENSOR_CMD:
@@ -331,57 +305,79 @@ void Communication::recieveMessage(const sMessageDown& msg){
 }
 
 void Communication::checkMessages(){
-	uRawMessageDown rawDataDown;
-	uRawMessageUp rawUpAckMessage;
-	if (serial.available()) { //If there is some data waiting in the buffer
-		if (serial.available() >= downMsgMaxSize) { //Read all the data in the buffer (asserting raspi is sending at max one message per teensy loop)
-			for (int i = 0; i < downMsgMaxSize; i++){
-				rawDataDown.bytes[i] = serial.read();
+	sMessageUp upAckMessage;
+	if (state == WAITING){
+		if (serial.available() >= downMsgHeaderSize + 2) { //If there is some data waiting in the buffer
+			byte incoming = serial.read();
+			if (incoming == 0xFF && serial.peek() == 0xFF) {
+				serial.read();  // The second 0xFF that we have peeked
+				for (int i=0; i < downMsgHeaderSize; i++){
+					receivingMsg.bytes[i] = serial.read();
+#if DEBUG_COMM
+					Serial.print((int)receivingMsg.bytes[i]);
+					Serial.print(' ');
+#endif
+				}
+				Serial.println();
+				if (receivingMsg.messageDown.downMsgType > SENSOR_CMD){
+#if DEBUG_COMM
+					Serial.print("Invalid down message type: ");
+					Serial.println(receivingMsg.messageDown.downMsgType);
+#endif
+					serial.flush();
+					return;
+				}
+				if (receivingMsg.messageDown.dataSize > downMsgMaxSize - downMsgHeaderSize){
+#if DEBUG_COMM
+					Serial.print("Invalid down message size: ");
+					Serial.println(receivingMsg.messageDown.dataSize);
+#endif
+					serial.flush();
+					return;
+				}
+				state = HEADER_RECEIVED;
+			}
+		}
+	}
+
+	if (state == HEADER_RECEIVED){
+		if (serial.available() >= receivingMsg.messageDown.dataSize){
+			for (int i=0; i < receivingMsg.messageDown.dataSize; i++){
+				receivingMsg.bytes[i + downMsgHeaderSize] = serial.read();
 			}
 #if DEBUG_COMM
 			char tmp[16];
-			for (int debug = 0; debug < downMsgMaxSize; debug++){
-				sprintf(tmp, "%.2X",rawDataDown.bytes[debug]);
+			for (int debug = 0; debug < downMsgHeaderSize + receivingMsg.messageDown.dataSize; debug++){
+				sprintf(tmp, "%.2X",receivingMsg.bytes[debug]);
 				Serial.print(tmp);
+				Serial.print(" ");
 			}
 			Serial.println();
 #endif
-			if (computeDownChecksum(rawDataDown.messageDown) == rawDataDown.messageDown.checksum){
-				rawUpAckMessage.messageUp.upMsgType = ACK_DOWN;
-				rawUpAckMessage.messageUp.upData.ackMsg.ackDownMsgId = rawDataDown.messageDown.downMsgId;
-				serial.write(rawUpAckMessage.bytes, upMsgMaxSize);
-
-
+			state = WAITING;
+			if (computeDownChecksum(receivingMsg.messageDown) == receivingMsg.messageDown.checksum){
+				upAckMessage.upMsgType = ACK_DOWN;
+				upAckMessage.upData.ackMsg.ackDownMsgId = receivingMsg.messageDown.downMsgId;
+				sendUpMessage(upAckMessage);
 				if (isFirstMessage || //If it is the first message, accept it
-						rawDataDown.messageDown.downMsgType == RESET ||
-						((rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved + 256 )%256>0
-								&& (rawDataDown.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
+						receivingMsg.messageDown.downMsgType == RESET ||
+						((receivingMsg.messageDown.downMsgId - lastIdDownMessageRecieved + 256 )%256>0
+								&& (receivingMsg.messageDown.downMsgId - lastIdDownMessageRecieved)%256<128)) { //Check if the message has a id bigger than the last recevied
 					isFirstMessage = false;
-					lastIdDownMessageRecieved = rawDataDown.messageDown.downMsgId;
+					lastIdDownMessageRecieved = receivingMsg.messageDown.downMsgId;
 
-					recieveMessage(rawDataDown.messageDown);
-
+					recieveMessage(receivingMsg.messageDown);
 				}
-			}/* else {
-				raw_ack_message.msg.type = NON_ACK;
-				raw_ack_message.msg.down_id = raw_data_down.msg.id;
-				HWSERIAL.write(raw_ack_message.data, MSG_UP_MAX_SIZE);
-				return 0;*/
-
+			}
 		}
-	} /*else {
-		return 0; //Serial is empty :'(
-	}*/
+	}
 }
 
 void Communication::reset(){
 	for (unsigned int i = 0; i < maxNonAckMessageStored; i++){
 		toBeAcknowledged[i].sendTime = 0;
 	}
-	nonAcknowledgedOdomReport.startIndex = 0;
-	nonAcknowledgedOdomReport.writeIndex = 0;
-	odomReportIndex = 0;
-	lastOdomReportIndexAcknowledged = 0;
+	state = WAITING;
 	upMessageIndex = 0;
 	lastIdDownMessageRecieved = 0;
 	isFirstMessage = true;
