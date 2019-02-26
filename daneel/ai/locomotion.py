@@ -11,6 +11,8 @@ ROTATION_ACCELERATION_MAX = 0.8  # rad/s²
 ROTATION_SPEED_MAX = 0.7  # rad/s
 ADMITTED_ANGLE_ERROR = 0.05  # rad
 
+LOOKAHEAD_DISTANCE = 20.
+
 Speed = namedtuple("Speed", ['vx', 'vy', 'vtheta'])
 GoalPoint = namedtuple("GoalPoint", ['goal_point', 'goal_speed'])
 
@@ -61,50 +63,11 @@ class Locomotion:
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
         self._last_position_control_time = None
-        self._odometry_reports = {}  # type: dict[(int, int): (float, float, float)]
-        self._latest_odometry_report = 0
 
-    def handle_new_odometry_report(self, old_report_id, new_report_id, dx, dy, dtheta):
-        if (new_report_id - self._latest_odometry_report + 256) % 256 < 128:
-            if old_report_id - self._latest_odometry_report > 128:
-                #  Need to find previous report and add the new information
-                for ids, deltas in list(self._odometry_reports.items()):
-                    if ids[0] == old_report_id and ids[1] == self._latest_odometry_report:
-                        self.x -= deltas[0]
-                        self.y -= deltas[1]
-                        self.theta = center_radians(self.theta - deltas[2])
-                        break
-                # in fact we search for old_report_id -> _latest_odemtry_report, but what we need is
-                #  a CHAIN going from old_report_id to _latest_odemetry_report and substract each node (and add them if
-                # they overlap).
-
-                self.x += dx
-                self.y += dy
-                self.theta = center_radians(self.theta + dtheta)
-
-                self._odometry_reports[(old_report_id, new_report_id)] = (dx, dy, dtheta)
-            elif old_report_id == self._latest_odometry_report:
-                # Nominal case, the new report brings only new information
-                self.x += dx
-                self.y += dy
-                self.theta = center_radians(self.theta + dtheta)
-
-                self._odometry_reports[(old_report_id, new_report_id)] = (dx, dy, dtheta)
-            else:
-                # Should not happen, information has been missed
-                pass
-            self._latest_odometry_report = new_report_id
-        elif new_report_id == self._latest_odometry_report:
-            # We already have this information, but it may worth to update it
-            pass
-        else:
-            # Only old information; it probably don't worth to update it...
-            pass
-
-        # Delete all the old reports (those taken into account by the teensy)
-        for ids, delta in list(self._odometry_reports.items()):
-            if (ids[1] - old_report_id + 256) % 256 == 0 or (ids[1] - old_report_id + 256) % 256 > 128:
-                del (self._odometry_reports[ids])
+    def handle_new_odometry_report(self, x, y, theta):
+        self.x = x
+        self.y = y
+        self.theta = center_radians(theta)
 
     def go_to_orient(self, x, y, theta):
         self.mode = LocomotionState.POSITION_CONTROL
@@ -119,8 +82,7 @@ class Locomotion:
     def handle_obstacle(self, speed, detection_angle, stop_distance):
         if math.hypot(speed.vx, speed.vy) < 0.01:
             return
-        a = math.atan2(speed.vy, speed.vx)
-        if self.robot.io.is_obstacle_in_cone(a, detection_angle, stop_distance):
+        if self.robot.io.is_obstacle_in_cone(self.theta, detection_angle, stop_distance):
             if self.mode != LocomotionState.STOPPED:
                 self.stop()
         else:
@@ -295,8 +257,9 @@ class Locomotion:
 
             # Acceleration part
             alpha = math.atan2(self.current_point_objective.y - self.y, self.current_point_objective.x - self.x)
+            target_speed = LINEAR_SPEED_MAX * (1 - abs(alpha) / (math.pi / 2))
             current_linear_speed = math.hypot(self.current_speed.vx, self.current_speed.vy)
-            new_speed = min((LINEAR_SPEED_MAX, current_linear_speed + delta_time * ACCELERATION_MAX))
+            new_speed = min((target_speed, current_linear_speed + delta_time * ACCELERATION_MAX))
 
             # Check if we need to decelerate
             if new_speed > self.position_control_speed_goal:
@@ -304,8 +267,8 @@ class Locomotion:
                 reach_speed_length = 2 * (
                     current_linear_speed * t_reach_speed - 1 / 2 * ACCELERATION_MAX * t_reach_speed ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
                 # current_speed_alpha = math.atan2(self.current_speed[1], self.current_speed[0])
-                planned_stop_point = self.Point(self.x + reach_speed_length * math.cos(alpha),
-                                                self.y + reach_speed_length * math.sin(alpha))
+                planned_stop_point = self.Point(self.x + reach_speed_length * math.cos(self.theta),
+                                                self.y + reach_speed_length * math.sin(self.theta))
                 self.robot.ivy.highlight_point(1, planned_stop_point.x, planned_stop_point.y)
                 planned_stop_error = planned_stop_point.lin_distance_to_point(self.current_point_objective)
                 if planned_stop_error <= ADMITTED_POSITION_ERROR or planned_stop_point.lin_distance_to(self.x,
@@ -313,24 +276,69 @@ class Locomotion:
                     # Deceleration time
                     new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
 
-            # Rotation part
-            omega = min((ROTATION_SPEED_MAX, abs(self.current_speed.vtheta) + delta_time * ROTATION_ACCELERATION_MAX))
-            rotation_error_sign = math.copysign(1, center_radians(self.current_point_objective.theta - self.theta))
-            t_rotation_stop = abs(self.current_speed.vtheta) / ROTATION_ACCELERATION_MAX
-            planned_stop_angle = center_radians(
-                self.theta + rotation_error_sign * 2.5 * (
-                    abs(
-                        self.current_speed.vtheta) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop ** 2))
-            self.robot.ivy.highlight_robot_angle(0, self.current_point_objective.theta)
-            self.robot.ivy.highlight_robot_angle(1, planned_stop_angle)
-            if abs(center_radians(
-                            planned_stop_angle - self.current_point_objective.theta)) <= ADMITTED_ANGLE_ERROR or abs(
-                center_radians(planned_stop_angle - self.theta)) > abs(
-                    center_radians(self.current_point_objective.theta - self.theta)):
-                omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
+            # Pure pursuit
+            # Find the path point closest to the robot
+            d = 99999
+            t_min = 1
+            ith_traj_point = 0
+            p_min = None
+            for i in range(len(self.trajectory) - 1):
+                ab = self.trajectory[i + 1].goal_point - self.trajectory[i].goal_point
+                ar = Locomotion.Point(self.x, self.y) - self.trajectory[i].goal_point
+                # print(ab)
+                t = (ar[0]*ab[0]+ar[1]*ab[1]) / (ab[0]**2 + ab[1]**2)
+                p = self.trajectory[i].goal_point + Locomotion.Point(t * ab[0], t * ab[1])
+                pr = Locomotion.Point(self.x, self.y) - Locomotion.Point(p[0], p[1])
+                dist = math.hypot(pr[0], pr[1])
+                # print(p, dist)
+                if dist < d:
+                    d = dist
+                    t_min = t
+                    ith_traj_point = i
+                    p_min = p
 
-            speed_command = Speed(new_speed * math.cos(alpha), new_speed * math.sin(alpha), math.copysign(
-                omega, rotation_error_sign))
+            # self.goal_point = p_min
+
+            # Find the goal point
+            lookhead_left = LOOKAHEAD_DISTANCE
+            browse_traj_i = 0
+            self.trajectory = self.trajectory[ith_traj_point:]
+            self.current_point_objective = self.trajectory[0].goal_point
+            self.position_control_speed_goal = self.trajectory[0].goal_speed
+
+            t_robot = t_min
+            # print(lookahead_t, t_min, goal_t)
+            path_len = math.hypot(self.trajectory[1].goal_point[0] - p_min[0],
+                                  self.trajectory[1].goal_point[1] - p_min[1])
+            while lookhead_left > path_len:
+                # Go to the next segment and recompute it while lookhead_left > 1. If last traj element is reach, extrapolate or clamp to 1 ?
+                t_robot = 0
+                browse_traj_i += 1
+                lookhead_left -= path_len
+                path_len = math.hypot(
+                    self.trajectory[browse_traj_i + 1].goal_point[0] - self.trajectory[browse_traj_i].goal_point[0],
+                    self.trajectory[browse_traj_i + 1].goal_point[1] - self.trajectory[browse_traj_i].goal_point[1])
+
+            ab = self.trajectory[browse_traj_i + 1].goal_point - self.trajectory[browse_traj_i].goal_point
+            goal_t = t_robot + lookhead_left / math.hypot(ab[0], ab[1])
+            goal_point = self.trajectory[browse_traj_i].goal_point + Locomotion.Point(goal_t * ab[0], goal_t * ab[1])
+            # print(lookhead_left, ab, goal_t)
+            # self.goal_point = goal_point
+
+            # Goal point in vehicle coord
+            goal_point_r = [
+                -(goal_point[0] - self.x) * math.sin(self.theta) + (goal_point[1] - self.y) * math.cos(
+                    self.theta),
+                (goal_point[0] - self.x) * math.cos(self.theta) + (goal_point[1] - self.y) * math.sin(
+                    self.theta)]
+
+            # Compute the curvature gamma
+            gamma = 2 * goal_point_r[0] / (LOOKAHEAD_DISTANCE ** 2)
+            vtheta = new_speed * gamma
+
+
+
+            speed_command = Speed(new_speed, 0, vtheta)
         else:
             speed_command = Speed(0, 0, 0)
         return speed_command
@@ -411,6 +419,12 @@ class Locomotion:
 
         def lin_distance_to(self, x, y):
             return math.hypot(x - self.x, y - self.y)
+
+        def __add__(self, other):
+            return [self.x + other.x, self.y + other.y]
+
+        def __sub__(self, other):
+            return [self.x - other.x, self.y - other.y]
 
         def __getitem__(self, item):
             if item == 0 or item == 'x':
