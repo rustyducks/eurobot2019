@@ -63,6 +63,11 @@ void MotorControl::control() {
 
 	setMotorCommand(cmd_mot1, MOT1_PWM, MOT1_DIR);
 	setMotorCommand(cmd_mot2, MOT2_PWM, MOT2_DIR);
+
+#ifdef SIMULATOR
+	simulator.setMotorCommand(cmd_mot1, 0);
+	simulator.setMotorCommand(cmd_mot2, 1);
+#endif
 }
 
 void MotorControl::setMotorCommand(int command, int pwmPin, int dirPin) {

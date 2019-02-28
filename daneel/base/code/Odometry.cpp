@@ -33,6 +33,11 @@ void Odometry::update() {
 	_incr1 = _incr2 = 0;
 	sei();
 
+#ifdef SIMULATOR
+	incr1 = simulator.readEnc(0);
+	incr2 = simulator.readEnc(1);
+#endif
+
 	float length = ((float)(-incr1+incr2)/2.0)/INC_PER_MM;		//opposite sign on incr1 because motors are mirrored
 	float angle = ((float)(incr1+incr2)/INC_PER_MM)/WHEELBASE;  //opposite sign on incr1 because motors are mirrored
 
