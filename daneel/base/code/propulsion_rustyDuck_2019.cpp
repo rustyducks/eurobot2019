@@ -94,9 +94,8 @@ void loop()
 	}
 
 	if(posReportTme.check()) {
-		//TODO update comm
-		//communication.sendOdometryReport(odometry.getMoveDelta()->pData[0], odometry.getMoveDelta()->pData[1],
-				//odometry.getMoveDelta()->pData[2]);
+		communication.sendOdometryPosition(odometry.get_pos_x(), odometry.get_pos_y(),
+				odometry.get_pos_theta());
 	}
 
 	if(IOsTime.check()) {
@@ -171,12 +170,9 @@ void handleRepositionningCallback(const Communication::Repositionning msg){
 	Serial.print(msg.y);
 	Serial.print("\ttheta: ");
 	Serial.print(msg.theta);
+	odometry.set_pos(msg.x, msg.y, msg.theta);
 }
 
 void handleSensorCommandCallback(Communication::SensorCommand cmd){
 	inputOutputs.handleSensorCommand(cmd.sensorId, cmd.sensorCommand);
-}
-
-void setNewSpeedCallback(const Communication::SpeedCommand msg) {
-
 }
