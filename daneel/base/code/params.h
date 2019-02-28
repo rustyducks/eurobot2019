@@ -36,8 +36,8 @@ const float PWM_FREQUENCY = 915.527;
 const int PWM_RESOLUTION = 8;
 const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
-const float32_t INC_PER_MM = 7.554804140138556;
-const float32_t WHEELBASE = 200;		//todo change this
+const float32_t INC_PER_MM = 9.866663789678743;
+const float32_t WHEELBASE = 154.84329099722402;		//todo change this
 const float CONTROL_PERIOD = 0.05;
 
 /* END ------------------- Motors & Odometry --------------------------*/
