@@ -6,6 +6,7 @@
  */
 
 #include "Communication.h"
+#include "MotorControl.h"
 
 using namespace std;
 namespace fat {
@@ -293,6 +294,14 @@ void Communication::recieveMessage(const sMessageDown& msg){
 		for (unsigned int i = 0; i < repositioningCallbacks.index; i++){
 			repositioningCallbacks.cb[i](repositioning);
 		}
+		break;
+	case PID_TUNING:
+		motorControl.setKpSpeed(msg.downData.pidTuningMsg.kp_linear / 1000.0);
+		motorControl.setKiSpeed(msg.downData.pidTuningMsg.ki_linear / 1000.0);
+		motorControl.setKdSpeed(msg.downData.pidTuningMsg.kd_linear / 1000.0);
+		motorControl.setKpOmega(msg.downData.pidTuningMsg.kp_angular / 100.0);
+		motorControl.setKiOmega(msg.downData.pidTuningMsg.ki_angular / 100.0);
+		motorControl.setKdOmega(msg.downData.pidTuningMsg.kd_angular / 100.0);
 		break;
 	case SENSOR_CMD:
 		sensorCommand.sensorId = msg.downData.sensorCmdMsg.sensorId;

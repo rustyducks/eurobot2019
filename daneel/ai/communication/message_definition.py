@@ -4,7 +4,7 @@ import bitstring
 
 UP_MESSAGE_SIZE = 10  # maximum size of a up message (teensy -> raspi) in bytes
 UP_HEADER_SIZE = 4  # size of the header (all except the data) of an up message
-DOWN_MESSAGE_SIZE = 10  # maximum size of a down message (raspi -> teensy) in bytes
+DOWN_MESSAGE_SIZE = 16  # maximum size of a down message (raspi -> teensy) in bytes
 DOWN_HEADER_SIZE = 4  # size of the header (all except the data) of a down message
 
 # Data converters (from and to what is sent over the wire and what is used as data).
@@ -206,7 +206,8 @@ class eTypeDown(Enum):
     HMI_COMMAND = 3
     RESET = 4
     REPOSITIONING = 5
-    SENSOR_COMMAND = 6
+    PID_TUNING = 6
+    SENSOR_COMMAND = 7
 
 
 class sAckUp:
@@ -303,6 +304,69 @@ class sRepositioning:
         return bitstring.pack('uintle:16, uintle:16, uintle:16',
                               self._x_repositioning, self._y_repositioning, self._theta_repositioning)
 
+
+class sPIDTuning:
+    def __init__(self):
+        self._kp_linear = None
+        self._ki_linear = None
+        self._kd_linear = None
+        self._kp_angular = None
+        self._kp_angular = None
+        self._kp_angular = None
+        
+    @property
+    def kp_linear(self):
+        return self._kp_linear / 1000
+    
+    @kp_linear.setter
+    def kp_linear(self, value):
+        self._kp_linear = value * 1000
+        
+    @property
+    def ki_linear(self):
+        return self._ki_linear / 1000
+    
+    @ki_linear.setter
+    def ki_linear(self, value):
+        self._ki_linear = value * 1000
+        
+    @property
+    def kd_linear(self):
+        return self._kd_linear / 1000
+    
+    @kd_linear.setter
+    def kd_linear(self, value):
+        self._kd_linear = value * 1000
+        
+    @property
+    def kp_angular(self):
+        return self._kp_angular / 1000
+    
+    @kp_angular.setter
+    def kp_angular(self, value):
+        self._kp_angular = value * 1000
+
+    @property
+    def ki_angular(self):
+        return self._ki_angular / 1000
+    
+    @ki_angular.setter
+    def ki_angular(self, value):
+        self._ki_angular = value * 1000        
+        
+    @property
+    def kd_angular(self):
+        return self._kd_angular / 1000
+    
+    @kd_angular.setter
+    def kd_angular(self, value):
+        self._kd_angular = value * 1000
+        
+    def serialize(self):
+        return bitstring.pack('uintle:16, uintle:16, uintle:16, uintle:16, uintle:16, uintle:16',
+                              self._kp_linear, self._ki_linear, self._kd_linear, self._kp_angular, self._ki_angular, self._kd_angular)
+        
+        
 
 class sSensorCommand:
     def __init__(self):
