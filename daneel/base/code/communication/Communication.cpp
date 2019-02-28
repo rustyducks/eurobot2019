@@ -327,7 +327,7 @@ void Communication::checkMessages(){
 					Serial.print(' ');
 #endif
 				}
-				Serial.println();
+				//Serial.println();
 				if (receivingMsg.messageDown.downMsgType > SENSOR_CMD){
 #if DEBUG_COMM
 					Serial.print("Invalid down message type: ");

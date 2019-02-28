@@ -34,14 +34,6 @@ Metro IOsTime = Metro((unsigned long)(IO_REPORT_PERIOD*1000));
 Metro BallDetectorTime = Metro((unsigned long)(100));
 
 //Metro testTime = Metro(4000);
-//
-//float32_t testCommands[][3] = {
-//		{0, 0, 0.5},
-//		{0, 0, 0},
-//		{0, 0, -0.3},
-//		{0, 0, 0}
-//};
-int i = 0;
 
 void setup()
 {
@@ -52,7 +44,7 @@ void setup()
 	inputOutputs.init();
 	communication.init();
 	Serial.begin(115200);
-	//while(!Serial.available());
+	//while(!Serial);
 	Serial.println("Start");
 	Serial.flush();
 //	testTime.reset();
@@ -91,6 +83,17 @@ void loop()
 		extNavigation.update();
 		motorControl.control();
 
+//		Serial.print("x: ");
+//		Serial.print(odometry.get_pos_x());
+//		Serial.print("\ty: ");
+//		Serial.print(odometry.get_pos_y());
+//		Serial.print("\ttheta: ");
+//		Serial.print(odometry.get_pos_theta());
+//		Serial.print("\tspeed: ");
+//		Serial.print(odometry.get_speed());
+//		Serial.print("\tomega ");
+//		Serial.println(odometry.get_omega());
+
 	}
 
 	if(posReportTme.check()) {
@@ -107,9 +110,6 @@ void loop()
 	}
 
 //	if(testTime.check()) {
-//		//motorControl.setTargetSpeed(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
-//		extNavigation.setTableSpeedCons(testCommands[i][0], testCommands[i][1], testCommands[i][2]);
-//		i = (i+1) % 4;
 //	}
 
 }
@@ -140,13 +140,6 @@ void handleActuatorCallback(const Communication::ActuatorCommand msg){
 }
 
 void setNewSpeedCallback(const Communication::SpeedCommand msg){
-	Serial.print("New speed: ");
-	Serial.print("vx: ");
-	Serial.print(msg.vx);
-	Serial.print("\tvy: ");
-	Serial.print(msg.vy);
-	Serial.print("\tvtheta: ");
-	Serial.println(msg.vtheta);
 	fat::communication.setTimeLastSpeedMessage(millis());
 	extNavigation.setSpeedCons(msg.vx, msg.vtheta);
 }
@@ -163,13 +156,6 @@ void resetCallback(){
 }
 
 void handleRepositionningCallback(const Communication::Repositionning msg){
-	Serial.print("Repositioning: ");
-	Serial.print("x: ");
-	Serial.print(msg.x);
-	Serial.print("\ty: ");
-	Serial.print(msg.y);
-	Serial.print("\ttheta: ");
-	Serial.print(msg.theta);
 	odometry.set_pos(msg.x, msg.y, msg.theta);
 }
 
