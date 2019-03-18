@@ -46,7 +46,7 @@ class Ivy:
 
     def send_trajectory(self):
         traj = ""
-        for point in self.robot.locomotion.current_trajectory:
+        for point in self.robot.locomotion.position_control.trajectory:
             pt = point.point
             traj += str(pt.x) + "," + str(pt.y)
             traj += ";"

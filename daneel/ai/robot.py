@@ -6,7 +6,7 @@ import argparse
 import communication
 import ivy_robot
 from io_robot import *
-from locomotion import *
+from locomotion.locomotion import *
 from behavior import Behaviors
 
 TRACE_FILE = "/home/pi/code/primary_robot/ai/log/log_"+str(datetime.datetime.now()).replace(' ', '_')
