@@ -205,6 +205,19 @@ class Communication:
         msg.data.y_repositioning = y
         msg.data.theta_repositioning = theta
         return self.send_message(msg, max_retries)
+        
+        
+    def send_pid_tuning(self, kp_linear, ki_linear, kd_linear, kp_angular, ki_angular, kd_angular, max_retries=1000):
+        msg = sMessageDown()
+        msg.type = eTypeDown.PID_TUNING
+        msg.data = sPIDTuning()
+        msg.data.kp_linear = kp_linear
+        msg.data.ki_linear = ki_linear
+        msg.data.kd_linear = kd_linear
+        msg.data.kp_angular = kp_angular
+        msg.data.ki_angular = ki_angular
+        msg.data.kd_angular = kd_angular
+        return self.send_message(msg, max_retries)
 
     def send_message(self, msg, max_retries=1000):
         """

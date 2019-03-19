@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from communication.message_definition import *
 import robot
 import time
@@ -6,25 +8,33 @@ import math
 from drivers.line_detector_cny70 import LineDetector
 
 if __name__ == '__main__':
-    r = robot.Robot(behavior.Behaviors.Slave.value)
+    r = robot.Robot(behavior.Behaviors.Slave.value, ivy_address="127:2010"    , teensy_serial_path="/dev/ttyUSB0")
     # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
     #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
     #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
-    r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: r.ivy.send_robot_position())
+    #r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda x, y, t: r.ivy.send_robot_position())
     r.communication.register_callback(eTypeUp.HMI_STATE, lambda cord, b1, b2, lr, lg, lb: print("c: {}, b1: {}, b2: {}".format(
         r.io.cord_state, r.io.button1_state ,r.io.button2_state)))
     # r.communication.register_callback(eTypeUp.SENSOR_VALUE, lambda i, v: print("Sensor ID : {}, Sensor Value : {}".format(i, v)))
 
     last_behavior_time = time.time()
-    r.locomotion.reposition_robot(1000, 1680, -math.pi/2)
-    r.locomotion.start_repositionning(30, 0, 0, (1130, None), -math.pi/2)
+    r.locomotion.reposition_robot(250, 250, 0)
+    r.locomotion.follow_trajectory([(250, 250, 0), (250, 1500, 0), (1500, 1500, 0), (1700, 1300, 0), (1700, 1100, 0),
+                                    (1500, 900, 0), (250, 900, 0), (1700, 250, 0)])
+    time.sleep(2)
+    r.ivy.send_trajectory()
+    #r.locomotion.start_repositionning(30, 0, 0, (1130, None), -math.pi/2)
+    last_time = 0
     while 1:
         time.sleep(0.01)
         r.communication.check_message()
         r.locomotion.locomotion_loop(obstacle_detection=False)
-        if r.locomotion.is_repositioning_ended:
-            print("x: {}, y: {}".format(r.locomotion.x, r.locomotion.y))
-            r.locomotion.go_to_orient(r.locomotion.x, r.locomotion.y, -math.pi/2)
+        if time.time() - last_time >= 0.10:
+            r.ivy.send_robot_position()
+            last_time = time.time()
+        # if r.locomotion.is_repositioning_ended:
+        #     print("x: {}, y: {}".format(r.locomotion.x, r.locomotion.y))
+        #     r.locomotion.go_to_orient(r.locomotion.x, r.locomotion.y, -math.pi/2)
 
 
 

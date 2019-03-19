@@ -9,6 +9,7 @@
 #define SIMULATOR_H_
 
 #include "params.h"
+#define NB_MOTORS 2
 
 class Simulator {
 public:
@@ -22,16 +23,16 @@ public:
 	void reset();
 
 private:
-	float vDiff[3];
-	float acc[3];
+	float vDiff[2];
+	float acc[2];
 
-	float vFinal[3];
-	float v[3];
+	float vFinal[2];
+	float v[2];
 
 	//! time at which the motor reach about 63% of its final speed. 95% at 5*tau.
 	float tau;
 
-	float encs[3];
+	float encs[2];
 
 	//! factor between pwm command and robot speed (dependent of wheel size,motor, and battery level)
 	float KMotor;

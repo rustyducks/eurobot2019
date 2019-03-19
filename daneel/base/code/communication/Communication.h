@@ -116,7 +116,7 @@ private:
 	static constexpr double angularSpeedToMsgAdder = 4 * M_PI;
 	static constexpr int upMsgMaxSize = 10;
 	static constexpr int upMsgHeaderSize = 4;  // Number of bytes discarded for checksum computation
-	static constexpr int downMsgMaxSize = 10;
+	static constexpr int downMsgMaxSize = 16;
 	static constexpr int downMsgHeaderSize = 4; // Number of bytes discarded for checksum computation
 	static constexpr unsigned char hmiCommandRedMask = 7 << 5;
 	static constexpr unsigned char hmiCommandGreenMask = 7 << 2;
@@ -174,6 +174,7 @@ private:
 		HMI_CMD,
 		RESET,
 		REPOSITIONING,
+		PID_TUNING,
 		SENSOR_CMD
 	}eDownMessageType;
 	typedef struct __attribute__((packed)){
@@ -197,6 +198,14 @@ private:
 		uint16_t thetaRepositioning;
 	}sRepositioning;
 	typedef struct __attribute__((packed)){
+		uint16_t kp_linear;
+		uint16_t ki_linear;
+		uint16_t kd_linear;
+		uint16_t kp_angular;
+		uint16_t ki_angular;
+		uint16_t kd_angular;
+	}sPIDTuning;
+	typedef struct __attribute__((packed)){
 		uint8_t sensorId;
 		uint8_t sensorState;
 	}sSensorCmd;
@@ -206,6 +215,7 @@ private:
 		sActuatorCmd actuatorCmdMsg;
 		sHMICmd hmiCmdMsg;
 		sRepositioning repositioningMsg;
+		sPIDTuning pidTuningMsg;
 		sSensorCmd sensorCmdMsg;
 	}uMessageDownData;
 	typedef struct __attribute__((packed)){
