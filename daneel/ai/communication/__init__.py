@@ -240,7 +240,7 @@ class Communication:
         for i in range(max_retries):
             # print(serialized)
             self._serial_port.write(b'\xff\xff' + serialized)
-            print("Sending :", b'\xff\xff' + serialized)
+            #print("Sending :", b'\xff\xff' + serialized)
             time_sent = int(round(time.time() * 1000))
             while int(round(time.time() * 1000)) - time_sent < SERIAL_SEND_TIMEOUT:
                 msg = self._read_message()
@@ -262,7 +262,7 @@ class Communication:
         ack.data.ack_up_id = id_to_acknowledge
         serialized = ack.serialize().tobytes()
         self._serial_port.write(b'\xff\xff' + serialized)
-        print("Sending :", b'\xff\xff' + serialized)
+        #print("Sending :", b'\xff\xff' + serialized)
 
     def _handle_acknowledgement(self, msg):
         if msg.type == eTypeUp.ACK_DOWN:
