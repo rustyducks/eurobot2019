@@ -18,8 +18,9 @@ if __name__ == '__main__':
     # r.communication.register_callback(eTypeUp.SENSOR_VALUE, lambda i, v: print("Sensor ID : {}, Sensor Value : {}".format(i, v)))
 
     last_behavior_time = time.time()
-    r.locomotion.reposition_robot(1000, 1680, -math.pi/2)
-    r.locomotion.follow_trajectory([(1500, 1680, 0), (1600, 1600, 0), (1650, 1500, 0), (1550, 1390, 0), (1500, 1000, 0)])
+    r.locomotion.reposition_robot(250, 250, 0)
+    r.locomotion.follow_trajectory([(250, 250, 0), (250, 1500, 0), (1500, 1500, 0), (1700, 1300, 0), (1700, 1100, 0),
+                                    (1500, 900, 0), (250, 900, 0), (1700, 250, 0)])
     time.sleep(2)
     r.ivy.send_trajectory()
     #r.locomotion.start_repositionning(30, 0, 0, (1130, None), -math.pi/2)
@@ -28,7 +29,7 @@ if __name__ == '__main__':
         time.sleep(0.01)
         r.communication.check_message()
         r.locomotion.locomotion_loop(obstacle_detection=False)
-        if time.time() - last_time >= 0.25:
+        if time.time() - last_time >= 0.10:
             r.ivy.send_robot_position()
             last_time = time.time()
         # if r.locomotion.is_repositioning_ended:

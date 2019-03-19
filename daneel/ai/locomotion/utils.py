@@ -1,8 +1,5 @@
-from collections import namedtuple
+from typing import NamedTuple
 import math
-
-Speed = namedtuple("Speed", ['vx', 'vy', 'vtheta'])
-TrajPoint = namedtuple("GoalPoint", ['point', 'speed'])
 
 
 class Point:
@@ -91,6 +88,9 @@ class Vector2:
     def __repr__(self):
         return "Vector2({}, {})".format(self.x, self.y)
 
+
+Speed = NamedTuple("Speed", [('vx', float), ('vy', float), ('vtheta', float)])
+TrajPoint = NamedTuple("GoalPoint", [('point', PointOrient), ('speed', float)])
 
 def center_radians(value):
     while value < - math.pi:

@@ -350,32 +350,9 @@ class Locomotion:
         :return:
         """
         self.mode = LocomotionState.POSITION_CONTROL
-        self.position_control.state = self.position_control.eState.FIRST_ROTATION
-        self.position_control.trajectory.clear()
-        self.position_control.trajectory.append(TrajPoint(PointOrient(self.x, self.y, self.theta), 0))
-        if len(points_list) > 0:
-            for i, pt in enumerate(points_list):
-                if i != len(points_list) - 1:
-                    xe = points_list[i + 1][0]
-                    ye = points_list[i + 1][1]
-
-                    if i == 0:
-                        xs = self.x
-                        ys = self.y
-                    else:
-                        xs = points_list[i - 1][0]
-                        ys = points_list[i - 1][1]
-                    a1 = math.atan2(pt[1] - ys, pt[0] - xs)
-                    a2 = math.atan2(ye - pt[1], xe - pt[0])
-                    angle = center_radians(abs(a1) - abs(a2))
-                    if abs(angle) >= math.pi / 2:
-                        goal_speed = 0.
-                    else:
-                        goal_speed = LINEAR_SPEED_MAX * (1 - abs(angle) / (math.pi / 2))
-                else:
-                    goal_speed = 0.
-
-                self.position_control.trajectory.append(TrajPoint(PointOrient(pt[0], pt[1], pt[2]), goal_speed))
+        self.position_control.new_trajectory(points_list)
+        print("[Locomotion] New trajectory received.")
+        print("[Locomotion] Going into position control mode.")
 
     @property
     def x(self):
