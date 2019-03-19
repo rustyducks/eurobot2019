@@ -21,12 +21,13 @@ class Map:
             self.lidar_table_bb = BoundingBox(self.robot, table['x_start'],
                                               table['y_start'], table['x_stop'], table['y_stop'])
             obstacles = lidar_obstacles_dict['mask']['static_obstacles']
-            for o in obstacles:
-                x1 = int(o['x_start'])
-                y1 = int(o['y_start'])
-                x2 = int(o['x_stop'])
-                y2 = int(o['y_stop'])
-                self.lidar_static_obstacles_bb.append(BoundingBox(self.robot, x1, y1, x2, y2))
+            if obstacles is not None:
+                for o in obstacles:
+                    x1 = int(o['x_start'])
+                    y1 = int(o['y_start'])
+                    x2 = int(o['x_stop'])
+                    y2 = int(o['y_stop'])
+                    self.lidar_static_obstacles_bb.append(BoundingBox(self.robot, x1, y1, x2, y2))
 
 
 class Obstacle:
