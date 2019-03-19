@@ -49,7 +49,7 @@ public:
 
 	float get_pos_theta()
 	{
-		return _theta;  //TODO normalize angle
+		return _theta;
 	}
 
 	float get_speed() {

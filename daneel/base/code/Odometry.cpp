@@ -43,7 +43,7 @@ void Odometry::update() {
 
 	_x = _x + length*cos(_theta + angle/2.0);
 	_y = _y + length*sin(_theta + angle/2.0);
-	_theta = _theta + angle;
+	_theta = center_radians(_theta + angle);
 	_speed = length / CONTROL_PERIOD;
 	_omega = angle / CONTROL_PERIOD;
 }
