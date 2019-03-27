@@ -28,7 +28,7 @@ InputOutputs::~InputOutputs() {
 }
 
 void InputOutputs::init() {
-	Dynamixel.begin(1000000, DYNAMIXEL_CONTROL);
+	//Dynamixel.begin(1000000, DYNAMIXEL_CONTROL);
 	pinMode(LED_RED, OUTPUT);
 	pinMode(LED_GREEN, OUTPUT);
 	pinMode(LED_BLUE, OUTPUT);
@@ -129,7 +129,8 @@ int InputOutputs::readSensor(sSensor& sensor){
 		return digitalRead(sensor.sensorPin);
 		break;
 	case sSensor::DYNAMIXEL_POSITION:
-		return Dynamixel.readPosition(sensor.sensorPin);
+		//return Dynamixel.readPosition(sensor.sensorPin);
+		return 0;
 		break;
 	}
 	return 0;
@@ -176,13 +177,13 @@ void ioHMIhasChanged(){
 }
 
 void InputOutputs::deliverWater(bool enable, int dynamixelId, bool direction) {
-	if(enable) {
+	/*if(enable) {
 		Dynamixel.setEndless(2, true);
 		Dynamixel.turn(dynamixelId, direction, 1023);
 	}
 	else {
 		Dynamixel.turn(dynamixelId, direction, 0);
-	}
+	}*/
 }
 
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
