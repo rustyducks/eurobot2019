@@ -1,9 +1,8 @@
 import enum
 from locomotion.utils import *
 from locomotion.params import ADMITTED_POSITION_ERROR, ROTATION_ACCELERATION_MAX, ADMITTED_ANGLE_ERROR, \
-    ROTATION_SPEED_MAX, LINEAR_SPEED_MAX, ACCELERATION_MAX
+    ROTATION_SPEED_MAX, LINEAR_SPEED_MAX, ACCELERATION_MAX, LOOKAHEAD_DISTANCE
 
-LOOKAHEAD_DISTANCE = 100.
 
 
 class PositionControl(LocomotionControlBase):
@@ -116,7 +115,7 @@ class PositionControl(LocomotionControlBase):
         omega = min((ROTATION_SPEED_MAX, abs(self.current_speed.vtheta) + delta_time * ROTATION_ACCELERATION_MAX))
         rotation_error_sign = math.copysign(1, center_radians(aiming_angle - self.current_pose.theta))
         t_rotation_stop = abs(self.current_speed.vtheta) / ROTATION_ACCELERATION_MAX
-        planned_stop_angle = center_radians(self.current_pose.theta + rotation_error_sign * 2.5 * (
+        planned_stop_angle = center_radians(self.current_pose.theta + rotation_error_sign * 2 * (
             abs(
                 self.current_speed.vtheta) * t_rotation_stop - 1 / 2 * ROTATION_ACCELERATION_MAX * t_rotation_stop**2))
         #self.robot.ivy.highlight_robot_angle(0, aiming_angle)
@@ -125,6 +124,9 @@ class PositionControl(LocomotionControlBase):
         if planned_angular_error <= ADMITTED_ANGLE_ERROR or abs(center_radians(planned_stop_angle - self.theta)) > abs(
                 center_radians(aiming_angle - self.theta)):
             omega = max((0, abs(self.current_speed.vtheta) - ROTATION_ACCELERATION_MAX * delta_time))
+        elif planned_angular_error <= 3*ADMITTED_ANGLE_ERROR and abs(self.current_speed.vtheta) >= 0.1:
+            omega = self.current_speed.vtheta
+
         #print(omega)
         return Speed(0, 0, math.copysign(omega, rotation_error_sign))
 
@@ -215,10 +217,13 @@ class PositionControl(LocomotionControlBase):
         # Acceleration part
         rg = next_point_traj.point - self.current_pose
         unit_orient = Vector2(math.cos(self.theta), math.sin(self.theta))
-        alpha = math.acos(rg.dot(unit_orient) / rg.norm())
+        if (rg.norm() <= 0.001):
+            alpha = math.pi / 2
+        else:
+            alpha = math.acos(rg.dot(unit_orient) / rg.norm())
         target_speed = LINEAR_SPEED_MAX * (1 - abs(alpha) / (math.pi / 2))
-        current_linear_speed = math.hypot(self.current_speed.vx, self.current_speed.vy)
-        new_speed = min((target_speed, current_linear_speed + delta_time * ACCELERATION_MAX))
+        current_linear_speed = self.current_speed.vx
+        new_speed = min((max((target_speed, current_linear_speed - delta_time * ACCELERATION_MAX)), current_linear_speed + delta_time * ACCELERATION_MAX))
 
 
         # Check if we need to decelerate
@@ -238,6 +243,9 @@ class PositionControl(LocomotionControlBase):
                                                                                                    self.y) > distance_to_objective:
                 # Deceleration time
                 new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
+            elif planned_stop_error <= 3 * ADMITTED_POSITION_ERROR and abs(current_linear_speed) > 10:
+                # Do not accelerate if we already plan to stop close to the point
+                new_speed = current_linear_speed
 
         return new_speed
 
