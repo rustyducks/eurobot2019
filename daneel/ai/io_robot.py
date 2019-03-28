@@ -88,7 +88,7 @@ class IO(object):
         PURPLE = (255, 0, 255)
         CYAN = (0, 255, 255)
         ORANGE = (255, 127, 0)
-        WHITE = (255, 255, 255)
+        WHITE = (200, 200, 200)
 
     class CordState(Enum):
         IN = "in"
