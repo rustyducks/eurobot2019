@@ -25,11 +25,13 @@ if __name__ == '__main__':
     r.ivy.send_trajectory()
     #r.locomotion.start_repositionning(30, 0, 0, (1130, None), -math.pi/2)
     last_time = 0
+    last_pos_ctrl = 0
     while 1:
-        time.sleep(0.01)
         r.communication.check_message()
-        r.locomotion.locomotion_loop(obstacle_detection=False)
-        if time.time() - last_time >= 0.10:
+        if time.time() - last_pos_ctrl >= 0.1:
+            r.locomotion.locomotion_loop(obstacle_detection=False)
+            last_pos_ctrl = time.time()
+        if time.time() - last_time >= 0.05:
             r.ivy.send_robot_position()
             last_time = time.time()
         # if r.locomotion.is_repositioning_ended:
