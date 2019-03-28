@@ -64,7 +64,7 @@ const int BAT_POW = A22;
 /* END ------------------------- IOs ----------------------------------*/
 
 
-const float POS_REPORT_PERIOD = 0.2;
+const float POS_REPORT_PERIOD = 0.05;
 const unsigned int TIME_SPEED_FAILSAFE = 10000000;		//TODO shorten this time
 
 #endif /* PARAMS_H_ */
