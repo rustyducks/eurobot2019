@@ -12,6 +12,7 @@
 #include "params.h"
 
 const int MOVE_HISTORY_LENGHT = 10;
+const int COUNTER_ZERO_VALUE = 32000;
 
 class Odometry {
 public:
@@ -68,6 +69,10 @@ protected:
 
 	float _speed, _omega;
 
+	void zeroLeftFTM();
+	int32_t lastLeftCTN;
+
+
 };
 
 
@@ -77,6 +82,7 @@ extern Odometry odometry;
  * Instanciate the Odometry class, then configure corrects interruption routines
  */
 void initOdometry();
+void initLeftEncoder();
 
 void ISR1();
 void ISR11();
