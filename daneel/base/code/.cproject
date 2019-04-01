@@ -19,14 +19,13 @@
 							<builder buildPath="${workspace_loc:/propulsion_rustyDuck_2019}/Release" id="io.sloeber.sketch.builder.952899806" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
 							<tool id="io.sloeber.tool.sketch.compiler.cpp.434486672" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
 								<option id="io.sloeber.compiler.cpp.sketch.option.incpath.1904622676" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/BallDetector}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/TM1637}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libraries/DynamixelSerial5}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libraries/Metro}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libraries/Servo}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/core/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libraries/TM1637}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/utility}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Metro}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/DynamixelSerial5}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/propulsion_rustyDuck_2019/libraries/Servo}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.948193164" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
