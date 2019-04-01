@@ -35,7 +35,7 @@ void ExtNavigation::update() {
 		speed_setpoint = 0;
 		omega_setpoint = 0;
 		inputOutputs.HMISetLedColor(255,0,0);
-		Serial.print("[WARNING] Long time since last speed message. Stop for failsafe. ");
+		Serial.println("[WARNING] Long time since last speed message. Stop for failsafe. ");
 	}
 	motorControl.set_speed_setpoint(speed_setpoint);
 	motorControl.set_omega_setpoint(omega_setpoint);
