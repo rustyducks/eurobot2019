@@ -106,10 +106,6 @@ void loop()
 		inputOutputs.run();
 	}
 
-	if (BallDetectorTime.check()){
-		inputOutputs.updateBallDetector();
-	}
-
 //	if(testTime.check()) {
 //	}
 

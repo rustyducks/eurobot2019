@@ -45,7 +45,7 @@ void InputOutputs::init() {
 }
 
 void InputOutputs::initSensors(){
-	sSensor battery_sig, battery_pwr, ball_detector_green, ball_detector_orange;
+	sSensor battery_sig, battery_pwr;
 	pinMode(BAT_SIG, INPUT);
 	pinMode(BAT_POW, INPUT);
 	battery_sig.sensorType = sSensor::ANALOG;
@@ -63,10 +63,6 @@ void InputOutputs::initSensors(){
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
 
-	sensors[registeredSensorsNumber++] = ball_detector_green;
-
-	sensors[registeredSensorsNumber++] = ball_detector_orange;
-
 	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
 //	irCubeLeft.sensorType = sSensor::ANALOG;
 //	irCubeLeft.sensorId = 0;
@@ -80,10 +76,9 @@ void InputOutputs::initSensors(){
 
 void InputOutputs::reset(){
 	for (int i = 0; i < registeredSensorsNumber; i++){
-		sSensor s = sensors[i];
-		s.lastReadTime = 0;
-		s.lastReadValue = 0;
-		s.sensorReadState = sSensor::STOPPED;
+		sensors[i].lastReadTime = 0;
+		sensors[i].lastReadValue = 0;
+		sensors[i].sensorReadState = sSensor::STOPPED;
 	}
 }
 
@@ -136,9 +131,6 @@ int InputOutputs::readSensor(sSensor& sensor){
 	return 0;
 }
 
-void InputOutputs::updateBallDetector(){
-}
-
 bool InputOutputs::HMIGetButton1State() {
 	_button1Pressed = digitalRead(BUTTON1);
 	return _button1Pressed;
@@ -174,16 +166,6 @@ void InputOutputs::HMISendState(){
 
 void ioHMIhasChanged(){
 	inputOutputs.setHmIhasChanged(true);
-}
-
-void InputOutputs::deliverWater(bool enable, int dynamixelId, bool direction) {
-	/*if(enable) {
-		Dynamixel.setEndless(2, true);
-		Dynamixel.turn(dynamixelId, direction, 1023);
-	}
-	else {
-		Dynamixel.turn(dynamixelId, direction, 0);
-	}*/
 }
 
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){

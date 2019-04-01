@@ -12,7 +12,6 @@
 
 #include <libraries/TM1637/TM1637Display.h>
 #include <Servo.h>
-#include <BallDetector.h>
 #include <params.h>
 
 class InputOutputs {
@@ -35,7 +34,6 @@ public:
 	void HMISendState();
 
 	void handleActuatorMessage(int actuatorId, int actuatorCommand);
-	void deliverWater(bool enable, int dynamixelId, bool direction);
 
 	void handleSensorCommand(int sensorId, int sensorCommand);
 
@@ -49,8 +47,6 @@ public:
 	void setHmIhasChanged(bool hmIhasChanged) {
 		_HMIhasChanged = hmIhasChanged;
 	}
-
-	void updateBallDetector();
 
 
 private:
