@@ -1,7 +1,6 @@
 from enum import Enum
 import bitstring
 
-
 UP_MESSAGE_SIZE = 10  # maximum size of a up message (teensy -> raspi) in bytes
 UP_HEADER_SIZE = 4  # size of the header (all except the data) of an up message
 DOWN_MESSAGE_SIZE = 16  # maximum size of a down message (raspi -> teensy) in bytes
@@ -22,6 +21,7 @@ class DeserializationException(Exception):
     """
     Raised on deserialization error (when trying to read what is sent over the wire into usable data)
     """
+
     def __init__(self, message):
         """
         Ctor of the deserialization exception.
@@ -50,6 +50,7 @@ class sAckDown:
     """
     Payload of an up message (from base to ai) acknowledging a down message (from ai to base).
     """
+
     def __init__(self):
         """
         Ctor
@@ -112,7 +113,7 @@ class sOdomReport:
             'uintle:16, uintle:16, uintle:16')
 
     def serialize(self):
-        return bitstring.pack('uint:8, uint:8, uintle:16, uintle:16, uintle:16',
+        return bitstring.pack('uintle:16, uintle:16, uintle:16',
                               self._x, self._y, self._theta)
 
 
@@ -354,37 +355,37 @@ class sPIDTuning:
         self._ki_linear = None
         self._kd_linear = None
         self._kp_angular = None
-        self._kp_angular = None
-        self._kp_angular = None
-        
+        self._ki_angular = None
+        self._kd_angular = None
+
     @property
     def kp_linear(self):
         return self._kp_linear / 1000
-    
+
     @kp_linear.setter
     def kp_linear(self, value):
         self._kp_linear = value * 1000
-        
+
     @property
     def ki_linear(self):
         return self._ki_linear / 1000
-    
+
     @ki_linear.setter
     def ki_linear(self, value):
         self._ki_linear = value * 1000
-        
+
     @property
     def kd_linear(self):
         return self._kd_linear / 1000
-    
+
     @kd_linear.setter
     def kd_linear(self, value):
         self._kd_linear = value * 1000
-        
+
     @property
     def kp_angular(self):
         return self._kp_angular / 1000
-    
+
     @kp_angular.setter
     def kp_angular(self, value):
         self._kp_angular = value * 1000
@@ -392,24 +393,24 @@ class sPIDTuning:
     @property
     def ki_angular(self):
         return self._ki_angular / 1000
-    
+
     @ki_angular.setter
     def ki_angular(self, value):
-        self._ki_angular = value * 1000        
-        
+        self._ki_angular = value * 1000
+
     @property
     def kd_angular(self):
         return self._kd_angular / 1000
-    
+
     @kd_angular.setter
     def kd_angular(self, value):
         self._kd_angular = value * 1000
-        
+
     def serialize(self):
         return bitstring.pack('uintle:16, uintle:16, uintle:16, uintle:16, uintle:16, uintle:16',
-                              self._kp_linear, self._ki_linear, self._kd_linear, self._kp_angular, self._ki_angular, self._kd_angular)
-        
-        
+                              self._kp_linear, self._ki_linear, self._kd_linear, self._kp_angular, self._ki_angular,
+                              self._kd_angular)
+
 
 class sSensorCommand:
     def __init__(self):
@@ -423,11 +424,12 @@ class sSensorCommand:
 class sMessageDown:
     """
     Class defining the down (raspi -> teensy) messages
-    :type type: eTypeDown
+    :type type: eTypeDown|None
     :type down_id: int
     :type checksum: int
-    :type data: sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand|sRepositioning
+    :type data: sAckUp|sActuatorCommand|sSpeedCommand|sHMICommand|sRepositioning|None
     """
+
     def __init__(self):
         self.down_id = 0  # :8
         self.type = None  # :8
@@ -448,9 +450,9 @@ class sMessageDown:
 
         self.checksum = self.checksum % 0xFF
 
-        ser = bitstring.pack('uint:8, uint:8, uint:8, uint:8', self.down_id, self.type.value, self.data_size, self.checksum)
+        ser = bitstring.pack('uint:8, uint:8, uint:8, uint:8', self.down_id, self.type.value, self.data_size,
+                             self.checksum)
         serialized_msg = ser + ser2
         return serialized_msg
-
 
 # ====== End down message declaration
