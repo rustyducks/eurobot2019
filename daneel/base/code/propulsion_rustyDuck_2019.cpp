@@ -80,6 +80,7 @@ void loop()
 		simulator.update();
 #endif
 		odometry.update();
+		odometry.periodic_position();
 		extNavigation.update();
 		motorControl.control();
 

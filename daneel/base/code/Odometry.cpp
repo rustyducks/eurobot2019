@@ -25,24 +25,69 @@ Odometry::Odometry() {
 	_speed = _omega = 0;
 	_incr1 = _incr2 = 0;
 	lastLeftCTN = COUNTER_ZERO_VALUE;
+	lastRightCTN = COUNTER_ZERO_VALUE;
 }
 
 Odometry::~Odometry() {
 }
 
-static inline int readLeftInc() {
+void Odometry::periodic_position() {
 	noInterrupts();	    // Variables can change if FTM interrrupt occurs
-	uint16_t count16 = FTM1_CNT;
+	int32_t leftCTN = (int32_t)FTM1_CNT;
+	int32_t rightCTN = (int32_t)FTM2_CNT;
 	interrupts();   // Turn interrupts back on before return
-	return count16/* - 32000*/;
+
+	int32_t deltaLeft = leftCTN - lastLeftCTN;
+	int32_t deltaRight = rightCTN - lastRightCTN;
+	lastLeftCTN = leftCTN;
+	lastRightCTN = rightCTN;
+
+	if(FTM1_SC & FTM_SC_TOF) {		//overflow occurs
+		Serial.println("overflow FTM1 !");
+		FTM1_SC=0;		//clear overflow bit
+		int tofdir = FTM1_QDCTRL & FTM_QDCTRL_TOFDIR;	//determine overflow direction
+		if(tofdir) {			//overflow counting up
+			deltaLeft += 65535;
+		}
+		else {					////overflow counting down
+			deltaLeft -= 65535;
+		}
+	}
+
+	if(FTM2_SC & FTM_SC_TOF) {		//overflow occurs
+		Serial.println("overflow FTM2 !");
+		FTM2_SC=0;		//clear overflow bit
+		int tofdir = FTM2_QDCTRL & FTM_QDCTRL_TOFDIR;	//determine overflow direction
+		if(tofdir) {			//overflow counting up
+			deltaRight += 65535;
+		}
+		else {					////overflow counting down
+			deltaRight -= 65535;
+		}
+	}
+
+
+	float length = ((float)(deltaLeft + deltaRight)/2.0)/INC_PER_MM_CODING_WHEELS;
+	float angle = ((float)(deltaRight - deltaLeft)/INC_PER_MM_CODING_WHEELS)/WHEELBASE_CODING_WHEELS;
+
+	_x = _x + length*cos(_theta + angle/2.0);
+	_y = _y + length*sin(_theta + angle/2.0);
+	_theta = center_radians(_theta + angle);
+
+	/*Serial.print("  x: ");
+	Serial.print(_x);
+	Serial.print("   y: ");
+	Serial.print(_y);
+	Serial.print("   theta: ");
+	Serial.println(_theta);*/
 }
 
 void Odometry::update() {
-	cli();
+	noInterrupts();
 	int incr1 = _incr1;
 	int incr2 = _incr2;
 	_incr1 = _incr2 = 0;
-	sei();
+	interrupts();
 
 #ifdef SIMULATOR
 	incr1 = simulator.readEnc(0);
@@ -52,36 +97,12 @@ void Odometry::update() {
 	float length = ((float)(-incr1+incr2)/2.0)/INC_PER_MM;		//opposite sign on incr1 because motors are mirrored
 	float angle = ((float)(incr1+incr2)/INC_PER_MM)/WHEELBASE;  //opposite sign on incr1 because motors are mirrored
 
-	_x = _x + length*cos(_theta + angle/2.0);
-	_y = _y + length*sin(_theta + angle/2.0);
-	_theta = center_radians(_theta + angle);
+//	_x = _x + length*cos(_theta + angle/2.0);
+//	_y = _y + length*sin(_theta + angle/2.0);
+//	_theta = center_radians(_theta + angle);
 	_speed = length / CONTROL_PERIOD;
 	_omega = angle / CONTROL_PERIOD;
 
-
-
-	noInterrupts();	    // Variables can change if FTM interrrupt occurs
-	int32_t leftCTN = (int32_t)FTM1_CNT;
-	interrupts();   // Turn interrupts back on before return
-
-	int32_t delta = leftCTN - lastLeftCTN;
-	lastLeftCTN = leftCTN;
-
-	if(FTM1_SC & FTM_SC_TOF) {		//overflow occurs
-		FTM1_SC=0;		//clear overflow bit
-		int tofdir = FTM1_QDCTRL & FTM_QDCTRL_TOFDIR;	//determine overflow direction
-		if(tofdir) {			//overflow counting up
-			delta += 65535;
-		}
-		else {					////overflow counting down
-			delta -= 65535;
-		}
-	}
-
-	//do something with delta
-
-	//Serial.print("  Test odom: ");
-	//Serial.println(delta);
 }
 
 void Odometry::init() {
@@ -100,6 +121,7 @@ void initOdometry() {
 	attachInterrupt(MOT2_ENCB, ISR22, RISING);
 
 	initLeftEncoder();
+	initRightEncoder();
 
 	odometry.init();
 }
@@ -180,9 +202,35 @@ void Odometry::zeroLeftFTM() {
     FTM1_C0SC=0x10;	// Disable Channel compare int, clear compare bit
 			//   Leaves Mode bit for compare set
 
+
     // Enable counter again
     FTM1_QDCTRL=0xE1;	// QUADEN
     FTM1_FMS=0x40;  	// Write Protect, WPDIS=1
+}
+
+void Odometry::zeroRightFTM() {
+#warning "Unexepected behavior if you use it quite often (read 1 even if the robot has not moved)"
+    // Turn off counter to disable interrupts and clear any
+    //   overflow and compare bits
+
+    v_read=FTM2_FMS;	// Requires reading before WPDIS can be set
+
+    noInterrupts();
+    FTM2_MODE=0x05;	// Write Protect Disable with FTMEN set
+    FTM2_QDCTRL=0xE0;	// Disable QUADEN, filter still enabled
+                        //   Turns off counter so no interrupts
+    interrupts();
+
+    FTM2_CNTIN=COUNTER_ZERO_VALUE;	//set initial value to 32000 (the middle to not bother with overflows)
+    FTM2_CNT=0;		// Updates counter with CNTIN
+    FTM2_CNTIN=0;	//set minimum value to 0
+
+    FTM2_C0SC=0x10;	// Disable Channel compare int, clear compare bit
+			//   Leaves Mode bit for compare set
+
+    // Enable counter again
+    FTM2_QDCTRL=0xE1;	// QUADEN
+    FTM2_FMS=0x40;  	// Write Protect, WPDIS=1
 }
 
 void initLeftEncoder() {
@@ -216,9 +264,57 @@ void initLeftEncoder() {
     FTM1_QDCTRL=0b11100001;	    // Quadrature control		0xE1
     //        Filter enabled, phase A inverted (positive count down) ,QUADEN set
 
+    if(FTM1_SC) {	//clear overflow flag. register need to be read before it can be cleared
+    	FTM1_SC = 0;
+    }
     // Write Protect Enable
     FTM1_FMS=0x40;		// Write Protect, WPDIS=1
 
     //NVIC_ENABLE_IRQ(IRQ_FTM1);
+
+}
+
+void initRightEncoder() {
+
+//	const int POS_ENC2A = 29;	//PTB18		ALT6: FTM2_QD_PHA
+//	const int POS_ENC2B = 30;	//PTB19		ALT6: FTM2_QD_PHB
+
+	PORTB_PCR18 = 0x00000612;   //Alt7-QD_FTM1,FilterEnable,Pulldown
+	PORTB_PCR19 = 0x00000612;   //Alt7-QD_FTM1,FilterEnable,Pulldown
+
+    //Set FTMEN to be able to write registers
+	FTM2_MODE=0x04;	    // Write protect disable - reset value
+	FTM2_MODE=0x05;	    // Set FTM Enable
+
+    // Set registers written in pins_teensy.c back to default
+    FTM2_CNT = 0;
+    FTM2_MOD = 0;
+    FTM2_C0SC =0;
+    FTM2_C1SC =0;
+    FTM2_SC = 0;
+
+
+    // Set registers to count quadrature
+    FTM2_FILTER=0x22;	// 2x4 clock filters on both channels
+    FTM2_MOD=0xFFFF;	// Maximum value of counter
+    FTM2_CNTIN=COUNTER_ZERO_VALUE;	//set initial value to 32000 (the middle to not bother with overflows)
+    FTM2_CNT=0;		// Updates counter with CNTIN
+    FTM2_CNTIN=0;	//set minimum value to 0
+
+    // Set Registers for output compare mode
+    FTM2_COMBINE=0;	    // Reset value, make sure
+    FTM2_C0SC=0x10;	    // Bit 4 Channel Mode
+
+    FTM2_QDCTRL=0b11000001;	    // Quadrature control		0xE1
+    //        Filter enabled, QUADEN set
+
+    if(FTM2_SC) {	//clear overflow flag. register need to be read before it can be cleared
+		FTM2_SC = 0;
+	}
+
+    // Write Protect Enable
+    FTM2_FMS=0x40;		// Write Protect, WPDIS=1
+
+    //NVIC_ENABLE_IRQ(IRQ_FTM2);
 
 }

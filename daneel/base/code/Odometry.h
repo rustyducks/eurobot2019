@@ -28,6 +28,7 @@ public:
 	 * This function should be called at fixed frequency, before the motor control.
 	 */
 	void update();
+	void periodic_position();
 
 	void isr1();
 	void isr11();
@@ -70,7 +71,9 @@ protected:
 	float _speed, _omega;
 
 	void zeroLeftFTM();
+	void zeroRightFTM();
 	int32_t lastLeftCTN;
+	int32_t lastRightCTN;
 
 
 };
@@ -83,6 +86,7 @@ extern Odometry odometry;
  */
 void initOdometry();
 void initLeftEncoder();
+void initRightEncoder();
 
 void ISR1();
 void ISR11();

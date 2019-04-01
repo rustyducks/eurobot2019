@@ -38,6 +38,10 @@ const int PWM_MAX = pow(2, PWM_RESOLUTION) - 5;
 
 const float32_t INC_PER_MM = 9.866663789678743;
 const float32_t WHEELBASE = 154.84329099722402;		//todo change this
+
+const float32_t INC_PER_MM_CODING_WHEELS = 27.653438736797984;
+const float32_t WHEELBASE_CODING_WHEELS = 288.0;
+
 const float CONTROL_PERIOD = 0.05;
 
 /* END ------------------- Motors & Odometry --------------------------*/
