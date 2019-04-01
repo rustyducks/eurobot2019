@@ -39,12 +39,17 @@ class Locomotion:
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
+        self.robot.communication.register_callback(self.robot.communication.eTypeUp.SPEED_REPORT,
+                                                   self.handle_new_speed_report)
         self._last_position_control_time = None
 
     def handle_new_odometry_report(self, x, y, theta):
         self.current_pose.x = x
         self.current_pose.y = y
         self.current_pose.theta = center_radians(theta)
+
+    def handle_new_speed_report(self, vx, vy, vtheta):
+        self.current_speed = Speed(vx, vy, vtheta)
 
     def go_to_orient(self, x, y, theta):
         self.mode = LocomotionState.POSITION_CONTROL
@@ -138,9 +143,8 @@ class Locomotion:
             vx_r = wanted_speed.vx * math.cos(self.theta) + wanted_speed.vy * math.sin(self.theta)
             vy_r = wanted_speed.vx * -math.sin(self.theta) + wanted_speed.vy * math.cos(self.theta)
             self.handle_obstacle(Speed(vx_r, vy_r, 0), 35, 350)
-        self.current_speed = speed
         #print("State : {}\tSending speed : {}".format(self.position_control.state, speed), end='\r', flush=True)
-        self.robot.communication.send_speed_command(*self.current_speed)
+        self.robot.communication.send_speed_command(*speed)
 
     def stop(self):
         self.previous_mode = self.mode

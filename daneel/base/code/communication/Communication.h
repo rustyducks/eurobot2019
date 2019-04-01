@@ -8,9 +8,7 @@
 #ifndef COMMUNICATION_COMMUNICATION_H_
 #define COMMUNICATION_COMMUNICATION_H_
 
-//#ifndef DEBUG_COMM
 //#define DEBUG_COMM 1
-//#endif
 
 #include <cstdint>
 #include <math.h>
@@ -78,6 +76,7 @@ public:
 	int sendActuatorState(const int actuatorId, const int actuatorState);
 	int sendOdometryPosition(const double x, const double y, const double theta);
 	int sendSensorValue(const int sensorId, const int sensorValue);
+	int sendSpeedReport(const double vx, const double vy, const double vtheta);
 
 	/*
 	 * Callback registering function. Fonctions registered will be called when the appropriate
@@ -127,7 +126,7 @@ private:
 
 	//========Start Up Messages definitions======
 	typedef enum __attribute__((packed)){
-		ACK_DOWN, ODOM_REPORT, HMI_STATE, SENSOR_VALUE
+		ACK_DOWN, ODOM_REPORT, HMI_STATE, SENSOR_VALUE, SPEED_REPORT
 	}eUpMessageType;
 
 	typedef struct __attribute__((packed)) {
@@ -145,11 +144,17 @@ private:
 		uint8_t sensorId;
 		uint16_t sensorValue;
 	}sSensorValueMsg;
+	typedef struct __attribute__((packed)){
+		uint16_t vx;
+		uint16_t vy;
+		uint16_t vtheta;
+	}sSpeedReportMsg;
 	typedef union __attribute__((packed)){
 		sAckDown ackMsg;
 		sOdomReportMsg odomReportMsg;
 		sHMIStateMsg hmiStateMsg;
 		sSensorValueMsg sensorValueMsg;
+		sSpeedReportMsg speedReportMsg;
 	}uMessageUpData;
 
 	typedef struct __attribute__((packed)){

@@ -43,6 +43,7 @@ class eTypeUp(Enum):
     ODOM_REPORT = 1
     HMI_STATE = 2
     SENSOR_VALUE = 3
+    SPEED_REPORT = 4
 
 
 class sAckDown:
@@ -127,6 +128,45 @@ class sHMIState:
         return bitstring.pack('uint:8', self.hmi_state)
 
 
+class sSpeedReport:
+    def __init__(self):
+        self._vx = None  #  uint:16
+        self._vy = None  #  uint:16
+        self._vtheta = None  #  uint:16
+
+    @property
+    def vx(self):
+        return self._vx / LINEAR_SPEED_TO_MSG_FACTOR - LINEAR_SPEED_TO_MSG_ADDER
+
+    @vx.setter
+    def vx(self, value):
+        self._vx = round((value + LINEAR_SPEED_TO_MSG_ADDER) * LINEAR_SPEED_TO_MSG_FACTOR)
+
+    @property
+    def vy(self):
+        return self._vy / LINEAR_SPEED_TO_MSG_FACTOR - LINEAR_SPEED_TO_MSG_ADDER
+
+    @vy.setter
+    def vy(self, value):
+        self._vy = round((value + LINEAR_SPEED_TO_MSG_ADDER) * LINEAR_SPEED_TO_MSG_FACTOR)
+
+    @property
+    def vtheta(self):
+        return self._vtheta / ANGULAR_SPEED_TO_MSG_FACTOR - ANGULAR_SPEED_TO_MSG_ADDER
+
+    @vtheta.setter
+    def vtheta(self, value):
+        self._vtheta = round((value + ANGULAR_SPEED_TO_MSG_ADDER) * ANGULAR_SPEED_TO_MSG_FACTOR)
+
+    def deserialize(self, bytes_packed):
+        s = bitstring.BitStream(bytes_packed)
+        self._vx, self._vy, self._vtheta = s.unpack(
+            'uintle:16, uintle:16, uintle:16')
+
+    def serialize(self):
+        return bitstring.pack('uintle:16, uintle:16, uintle:16', self._vx, self._vy, self._vtheta)
+
+
 class sSensorValue:
     def __init__(self):
         self.sensor_id = None
@@ -140,11 +180,12 @@ class sSensorValue:
 class sMessageUp:
     """
     Class defining the up (teensy -> raspi) messages
-    :type type: eTypeUp
-    :type up_id: int
-    :type checksum: int
-    :type data: sAckDown|sHMIState|sOdomReport|sSensorValue
+    :type type: eTypeUp|None
+    :type up_id: int|None
+    :type checksum: int|None
+    :type data: sAckDown|sHMIState|sOdomReport|sSensorValue|sSpeedReport|None
     """
+
     def __init__(self):
         self.up_id = None
         self.type = None
@@ -169,6 +210,8 @@ class sMessageUp:
             self.data = sOdomReport()
         elif self.type == eTypeUp.SENSOR_VALUE:
             self.data = sSensorValue()
+        elif self.type == eTypeUp.SPEED_REPORT:
+            self.data = sSpeedReport()
         try:
             self.data.deserialize(packed[0:self.data_size])
         except ValueError as e:

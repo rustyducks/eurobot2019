@@ -89,6 +89,29 @@ int Communication::sendOdometryPosition(const double x, const double y, const do
 	return sendUpMessage(msg);
 }
 
+int Communication::sendSpeedReport(const double vx, const double vy, const double vtheta){
+	sMessageUp msg;
+	int msgvx = round((vx + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
+	int msgvy = round((vy + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
+	int msgvtheta = round((vtheta + angularSpeedToMsgAdder) * angularSpeedToMsgFactor);
+
+	if (msgvx < 0 || msgvx > 65535){
+		return -10;
+	}
+	if (msgvy < 0 || msgvy > 65535){
+		return -11;
+	}
+	if (msgvtheta < 0 || msgvtheta > 65535){
+		return -12;
+	}
+	msg.upMsgType = Communication::SPEED_REPORT;
+	msg.upData.speedReportMsg.vx = msgvx;
+	msg.upData.speedReportMsg.vy = msgvy;
+	msg.upData.speedReportMsg.vtheta = msgvtheta;
+
+	return sendUpMessage(msg);
+}
+
 int Communication::storeNewSentMessage(unsigned long time, const uRawMessageUp msg){
 	bool stored = false;
 	sUpMessageStorage toStore = {time, msg};
@@ -166,6 +189,9 @@ uint8_t Communication::getMessageSize(const sMessageUp& msg){
 		break;
 	case SENSOR_VALUE:
 		return sizeof(sSensorValueMsg);
+		break;
+	case SPEED_REPORT:
+		return sizeof(sSpeedReportMsg);
 		break;
 	default:
 		return 0;

@@ -205,8 +205,7 @@ class Communication:
         msg.data.y_repositioning = y
         msg.data.theta_repositioning = theta
         return self.send_message(msg, max_retries)
-        
-        
+
     def send_pid_tuning(self, kp_linear, ki_linear, kd_linear, kp_angular, ki_angular, kd_angular, max_retries=1000):
         msg = sMessageDown()
         msg.type = eTypeDown.PID_TUNING
@@ -240,7 +239,7 @@ class Communication:
         for i in range(max_retries):
             # print(serialized)
             self._serial_port.write(b'\xff\xff' + serialized)
-            #print("Sending :", b'\xff\xff' + serialized)
+            # print("Sending :", b'\xff\xff' + serialized)
             time_sent = int(round(time.time() * 1000))
             while int(round(time.time() * 1000)) - time_sent < SERIAL_SEND_TIMEOUT:
                 msg = self._read_message()
@@ -262,7 +261,7 @@ class Communication:
         ack.data.ack_up_id = id_to_acknowledge
         serialized = ack.serialize().tobytes()
         self._serial_port.write(b'\xff\xff' + serialized)
-        #print("Sending :", b'\xff\xff' + serialized)
+        # print("Sending :", b'\xff\xff' + serialized)
 
     def _handle_acknowledgement(self, msg):
         if msg.type == eTypeUp.ACK_DOWN:
@@ -352,9 +351,10 @@ class Communication:
             for cb in self._callbacks[eTypeUp.HMI_STATE]:
                 cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
         elif message.type == eTypeUp.ODOM_REPORT:
-
             for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
-                cb(message.data.x, message.data.y,
-                   message.data.theta)
+                cb(message.data.x, message.data.y, message.data.theta)
+        elif message.type == eTypeUp.SPEED_REPORT:
+            for cb in self._callbacks[eTypeUp.SPEED_REPORT]:
+                cb(message.data.vx, message.data.vy, message.data.vtheta)
         elif message.type == eTypeUp.ACK_DOWN:
             pass

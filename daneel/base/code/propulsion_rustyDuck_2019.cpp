@@ -99,6 +99,7 @@ void loop()
 	if(posReportTme.check()) {
 		communication.sendOdometryPosition(odometry.get_pos_x(), odometry.get_pos_y(),
 				odometry.get_pos_theta());
+		communication.sendSpeedReport(odometry.get_speed(), 0.0, odometry.get_omega());
 	}
 
 	if(IOsTime.check()) {
