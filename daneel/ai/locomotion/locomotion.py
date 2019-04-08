@@ -30,8 +30,8 @@ class Locomotion:
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
-        self.robot.communication.register_callback(self.robot.communication.eTypeUp.SPEED_REPORT,
-                                                   self.handle_new_speed_report)
+        #self.robot.communication.register_callback(self.robot.communication.eTypeUp.SPEED_REPORT,
+        #                                           self.handle_new_speed_report)
         self._last_position_control_time = None
 
     def handle_new_odometry_report(self, x, y, theta):
@@ -118,6 +118,7 @@ class Locomotion:
         # print("Speed wanted : " + str(speed))
         # self.current_speed = self.comply_speed_constraints(speed, delta_time)
         # print("Speed after saturation : " + str(self.current_speed))
+        speed = self.comply_speed_constraints(speed, delta_time)
 
         if obstacle_detection:
             if self.mode == LocomotionState.STOPPED:
@@ -134,7 +135,9 @@ class Locomotion:
             vx_r = wanted_speed.vx * math.cos(self.theta) + wanted_speed.vy * math.sin(self.theta)
             vy_r = wanted_speed.vx * -math.sin(self.theta) + wanted_speed.vy * math.cos(self.theta)
             self.handle_obstacle(Speed(vx_r, vy_r, 0), 35, 350)
-        #print("State : {}\tSending speed : {}".format(self.position_control.state, speed), end='\r', flush=True)
+            
+        # print("State : {}\tSending speed : {}".format(self.position_control.state, speed), end='\r', flush=True)
+        self.current_speed = speed
         self.robot.communication.send_speed_command(*speed)
 
     def stop(self):
@@ -254,7 +257,7 @@ class Locomotion:
             speed_command = Speed(0, 0, 0)
         return speed_command
 
-    def comply_speed_constraints(self, speed_cmd, dt, alpha_step=0.05):
+    def comply_speed_constraints(self, speed_cmd, dt):
         if dt == 0:
             return Speed(0, 0, 0)
 
