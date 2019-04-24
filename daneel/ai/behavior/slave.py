@@ -109,7 +109,8 @@ class Slave(Behavior):
             x_speed = 0
             y_speed = 0
         else:
-            x_speed = x * DIRECT_SPEED_COMMAND_LINEAR_VALUE / math.hypot(x, y)
-            y_speed = y * DIRECT_SPEED_COMMAND_LINEAR_VALUE / math.hypot(x, y)
+            x_speed = x * DIRECT_SPEED_COMMAND_LINEAR_VALUE  #/ math.hypot(x, y)
+            y_speed = y * DIRECT_SPEED_COMMAND_LINEAR_VALUE  #/ math.hypot(x, y)
         theta_speed = theta * DIRECT_SPEED_COMMAND_ROTATION_VALUE
         self.robot.locomotion.set_direct_speed(x_speed, y_speed, theta_speed)
+
