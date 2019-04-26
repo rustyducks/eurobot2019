@@ -1,0 +1,3 @@
+[submodule "daneel/ai/ext/armothy-python"]
+	path = daneel/ai/ext/armothy-python
+	url = git@github.com:rustyducks/armothy-python.git
