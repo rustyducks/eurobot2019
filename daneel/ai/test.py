@@ -8,7 +8,7 @@ import math
 from drivers.line_detector_cny70 import LineDetector
 
 if __name__ == '__main__':
-    r = robot.Robot(behavior.Behaviors.Slave.value, ivy_address="127:2010"    , teensy_serial_path="/dev/ttyUSB0")
+    r = robot.Robot(behavior.Behaviors.Slave.value, ivy_address="192.168.1:2010"    , teensy_serial_path="/dev/ttyAMA0")
     # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
     #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
     #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
