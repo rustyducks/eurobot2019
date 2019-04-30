@@ -46,62 +46,13 @@ class Slave(Behavior):
         x, y = arg[0].split(",")
         self.robot.locomotion.go_to_orient(float(x), float(y), self.robot.locomotion.theta)
 
-    def toggle_water_cannon(self, color):
-        if color == "green":
-            if self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
-                self.robot.io.start_green_water_cannon()
-            elif self.robot.io.green_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
-                self.robot.io.stop_green_water_cannon()
-        else:
-            if self.robot.io.orange_water_cannon_state == self.robot.io.WaterCannonState.STOPPED:
-                self.robot.io.start_orange_water_cannon()
-            elif self.robot.io.orange_water_cannon_state == self.robot.io.WaterCannonState.FIRING:
-                self.robot.io.stop_orange_water_cannon()
-
-    def toggle_water_collector(self, color):
-        if color == "green":
-            if self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
-                self.robot.io.start_green_water_collector()
-            elif self.robot.io.green_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
-                self.robot.io.stop_green_water_collector()
-        else:
-            if self.robot.io.orange_water_collector_state == self.robot.io.WaterCollectorState.STOPPED:
-                self.robot.io.start_orange_water_collector()
-            elif self.robot.io.orange_water_collector_state == self.robot.io.WaterCollectorState.ACTIVATED:
-                self.robot.io.stop_orange_water_collector()
-
     def handle_custom_action(self, agent, *arg):
         custom_action_number = int(arg[0])
         print(custom_action_number)
         if custom_action_number == 1:
-            self.toggle_water_cannon("green")
+            print("action #1 !")
         elif custom_action_number == 2:
-            self.toggle_water_collector("green")
-        elif custom_action_number == 3:
-            self.toggle_water_cannon("orange")
-        elif custom_action_number == 4:
-            self.toggle_water_collector("orange")
-        elif custom_action_number == 5:
-            if abs(self.robot.io.arm_gripper_state - self.robot.io.ArmGripperState.CLOSED.value) < 10:
-                self.robot.io.open_arm_gripper()
-            else:
-                self.robot.io.close_arm_gripper()
-        elif custom_action_number == 6:
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.RAISED)
-        elif custom_action_number == 7:
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.MIDDLE)
-        elif custom_action_number == 8:
-            self.robot.io.move_arm_base(self.robot.io.ArmBaseState.LOWERED)
-        elif custom_action_number == 9:
-            if self.robot.io.bee_arm_green_state == self.robot.io.BeeArmState.LOWERED:
-                self.robot.io.raise_bee_arm_green()
-            else:
-                self.robot.io.lower_bee_arm_green()
-        elif custom_action_number == 10:
-            if self.robot.io.bee_arm_orange_state == self.robot.io.BeeArmState.LOWERED:
-                self.robot.io.raise_bee_arm_orange()
-            else:
-                self.robot.io.lower_bee_arm_orange()
+            print("action #2 !")
 
     def handle_ivy_speed_direction(self, agent, *arg):
         x, y, theta = map(lambda f: float(f), arg[0].split(","))

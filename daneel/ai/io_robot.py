@@ -17,13 +17,7 @@ BIT10_TO_BATTERY_FACTOR = 0.014774881516587679
 
 
 class ActuatorID(Enum):
-    WATER_COLLECTOR_GREEN = 0  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
-    WATER_COLLECTOR_ORANGE = 1  # Dynamixel (not the Dynamixel id ! But the id defined in base/InputOutputs.h/eMsgActuatorId)
-    WATER_CANNON_GREEN = 2     # DC motor
-    WATER_CANNON_ORANGE = 3    # DC motor
     SCORE_COUNTER = 4
-    BEE_ARM_GREEN = 5    # Chinese servomotor
-    BEE_ARM_ORANGE = 6   # Chinese servomotor
 
 
 class IO(object):
@@ -33,29 +27,15 @@ class IO(object):
         self.button1_state = None
         self.button2_state = None
         self.led_color = None
-        self.green_water_collector_state = None
-        self.green_water_cannon_state = None
-        self.orange_water_collector_state = None
-        self.orange_water_cannon_state = None
         self.score_display_text = None
         self.battery_power_voltage = None
         self.battery_signal_voltage = None
-        self.bee_arm_green_state = None
-        self.bee_arm_orange_state = None
-        self.ball_count_orange = 0
-        self.ball_count_green = 0
  #       self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
  #       self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
  #       self.lidar_thread.start()
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
-        self.stop_green_water_cannon()
-        self.stop_green_water_collector()
-        self.stop_orange_water_cannon()
-        self.stop_orange_water_collector()
-        self.raise_bee_arm_orange()
-        self.raise_bee_arm_green()
         self.score_display_fat()
 
     @property
@@ -65,8 +45,6 @@ class IO(object):
     class SensorId(Enum):
         BATTERY_SIGNAL = 0
         BATTERY_POWER = 1
-        BALL_COUNTER_GREEN = 2
-        BALL_COUNTER_ORANGE = 3
 
     class SensorState(Enum):
         STOPPED = 0
@@ -95,70 +73,9 @@ class IO(object):
         PRESSED = "pressed"
         RELEASED = "released"
 
-    class WaterCollectorState(Enum):
-        ACTIVATED = "activated"
-        STOPPED = "stopped"
-
-    class WaterCannonState(Enum):
-        FIRING = "firing"
-        STOPPED = "stopped"
-
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
         ENAC = 20001
         FAT = 20002
-
-    class BeeArmState(Enum):
-        # [green side degrees, orange side degrees]
-        RAISED = [40, 170]
-        LOWERED = [105, 98]
-
-    def start_green_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 1) == 0:
-            self.green_water_collector_state = self.WaterCollectorState.ACTIVATED
-            if __debug__:
-                print("[IO] Start green water collector")
-
-    def start_orange_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_ORANGE.value, 1) == 0:
-            self.orange_water_collector_state = self.WaterCollectorState.ACTIVATED
-            if __debug__:
-                print("[IO] Start orange water collector")
-
-    def stop_green_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_GREEN.value, 0) == 0:
-            self.green_water_collector_state = self.WaterCollectorState.STOPPED
-            if __debug__:
-                print("[IO] Stop green water collector")
-
-    def stop_orange_water_collector(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_COLLECTOR_ORANGE.value, 0) == 0:
-            self.orange_water_collector_state = self.WaterCollectorState.STOPPED
-            if __debug__:
-                print("[IO] Stop orange water collector")
-
-    def start_green_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 75) == 0:
-            self.green_water_cannon_state = self.WaterCannonState.FIRING
-            if __debug__:
-                print("[IO] Start green water cannon")
-
-    def start_orange_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 75) == 0:
-            self.orange_water_cannon_state = self.WaterCannonState.FIRING
-            if __debug__:
-                print("[IO] Start orange water cannon")
-
-    def stop_green_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_GREEN.value, 0) == 0:
-            self.green_water_cannon_state = self.WaterCannonState.STOPPED
-            if __debug__:
-                print("[IO] Stop green water cannon")
-
-    def stop_orange_water_cannon(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.WATER_CANNON_ORANGE.value, 0) == 0:
-            self.orange_water_cannon_state = self.WaterCannonState.STOPPED
-            if __debug__:
-                print("[IO] Stop orange water cannon")
 
     def set_led_color(self, color):
         if isinstance(color, self.LedColor):
@@ -190,26 +107,6 @@ class IO(object):
                 self.score_display_text = str(number)
             print("[IO] Score display displays " + self.score_display_text)
 
-    def raise_bee_arm_green(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_GREEN.value, self.BeeArmState.RAISED.value[0]) == 0:
-            self.bee_arm_green_state = self.BeeArmState.RAISED
-            print("[IO] Green bee arm raised")
-
-    def raise_bee_arm_orange(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_ORANGE.value, self.BeeArmState.RAISED.value[1]) == 0:
-            self.bee_arm_orange_state = self.BeeArmState.RAISED
-            print("[IO] Orange bee arm raised")
-
-    def lower_bee_arm_green(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_GREEN.value, self.BeeArmState.LOWERED.value[0]) == 0:
-            self.bee_arm_green_state = self.BeeArmState.LOWERED
-            print("[IO] Green bee arm lowered")
-
-    def lower_bee_arm_orange(self):
-        if self.robot.communication.send_actuator_command(ActuatorID.BEE_ARM_ORANGE.value, self.BeeArmState.LOWERED.value[1]) == 0:
-            self.bee_arm_orange_state = self.BeeArmState.LOWERED
-            print("[IO] Orange bee arm lowered")
-
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT
         self.button1_state = self.ButtonState.RELEASED if button1_state else self.ButtonState.PRESSED
@@ -221,10 +118,6 @@ class IO(object):
             self.battery_signal_voltage = self._bit10_to_battery_voltage(sensor_value)
         elif sensor_id == self.SensorId.BATTERY_POWER.value:
             self.battery_power_voltage = self._bit10_to_battery_voltage(sensor_value)
-        elif sensor_id == self.SensorId.BALL_COUNTER_GREEN.value:
-            self.ball_count_green = sensor_value
-        elif sensor_id == self.SensorId.BALL_COUNTER_ORANGE.value:
-            self.ball_count_orange = sensor_value
 
     def _bit10_to_battery_voltage(self, bit10):
         return bit10 * BIT10_TO_BATTERY_FACTOR
