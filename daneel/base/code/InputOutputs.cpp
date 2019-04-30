@@ -32,34 +32,39 @@ void InputOutputs::init() {
 	pinMode(LED_RED, OUTPUT);
 	pinMode(LED_GREEN, OUTPUT);
 	pinMode(LED_BLUE, OUTPUT);
-	//pinMode(CORD, INPUT_PULLUP);
+	pinMode(CORD, INPUT_PULLUP);
 	pinMode(BUTTON1, INPUT_PULLUP);
-	//pinMode(BUTTON2, INPUT_PULLUP);
-	//attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
+	pinMode(BUTTON2, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(CORD), ioHMIhasChanged, CHANGE);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1), ioHMIhasChanged, CHANGE);
-	//attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(BUTTON2), ioHMIhasChanged, CHANGE);
 
 	initSensors();
 
 	HMISetLedColor(0, 0, 0);
+
+	pinMode(LIDAR_SPEED, OUTPUT);
+	analogWrite(LIDAR_SPEED, LIDAR_BASE_PWM);
 }
 
 void InputOutputs::initSensors(){
 	sSensor battery_sig, battery_pwr;
 	pinMode(BAT_SIG, INPUT);
-	pinMode(BAT_POW, INPUT);
 	battery_sig.sensorType = sSensor::ANALOG;
-	battery_pwr.sensorType = sSensor::ANALOG;
 	battery_sig.sensorId = sSensor::BATTERY_SIG;
-	battery_pwr.sensorId = sSensor::BATTERY_POW;
 	battery_sig.sensorPin = BAT_SIG;
-	battery_pwr.sensorPin = BAT_POW;
 	battery_sig.sensorReadState = sSensor::STOPPED;
-	battery_pwr.sensorReadState = sSensor::STOPPED;
 	battery_sig.lastReadTime = 0;
-	battery_pwr.lastReadTime = 0;
 	battery_sig.lastReadValue = 0;
+
+	pinMode(BAT_POW, INPUT);
+	battery_pwr.sensorType = sSensor::ANALOG;
+	battery_pwr.sensorId = sSensor::BATTERY_POW;
+	battery_pwr.sensorPin = BAT_POW;
+	battery_pwr.sensorReadState = sSensor::STOPPED;
+	battery_pwr.lastReadTime = 0;
 	battery_pwr.lastReadValue = 0;
+
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
 
@@ -157,9 +162,9 @@ void InputOutputs::HMISetLedColor(int red, int green, int blue){
 }
 
 void InputOutputs::HMISendState(){
-	//_cordIn = digitalRead(CORD);
+	_cordIn = digitalRead(CORD);
 	_button1Pressed = digitalRead(BUTTON1);
-	//_button2Pressed = digitalRead(BUTTON2);
+	_button2Pressed = digitalRead(BUTTON2);
 	_HMIhasChanged = false;
 	communication.sendIHMState(_cordIn, _button1Pressed, _button2Pressed, _redLEDOn, _greenLEDOn, _blueLEDOn);
 }

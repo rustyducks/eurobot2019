@@ -40,7 +40,7 @@ const float32_t INC_PER_MM = 9.866663789678743;
 const float32_t WHEELBASE = 154.84329099722402;		//todo change this
 
 const float32_t INC_PER_MM_CODING_WHEELS = 27.653438736797984;
-const float32_t WHEELBASE_CODING_WHEELS = 288.0;
+const float32_t WHEELBASE_CODING_WHEELS = 289.88388523039015;
 
 const float CONTROL_PERIOD = 0.05;
 
@@ -50,10 +50,28 @@ const float CONTROL_PERIOD = 0.05;
 const int LED_RED = 23;
 const int LED_GREEN = 22;
 const int LED_BLUE = 21;
-const int BUTTON1 = 15;
 
-//const int CORD = 34;
-//const int BUTTON2 = 16;
+const int BUTTON1 = 15;
+const int CORD = 34;
+const int BUTTON2 = 16;
+
+const int DATA_433 = 33;
+const int SERVO = 14;
+const int LIDAR_SPEED = 20;
+
+const int AUX1 = 35;
+const int AUX2 = 36;
+const int AUX3 = 37;
+const int AUX4 = 9;
+const int AUX5 = 10;
+const int AUX6 = 11;
+const int AUX7 = 12;
+
+const int UART4_RX = 31;
+const int UART4_TX = 32;
+
+const int SDA0 = 18;
+const int SCL0 = 19;
 
 /* END ------------------------- HMI ----------------------------------*/
 
@@ -67,6 +85,7 @@ const int BAT_SIG = A3;
 const int BAT_POW = A22;
 /* END ------------------------- IOs ----------------------------------*/
 
+const int LIDAR_BASE_PWM = 244;
 
 const float POS_REPORT_PERIOD = 0.05;
 const unsigned int TIME_SPEED_FAILSAFE = 1000;
