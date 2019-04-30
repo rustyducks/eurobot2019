@@ -45,6 +45,10 @@ void InputOutputs::init() {
 
 	pinMode(LIDAR_SPEED, OUTPUT);
 	analogWrite(LIDAR_SPEED, LIDAR_BASE_PWM);
+
+	pinMode(VL6180X_LEFT, OUTPUT_OPENDRAIN); 	// If it doesn't work, test without the OPENDRAIN.
+	pinMode(VL6180X_CENTER, OUTPUT_OPENDRAIN);
+	pinMode(VL6180X_RIGHT, OUTPUT_OPENDRAIN);
 }
 
 void InputOutputs::initSensors(){
@@ -190,6 +194,15 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		}else{
 			scoreDisplay.setBrightness(0, false);
 		}
+		break;
+	case eMsgActuatorId::VL6180X_LEFT_RESET:
+		digitalWrite(VL6180X_LEFT, actuatorCommand);
+		break;
+	case eMsgActuatorId::VL6180X_CENTER_RESET:
+		digitalWrite(VL6180X_CENTER, actuatorCommand);
+		break;
+	case eMsgActuatorId::VL6180X_RIGHT_RESET:
+		digitalWrite(VL6180X_RIGHT, actuatorCommand);
 		break;
 	default:
 		break;

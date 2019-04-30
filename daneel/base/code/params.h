@@ -73,6 +73,11 @@ const int UART4_TX = 32;
 const int SDA0 = 18;
 const int SCL0 = 19;
 
+
+const int VL6180X_LEFT = AUX1;
+const int VL6180X_CENTER = AUX2;
+const int VL6180X_RIGHT = AUX3;
+
 /* END ------------------------- HMI ----------------------------------*/
 
 /* BEGIN ----------------------- IOs ----------------------------------*/

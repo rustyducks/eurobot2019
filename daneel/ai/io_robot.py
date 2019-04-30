@@ -17,6 +17,9 @@ BIT10_TO_BATTERY_FACTOR = 0.014774881516587679
 
 
 class ActuatorID(Enum):
+    VL6180X_LEFT_RESET = 0
+    VL6180X_CENTER_RESET = 1
+    VL6180X_RIGHT_RESET = 2
     SCORE_COUNTER = 4
 
 
@@ -106,6 +109,27 @@ class IO(object):
             else:
                 self.score_display_text = str(number)
             print("[IO] Score display displays " + self.score_display_text)
+
+    def enable_VL6180X_LEFT(self, enable):
+        if self.robot.communication.send_actuator_command(ActuatorID.VL6180X_LEFT_RESET.value, int(enable)) == 0:
+            pass
+            #self.green_water_collector_state = self.WaterCollectorState.ACTIVATED
+            if __debug__:
+                print("[IO] set VL6180X state to {}".format(enable))
+
+    def enable_VL6180X_CENTER(self, enable):
+        if self.robot.communication.send_actuator_command(ActuatorID.VL6180X_CENTER_RESET.value, int(enable)) == 0:
+            pass
+            #self.green_water_collector_state = self.WaterCollectorState.ACTIVATED
+            if __debug__:
+                print("[IO] set VL6180X state to {}".format(enable))
+
+    def enable_VL6180X_RIGHT(self, enable):
+        if self.robot.communication.send_actuator_command(ActuatorID.VL6180X_RIGHT_RESET.value, int(enable)) == 0:
+            pass
+            #self.green_water_collector_state = self.WaterCollectorState.ACTIVATED
+            if __debug__:
+                print("[IO] set VL6180X state to {}".format(enable))
 
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT

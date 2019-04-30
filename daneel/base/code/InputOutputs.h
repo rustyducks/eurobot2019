@@ -53,7 +53,11 @@ private:
 	static constexpr int maxSensorNumber = 20;
 	static constexpr int sensorPeriodicTime = 100; // ms
 	typedef enum{
+		VL6180X_LEFT_RESET = 0,
+		VL6180X_CENTER_RESET = 1,
+		VL6180X_RIGHT_RESET = 2,
 		SCORE_COUNTER = 4,
+
 	}eMsgActuatorId;
 
 	typedef struct{
