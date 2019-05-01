@@ -28,7 +28,6 @@ InputOutputs::~InputOutputs() {
 }
 
 void InputOutputs::init() {
-	//Dynamixel.begin(1000000, DYNAMIXEL_CONTROL);
 	pinMode(LED_RED, OUTPUT);
 	pinMode(LED_GREEN, OUTPUT);
 	pinMode(LED_BLUE, OUTPUT);
@@ -44,11 +43,12 @@ void InputOutputs::init() {
 	HMISetLedColor(0, 0, 0);
 
 	pinMode(LIDAR_SPEED, OUTPUT);
+	//digitalWrite(LIDAR_SPEED, HIGH);
 	analogWrite(LIDAR_SPEED, LIDAR_BASE_PWM);
 
-	pinMode(VL6180X_LEFT, OUTPUT_OPENDRAIN); 	// If it doesn't work, test without the OPENDRAIN.
-	pinMode(VL6180X_CENTER, OUTPUT_OPENDRAIN);
-	pinMode(VL6180X_RIGHT, OUTPUT_OPENDRAIN);
+	pinMode(VL6180X_LEFT, OUTPUT);
+	pinMode(VL6180X_CENTER, OUTPUT);
+	pinMode(VL6180X_RIGHT, OUTPUT);
 }
 
 void InputOutputs::initSensors(){
@@ -71,16 +71,6 @@ void InputOutputs::initSensors(){
 
 	sensors[registeredSensorsNumber++] = battery_sig;
 	sensors[registeredSensorsNumber++] = battery_pwr;
-
-	// { sensorType, sensorId, sensorReadState, lastReadTime, lastReadValue, sensorPin}
-//	irCubeLeft.sensorType = sSensor::ANALOG;
-//	irCubeLeft.sensorId = 0;
-//	irCubeLeft.sensorPin = IR_CUBES_LEFT;
-//	irCubeLeft.sensorReadState = STOPPED;
-//	irCubeLeft.lastReadTime = 0;
-//	irCubeLeft.lastReadValue = 0;
-//	sensors[registeredSensorsNumber] = irCubeLeft;
-//	registeredSensorsNumber++;
 }
 
 void InputOutputs::reset(){
@@ -113,7 +103,7 @@ void InputOutputs::run(){
 			break;
 		case sSensor::PERIODIC:
 			long now = millis();
-			Serial.println(now);
+			//Serial.println(now);
 			if (now - s->lastReadTime >= sensorPeriodicTime){
 				s->lastReadValue = readSensor(*s);
 				s->lastReadTime = now;
@@ -140,21 +130,6 @@ int InputOutputs::readSensor(sSensor& sensor){
 	return 0;
 }
 
-bool InputOutputs::HMIGetButton1State() {
-	_button1Pressed = digitalRead(BUTTON1);
-	return _button1Pressed;
-}
-
-bool InputOutputs::HMIGetButton2State() {
-	//_button2Pressed = digitalRead(BUTTON2);
-	return _button2Pressed;
-}
-
-bool InputOutputs::HMIGetCordState() {
-	//_cordIn = digitalRead(CORD);
-	return _cordIn;
-}
-
 void InputOutputs::HMISetLedColor(int red, int green, int blue){
 	_redLEDOn = red;
 	_greenLEDOn = green;
@@ -179,7 +154,7 @@ void ioHMIhasChanged(){
 
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
-	case eMsgActuatorId::SCORE_COUNTER:
+	case eMsgActuatorId::ACT_SCORE_COUNTER:
 		scoreDisplay.setBrightness(7, true);
 		if (actuatorCommand <= 9999){
 			scoreDisplay.showNumberDecEx(actuatorCommand, 0);
@@ -195,14 +170,23 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 			scoreDisplay.setBrightness(0, false);
 		}
 		break;
-	case eMsgActuatorId::VL6180X_LEFT_RESET:
+	case eMsgActuatorId::ACT_VL6180X_LEFT_RESET:
+		Serial.print("VL6180X_LEFT_RESET: ");
+		Serial.println(actuatorCommand);
 		digitalWrite(VL6180X_LEFT, actuatorCommand);
 		break;
-	case eMsgActuatorId::VL6180X_CENTER_RESET:
+	case eMsgActuatorId::ACT_VL6180X_CENTER_RESET:
+		Serial.print("VL6180X_LEFT_CENTER: ");
+		Serial.println(actuatorCommand);
 		digitalWrite(VL6180X_CENTER, actuatorCommand);
 		break;
-	case eMsgActuatorId::VL6180X_RIGHT_RESET:
+	case eMsgActuatorId::ACT_VL6180X_RIGHT_RESET:
+		Serial.print("VL6180X_LEFT_RIGHT: ");
+		Serial.println(actuatorCommand);
 		digitalWrite(VL6180X_RIGHT, actuatorCommand);
+		break;
+	case eMsgActuatorId::ACT_LIDAR_PWM:
+		analogWrite(LIDAR_SPEED, actuatorCommand);
 		break;
 	default:
 		break;

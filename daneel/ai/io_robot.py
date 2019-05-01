@@ -9,7 +9,7 @@ import threading, serial
 import math
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
-
+from drivers import vl6180x as v
 LIDAR_SERIAL_PATH = "/dev/ttyUSB0"
 LIDAR_SERIAL_BAUDRATE = 115200
 
@@ -20,6 +20,7 @@ class ActuatorID(Enum):
     VL6180X_LEFT_RESET = 0
     VL6180X_CENTER_RESET = 1
     VL6180X_RIGHT_RESET = 2
+    LIDAR_SPEED = 3
     SCORE_COUNTER = 4
 
 
@@ -33,6 +34,9 @@ class IO(object):
         self.score_display_text = None
         self.battery_power_voltage = None
         self.battery_signal_voltage = None
+        self.range_left = v.VL6180X()
+        self.range_center = v.VL6180X()
+        self.range_right = v.VL6180X()
  #       self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
  #       self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
  #       self.lidar_thread.start()
@@ -40,6 +44,7 @@ class IO(object):
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
         self.score_display_fat()
+        self.set_lidar_pwm(0) # 244 for a good speed  #TODO put a good value in order to use the lidar!
 
     @property
     def lidar_points(self):
@@ -79,6 +84,33 @@ class IO(object):
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
         ENAC = 20001
         FAT = 20002
+    
+    def init_range_sensors(self):
+        self.enable_VL6180X_LEFT(True)
+        self.enable_VL6180X_CENTER(False)
+        self.enable_VL6180X_RIGHT(False)
+        self.range_left.get_ready(0X28)
+        self.enable_VL6180X_CENTER(True)
+        self.range_center.get_ready(0X30)
+        self.enable_VL6180X_RIGHT(True)
+        self.range_right.get_ready(0X32)
+    
+    def do_range_left(self):
+        return self.range_left.do_single_shot()
+    
+    def do_range_center(self):
+        return self.range_center.do_single_shot()
+    
+    def do_range_right(self):
+        return self.range_right.do_single_shot()
+    
+    def set_lidar_pwm(self, pwm):
+        pwm=min(abs(int(pwm)), 255)
+        if self.robot.communication.send_actuator_command(ActuatorID.LIDAR_SPEED.value, pwm) == 0:
+            pass
+            if __debug__:
+                print("[IO] set lidar pwm to {}".format(pwm))
+        
 
     def set_led_color(self, color):
         if isinstance(color, self.LedColor):
