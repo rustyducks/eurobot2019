@@ -131,7 +131,7 @@ class VL6180X():
             return res
     
     def change_address(self, new_address):
-        self.write(I2C_SLAVE_DEVICE_ADDRESS, [new_address])
+        self.write(I2C_SLAVE_DEVICE_ADDRESS, new_address)
         self.address = new_address
     
     def load_sr_settings(self):
@@ -192,6 +192,33 @@ class VL6180X():
             print("init ERROR, SYSTEM_FRESH_OUT_OF_RESET should be equal to 0X01. Maybe the device is already initialized ?")
         self.load_sr_settings()
         self.write(SYSTEM_FRESH_OUT_OF_RESET, 0X00)
+    
+    def get_ready(self, new_addr):
+        have_good_address = False
+        try:
+            self.write(IDENTIFICATION_MODEL_ID)
+            have_good_address = True
+        except OSError:
+            print("OSError #1 !")
+            have_good_address = False
+        if not have_good_address:
+            self.address = new_addr
+            try:
+                self.write(IDENTIFICATION_MODEL_ID)
+                have_good_address = True
+            except OSError:
+                print("OSError #2 !")
+                have_good_address = False
+        if have_good_address:
+            m_id = self.read_byte()
+            if not m_id == 0xB4:
+                print("model id is different than 0XB4: {}".format(hex(m_id)))
+            self.init()
+            self.change_address(new_addr)
+            return 0
+        else:
+            return -1
+        
 
     def do_single_shot(self):
         """
