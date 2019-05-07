@@ -98,11 +98,12 @@ class PositionControl(LocomotionControlBase):
                 else:
                     return speed
         if self.state == self.eState.LAST_ROTATION:
-            if self.current_speed.vtheta <= 0.01 and center_radians(
-                    self.trajectory[0].point.theta - self.current_pose.theta) <= ADMITTED_ANGLE_ERROR:
+            if self.current_speed.vtheta <= 0.01 and abs(center_radians(
+                    self.trajectory[0].point.theta - self.current_pose.theta)) <= ADMITTED_ANGLE_ERROR:
                 self.trajectory.pop(0)
                 if len(self.trajectory) == 0:
                     self.state = self.eState.IDLE
+                    print("[Position control] Trajectory ended.")
                     return Speed(0, 0, 0)
                 else:
                     self.state = self.eState.FIRST_ROTATION
@@ -130,8 +131,8 @@ class PositionControl(LocomotionControlBase):
                 omega = max((0, self.current_speed.vtheta - ROTATION_ACCELERATION_MAX * delta_time))
             else:
                 omega = min((0, self.current_speed.vtheta + ROTATION_ACCELERATION_MAX * delta_time))
-        elif abs(planned_angular_error) <= 3 * ADMITTED_ANGLE_ERROR and abs(self.current_speed.vtheta) >= 0.1:
-            omega = self.current_speed.vtheta
+        elif abs(planned_angular_error) <= 3 * ADMITTED_ANGLE_ERROR:
+            omega = max((ROTATION_ACCELERATION_MAX * delta_time, self.current_speed.vtheta))
 
         # print(omega)
         return Speed(0, 0, omega)
