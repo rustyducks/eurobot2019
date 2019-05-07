@@ -10,8 +10,12 @@ import math
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 from drivers import vl6180x as v
+from drivers import jevois
+
 LIDAR_SERIAL_PATH = "/dev/ttyUSB0"
 LIDAR_SERIAL_BAUDRATE = 115200
+JEVOIS_SERIAL_PATH = "/dev/ttyACM1"
+JEVOIS_SERIAL_BAUDRATE = 115200
 
 BIT10_TO_BATTERY_FACTOR = 0.014774881516587679
 
@@ -40,6 +44,7 @@ class IO(object):
  #       self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
  #       self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
  #       self.lidar_thread.start()
+        self.jevois = jevois.JeVois(JEVOIS_SERIAL_PATH, JEVOIS_SERIAL_BAUDRATE)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
