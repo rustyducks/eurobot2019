@@ -43,11 +43,7 @@ class Locomotion:
         self.current_speed = Speed(vx, vy, vtheta)
 
     def go_to_orient(self, x, y, theta):
-        self.mode = LocomotionState.POSITION_CONTROL
-        self.trajectory.clear()
-        self.trajectory.append(TrajPoint(PointOrient(x, y, center_radians(theta)), 0.))
-        self.current_point_objective = self.trajectory[0].goal_point
-        self.position_control_speed_goal = self.trajectory[0].goal_speed
+        self.follow_trajectory([(x, y, theta)])
 
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
