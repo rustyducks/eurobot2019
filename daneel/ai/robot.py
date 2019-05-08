@@ -16,13 +16,15 @@ robot = None
 BEHAVIOR_DEFAULT = Behaviors.FSMMatch.value
 IVY_ADDRESS_DEFAULT = "192.168.1.255:2010"
 LIDAR_MASK_FILE = "data/obstacles_lidar_mask.yaml"
+STATIC_OBSTACLES_FILE = "data/obstacles_2019.yaml"
 TEENSY_SERIAL_PATH_DEFAULT = "/dev/ttyAMA0"
 
 
 class Robot(object):
     def __init__(self, behavior=BEHAVIOR_DEFAULT, ivy_address=IVY_ADDRESS_DEFAULT,
-                 lidar_mask_file=LIDAR_MASK_FILE, teensy_serial_path=TEENSY_SERIAL_PATH_DEFAULT):
-        self.map = map.Map(self, lidar_mask_file)
+                 static_obstacles_file=STATIC_OBSTACLES_FILE, lidar_mask_file=LIDAR_MASK_FILE,
+                 teensy_serial_path=TEENSY_SERIAL_PATH_DEFAULT):
+        self.map = map.Map(self, static_obstacles_file, lidar_mask_file)
         self.communication = communication.Communication(teensy_serial_path)
         self.io = IO(self)
         self.locomotion = Locomotion(self)

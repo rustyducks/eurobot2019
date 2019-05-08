@@ -30,6 +30,9 @@ class Ivy:
             for obstacle in self.robot.map.lidar_static_obstacles_bb:
                 IvySendMsg(NEW_OBSTACLE_REGEXP.format(obstacle.serialize()))
                 print(obstacle.serialize())
+            for obstacle in self.robot.map.static_obstacles:
+                IvySendMsg(NEW_OBSTACLE_REGEXP.format(obstacle.serialize()))
+                print(obstacle.serialize())
 
     def register_callback(self, regexp, callback):
         IvyBindMsg(callback, regexp)
