@@ -1,0 +1,57 @@
+obstacles:
+  - polygon: # Yellow ramp wall
+      points:
+        - x: 450
+          y: 400
+        - x: 1228
+          y: 400
+        - x: 1228
+          y: 422
+        - x: 1050
+          y: 422
+        - x: 1050
+          y: 457
+        - x: 450
+          y: 457
+  - polygon: # Pink ramp wall
+      points:
+        - x: 2550
+          y: 400
+        - x: 2550
+          y: 457
+        - x: 1950
+          y: 457
+        - x: 1950
+          y: 422
+        - x: 1772
+          y: 422
+        - x: 1772
+          y: 400
+  - polygon: # Middle scale
+      points:
+        - x: 1228
+          y: 0
+        - x: 1772
+          y: 0
+        - x: 1772
+          y: 422
+        - x: 1520
+          y: 422
+        - x: 1520
+          y: 622
+        - x: 1480
+          y: 622
+        - x: 1480
+          y: 422
+        - x: 1228
+          y: 422
+  - circle: # Yellow chaos zone
+      center:
+        x: 1000
+        y: 950
+      radius: 150
+  - circle: # Pink chaos zone
+      center:
+        x: 2000
+        y: 950
+      radius: 150
