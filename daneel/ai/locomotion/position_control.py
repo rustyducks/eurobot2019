@@ -132,7 +132,10 @@ class PositionControl(LocomotionControlBase):
             else:
                 omega = min((0, self.current_speed.vtheta + ROTATION_ACCELERATION_MAX * delta_time))
         elif abs(planned_angular_error) <= 3 * ADMITTED_ANGLE_ERROR:
-            omega = max((ROTATION_ACCELERATION_MAX * delta_time, self.current_speed.vtheta))
+            if self.current_speed.vtheta > 0:
+                omega = max((ROTATION_ACCELERATION_MAX * delta_time, self.current_speed.vtheta))
+            else:
+                omega = min((-ROTATION_ACCELERATION_MAX * delta_time, self.current_speed.vtheta))
 
         # print(omega)
         return Speed(0, 0, omega)
