@@ -4,6 +4,7 @@ from enum import Enum
 from locomotion.position_control import PositionControl
 from locomotion.utils import *
 from locomotion.params import *
+from locomotion.pathfinding import ThetaStar
 
 
 class LocomotionState(Enum):
@@ -23,6 +24,9 @@ class Locomotion:
         # Position Control
         # self.trajectory[0].goal_point must be equal to self.current_point_objective
         self.position_control = PositionControl(self.robot)
+
+        # Pathfinding
+        self.pathfinder = ThetaStar(self.robot)
 
         # Direct speed control
         self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
@@ -47,6 +51,17 @@ class Locomotion:
 
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
+
+    def navigate_to(self, x, y, theta):
+        traj = self.pathfinder.find_path((self.x, self.y), (float(x), float(y)))
+        if traj is None or len(traj) < 2:
+            print("[Locomotion] No trajectory found from {} to {} using pathfinder".format((self.x, self.y), (x, y)))
+        traj_orient = []
+        for pt in traj[:-1]:
+            traj_orient.append((int(pt[0]), int(pt[1]), 0))
+        traj_orient.append((int(traj[-1][0]), int(traj[-1][1]), theta))
+        print(traj_orient)
+        self.follow_trajectory(traj_orient)
 
     def handle_obstacle(self, speed, detection_angle, stop_distance):
         if math.hypot(speed.vx, speed.vy) < 0.01:

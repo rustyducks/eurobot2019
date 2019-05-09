@@ -40,11 +40,11 @@ class Slave(Behavior):
 
     def go_to_orient(self, agent, *arg):
         x, y, theta = arg[0].split(",")
-        self.robot.locomotion.go_to_orient(float(x), float(y), float(theta))
+        self.robot.locomotion.navigate_to(float(x), float(y), float(theta))
 
     def go_to(self, agent, *arg):
         x, y = arg[0].split(",")
-        self.robot.locomotion.go_to_orient(float(x), float(y), self.robot.locomotion.theta)
+        self.robot.locomotion.navigate_to(float(x), float(y), self.robot.locomotion.theta)
 
     def handle_custom_action(self, agent, *arg):
         custom_action_number = int(arg[0])

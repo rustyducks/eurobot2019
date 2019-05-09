@@ -8,7 +8,7 @@ import math
 from drivers.line_detector_cny70 import LineDetector
 
 if __name__ == '__main__':
-    r = robot.Robot(behavior.Behaviors.Slave.value, ivy_address="192.168.1:2010"    , teensy_serial_path="/dev/ttyAMA0")
+    r = robot.Robot(behavior.Behaviors.Slave.value, ivy_address="192.168.1:2010"    , teensy_serial_path="/dev/ttyUSB0")
     # r.communication.register_callback(eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
     #     "X : {}, Y : {}, Theta : {}\t(dx : {}, dy : {}, dt : {}, old report id : {}, new report id : {})".format(
     #        r.locomotion.x, r.locomotion.y, r.locomotion.theta, x, y, t, o, n)))
@@ -19,10 +19,10 @@ if __name__ == '__main__':
 
     last_behavior_time = time.time()
     r.locomotion.reposition_robot(250, 250, 0)
-    r.locomotion.follow_trajectory([(250, 250, 0), (250, 1500, 0), (1500, 1500, 0), (1700, 1300, 0), (1700, 1100, 0),
-                                    (1500, 900, 0), (250, 900, 0), (1700, 250, 0)])
-    time.sleep(2)
-    r.ivy.send_trajectory()
+    # r.locomotion.follow_trajectory([(250, 250, 0), (250, 1500, 0), (1500, 1500, 0), (1700, 1300, 0), (1700, 1100, 0),
+    #                                 (1500, 900, 0), (250, 900, 0), (1700, 250, 0)])
+    # time.sleep(2)
+    # r.ivy.send_trajectory()
     #r.locomotion.start_repositionning(30, 0, 0, (1130, None), -math.pi/2)
     last_time = 0
     last_pos_ctrl = 0
@@ -31,6 +31,7 @@ if __name__ == '__main__':
         if time.time() - last_pos_ctrl >= 0.1:
             r.locomotion.locomotion_loop(obstacle_detection=False)
             last_pos_ctrl = time.time()
+            r.ivy.send_trajectory()
         if time.time() - last_time >= 0.05:
             r.ivy.send_robot_position()
             last_time = time.time()
