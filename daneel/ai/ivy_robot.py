@@ -48,8 +48,11 @@ class Ivy:
         IvySendMsg(HIGHLIGHT_ANGLE_REGEXP.format(str(ident) + ";" + str(theta)))
 
     def send_trajectory(self):
+        trajectory = self.robot.locomotion.position_control.trajectory
+        if trajectory is None or len(trajectory) <= 0:
+            return
         traj = ""
-        for point in self.robot.locomotion.position_control.trajectory:
+        for point in trajectory:
             pt = point.point
             traj += str(pt.x) + "," + str(pt.y)
             traj += ";"
