@@ -53,6 +53,7 @@ class Locomotion:
         self.go_to_orient(point.x, point.y, point.theta)
 
     def navigate_to(self, x, y, theta):
+        # TODO: Probably detach a thread...
         traj = self.pathfinder.find_path((self.x, self.y), (float(x), float(y)))
         if traj is None or len(traj) < 2:
             print("[Locomotion] No trajectory found from {} to {} using pathfinder".format((self.x, self.y), (x, y)))

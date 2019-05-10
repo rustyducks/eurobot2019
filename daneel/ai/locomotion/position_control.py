@@ -48,7 +48,7 @@ class PositionControl(LocomotionControlBase):
                     if abs(angle) >= math.pi / 2:
                         goal_speed = 0.
                     else:
-                        goal_speed = LINEAR_SPEED_MAX * (1 - abs(angle) / (math.pi / 2))
+                        goal_speed = max(0, min(LINEAR_SPEED_MAX, LINEAR_SPEED_MAX * (1 - abs(angle) / (math.pi / 3))))
                 else:
                     goal_speed = 0.
                 self.trajectory.append(TrajPoint(PointOrient(pt[0], pt[1], pt[2]), goal_speed))
@@ -93,7 +93,13 @@ class PositionControl(LocomotionControlBase):
             else:
                 speed = self.pure_pursuit_loop(delta_time)
                 if abs(speed.vx) <= 0.1:
-                    aiming_angle = math.atan2(self.goal_point.y - self.y, self.goal_point.x - self.x)
+                    for i in range(self.pure_pursuit_traj_index):
+                        self.trajectory.pop(0)
+                    self.pure_pursuit_traj_index = 1
+                    self.state = self.eState.FIRST_ROTATION
+                    if len(self.trajectory) < 2:
+                        self.trajectory.insert(0, TrajPoint(self.current_pose, 0))
+                    aiming_angle = math.atan2(self.trajectory[1].point.y - self.y, self.trajectory[1].point.x - self.x)
                     return self.rotation_only_loop(delta_time, aiming_angle)
                 else:
                     return speed
@@ -199,7 +205,7 @@ class PositionControl(LocomotionControlBase):
             -(goal_point.x - self.x) * math.cos(-self.theta) + (goal_point.y - self.y) * math.sin(-self.theta))
 
         self.goal_point = goal_point
-        # self.robot.ivy.highlight_point(2, goal_point.x, goal_point.y)
+        self.robot.ivy.highlight_point(2, goal_point.x, goal_point.y)
 
         # Compute the curvature gamma
         gamma = 2 * goal_point_r[0] / (LOOKAHEAD_DISTANCE ** 2)
@@ -228,7 +234,7 @@ class PositionControl(LocomotionControlBase):
             alpha = math.pi / 2
         else:
             alpha = math.acos(rg.dot(unit_orient) / rg.norm())
-        target_speed = LINEAR_SPEED_MAX * (1 - abs(alpha) / (math.pi / 3))
+        target_speed = max(0, min(LINEAR_SPEED_MAX, LINEAR_SPEED_MAX * (1 - abs(alpha) / (math.pi / 3))))
         current_linear_speed = self.current_speed.vx
         new_speed = min((max((target_speed, current_linear_speed - delta_time * ACCELERATION_MAX)),
                          current_linear_speed + delta_time * ACCELERATION_MAX))
