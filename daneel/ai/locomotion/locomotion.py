@@ -64,41 +64,29 @@ class Locomotion:
         print(traj_orient)
         self.follow_trajectory(traj_orient)
 
-    def handle_obstacle(self, speed, detection_angle, stop_distance):
-        if math.hypot(speed.vx, speed.vy) < 0.01:
-            return
-        if self.robot.io.is_obstacle_in_cone(self.theta, detection_angle, stop_distance):
-            if self.mode != LocomotionState.STOPPED:
-                self.stop()
-        else:
-            if self.mode == LocomotionState.STOPPED:
-                self.restart()
+    def speed_constraints_from_obstacles(self):
+        min_vx = -LINEAR_SPEED_MAX
+        max_vx = LINEAR_SPEED_MAX
+        min_d_far_ellipse, max_d_far_ellipse = self.robot.io.distance_to_cone_ellipse(0, 1.4, FAR_ELLIPSE_MAJOR_AXIS,
+                                                                                      FAR_ELLIPSE_MINOR_AXIS)
+        if min_d_far_ellipse < 0:
+            # If we are in the far ellipse check for the close
+            min_d_close_e, max_d_close_e = self.robot.io.distance_to_cone_ellipse(0, 1.4, CLOSE_ELLIPSE_MAJOR_AXIS,
+                                                                                  CLOSE_ELLIPSE_MINOR_AXIS)
+            if min_d_close_e < 0:
+                max_vx = 0
+            else:
+                max_vx = LINEAR_SPEED_MAX * min_d_close_e / ELLIPSE_SCALE_FACTOR
+        return SpeedConstraint(-LINEAR_SPEED_MAX, max_vx, 0, 0, -ROTATION_SPEED_MAX, ROTATION_SPEED_MAX)
 
-    def is_at_point_orient(self, point=None):
-        if point is None:
-            point = self.current_point_objective
+
+    def is_at_point_orient(self, point):
         if self.mode != LocomotionState.POSITION_CONTROL and self.mode != LocomotionState.STOPPED:
             return True
         if point is None:
             return True
         return self.distance_to(point.x, point.y) <= ADMITTED_POSITION_ERROR \
             and abs(center_radians(self.theta - point.theta)) <= ADMITTED_ANGLE_ERROR
-
-    def is_trajectory_next_point_needed(self):
-        if self.is_at_point_orient():
-            return True
-        else:
-            if self.distance_to(self.current_point_objective.x, self.current_point_objective.y) <= 3 * ADMITTED_POSITION_ERROR and \
-                    self.trajectory[0].goal_speed > 0.1:
-                rp_x = self.current_point_objective.x - self.x
-                rp_y = self.current_point_objective.y - self.y
-                speed_dot_rp = self.current_speed.vy * rp_x + self.current_speed.vy * rp_y
-                return speed_dot_rp <= 0  # If speed is in not in the same direction as the point, proceed to next point
-
-    def is_trajectory_finished(self):
-        if len(self.trajectory) == 0:
-            return self.is_at_point_orient()
-        return False
 
     def locomotion_loop(self, obstacle_detection=False):
         control_time = time.time()
@@ -108,11 +96,17 @@ class Locomotion:
             delta_time = control_time - self._last_position_control_time
         self._last_position_control_time = control_time
 
+        speed_constraints = SpeedConstraint(-LINEAR_SPEED_MAX, LINEAR_SPEED_MAX, 0, 0,
+                                            -ROTATION_SPEED_MAX, ROTATION_SPEED_MAX)
+
+        if obstacle_detection:
+            speed_constraints = self.speed_constraints_from_obstacles()
+
         if self.mode == LocomotionState.STOPPED:
             speed = Speed(0, 0, 0)
 
         elif self.mode == LocomotionState.POSITION_CONTROL:
-            speed = self.position_control.compute_speed(delta_time)
+            speed = self.position_control.compute_speed(delta_time, speed_constraints)
         elif self.mode == LocomotionState.DIRECT_SPEED_CONTROL:
             if self.direct_speed_goal is not None:
                 speed = self.direct_speed_goal
@@ -130,23 +124,7 @@ class Locomotion:
         # print("Speed wanted : " + str(speed))
         # self.current_speed = self.comply_speed_constraints(speed, delta_time)
         # print("Speed after saturation : " + str(self.current_speed))
-        speed = self.comply_speed_constraints(speed, delta_time)
-
-        if obstacle_detection:
-            if self.mode == LocomotionState.STOPPED:
-                if self.previous_mode == LocomotionState.POSITION_CONTROL:
-                    wanted_speed = self.position_control.compute_speed(delta_time)
-                elif self.previous_mode == LocomotionState.DIRECT_SPEED_CONTROL:
-                    wanted_speed = self.direct_speed_goal
-                elif self.previous_mode == LocomotionState.REPOSITIONING:
-                    wanted_speed = self.repositioning_speed_goal
-                else:
-                    wanted_speed = Speed(0, 0, 0)
-            else:
-                wanted_speed = speed
-            vx_r = wanted_speed.vx * math.cos(self.theta) + wanted_speed.vy * math.sin(self.theta)
-            vy_r = wanted_speed.vx * -math.sin(self.theta) + wanted_speed.vy * math.cos(self.theta)
-            self.handle_obstacle(Speed(vx_r, vy_r, 0), 35, 350)
+        #speed = self.comply_speed_constraints(speed, delta_time)
             
         # print("State : {}\tSending speed : {}".format(self.position_control.state, speed), end='\r', flush=True)
         self.current_speed = speed
@@ -165,109 +143,6 @@ class Locomotion:
         else:
             self.mode = LocomotionState.DIRECT_SPEED_CONTROL
         self.direct_speed_goal = Speed(x_speed, y_speed, theta_speed)
-
-    def position_control_loop(self, delta_time):
-        if len(self.trajectory) > 0:
-            if self.is_trajectory_next_point_needed():
-                # We reached a point in the trajectory, remove it.
-                self.trajectory.pop(0)
-                if len(self.trajectory) > 0:
-                    # Go to next point in the trajectory
-                    self.current_point_objective = self.trajectory[0].goal_point
-                    self.position_control_speed_goal = self.trajectory[0].goal_speed
-
-        if self.current_point_objective is not None:
-            self.robot.ivy.highlight_point(0, self.current_point_objective.x, self.current_point_objective.y)
-            distance_to_objective = self.current_point_objective.lin_distance_to(self.x, self.y)
-            # if distance_to_objective <= ADMITTED_POSITION_ERROR:
-            #     self.current_point_objective = None
-            #     return
-
-            # Acceleration part
-            alpha = math.atan2(self.current_point_objective.y - self.y, self.current_point_objective.x - self.x)
-            target_speed = LINEAR_SPEED_MAX * (1 - abs(alpha) / (math.pi / 2))
-            current_linear_speed = math.hypot(self.current_speed.vx, self.current_speed.vy)
-            new_speed = min((target_speed, current_linear_speed + delta_time * ACCELERATION_MAX))
-
-            # Check if we need to decelerate
-            if new_speed > self.position_control_speed_goal:
-                t_reach_speed = (current_linear_speed - self.position_control_speed_goal) / ACCELERATION_MAX
-                reach_speed_length = 2 * (
-                    current_linear_speed * t_reach_speed - 1 / 2 * ACCELERATION_MAX * t_reach_speed ** 2)  # Why 2 times ? Don't know, without the factor, it is largely underestimated... Maybe because of the reaction time of the motors ?
-                # current_speed_alpha = math.atan2(self.current_speed[1], self.current_speed[0])
-                planned_stop_point = Point(self.x + reach_speed_length * math.cos(self.theta),
-                                                self.y + reach_speed_length * math.sin(self.theta))
-                self.robot.ivy.highlight_point(1, planned_stop_point.x, planned_stop_point.y)
-                planned_stop_error = planned_stop_point.lin_distance_to_point(self.current_point_objective)
-                if planned_stop_error <= ADMITTED_POSITION_ERROR or planned_stop_point.lin_distance_to(self.x,
-                                                                                                       self.y) > distance_to_objective:
-                    # Deceleration time
-                    new_speed = max((0, current_linear_speed - ACCELERATION_MAX * delta_time))
-
-            # Pure pursuit
-            # Find the path point closest to the robot
-            d = 99999
-            t_min = 1
-            ith_traj_point = 0
-            p_min = None
-            for i in range(len(self.trajectory) - 1):
-                ab = self.trajectory[i + 1].goal_point - self.trajectory[i].goal_point
-                ar = Point(self.x, self.y) - self.trajectory[i].goal_point
-                # print(ab)
-                t = (ar[0]*ab[0]+ar[1]*ab[1]) / (ab[0]**2 + ab[1]**2)
-                p = self.trajectory[i].goal_point + Point(t * ab[0], t * ab[1])
-                pr = Point(self.x, self.y) - Point(p[0], p[1])
-                dist = math.hypot(pr[0], pr[1])
-                # print(p, dist)
-                if dist < d:
-                    d = dist
-                    t_min = t
-                    ith_traj_point = i
-                    p_min = p
-
-            # self.goal_point = p_min
-
-            # Find the goal point
-            lookhead_left = LOOKAHEAD_DISTANCE
-            browse_traj_i = 0
-            self.trajectory = self.trajectory[ith_traj_point:]
-            self.current_point_objective = self.trajectory[0].goal_point
-            self.position_control_speed_goal = self.trajectory[0].goal_speed
-
-            t_robot = t_min
-            # print(lookahead_t, t_min, goal_t)
-            path_len = math.hypot(self.trajectory[1].goal_point[0] - p_min[0],
-                                  self.trajectory[1].goal_point[1] - p_min[1])
-            while lookhead_left > path_len:
-                # Go to the next segment and recompute it while lookhead_left > 1. If last traj element is reach, extrapolate or clamp to 1 ?
-                t_robot = 0
-                browse_traj_i += 1
-                lookhead_left -= path_len
-                path_len = math.hypot(
-                    self.trajectory[browse_traj_i + 1].goal_point[0] - self.trajectory[browse_traj_i].goal_point[0],
-                    self.trajectory[browse_traj_i + 1].goal_point[1] - self.trajectory[browse_traj_i].goal_point[1])
-
-            ab = self.trajectory[browse_traj_i + 1].goal_point - self.trajectory[browse_traj_i].goal_point
-            goal_t = t_robot + lookhead_left / math.hypot(ab[0], ab[1])
-            goal_point = self.trajectory[browse_traj_i].goal_point + Point(goal_t * ab[0], goal_t * ab[1])
-            # print(lookhead_left, ab, goal_t)
-            # self.goal_point = goal_point
-
-            # Goal point in vehicle coord
-            goal_point_r = [
-                -(goal_point[0] - self.x) * math.sin(self.theta) + (goal_point[1] - self.y) * math.cos(
-                    self.theta),
-                (goal_point[0] - self.x) * math.cos(self.theta) + (goal_point[1] - self.y) * math.sin(
-                    self.theta)]
-
-            # Compute the curvature gamma
-            gamma = 2 * goal_point_r[0] / (10 ** 2)
-            vtheta = new_speed * gamma
-
-            speed_command = Speed(new_speed, 0, vtheta)
-        else:
-            speed_command = Speed(0, 0, 0)
-        return speed_command
 
     def comply_speed_constraints(self, speed_cmd, dt):
         if dt == 0:

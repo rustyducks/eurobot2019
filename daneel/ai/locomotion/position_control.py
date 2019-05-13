@@ -53,7 +53,7 @@ class PositionControl(LocomotionControlBase):
                     goal_speed = 0.
                 self.trajectory.append(TrajPoint(PointOrient(pt[0], pt[1], pt[2]), goal_speed))
 
-    def compute_speed(self, delta_time):
+    def compute_speed(self, delta_time, speed_contraints):
         if self.state == self.eState.IDLE:
             return Speed(0, 0, 0)  # Maybe stay on the last point ?
         if self.state == self.eState.FIRST_ROTATION:
@@ -89,9 +89,11 @@ class PositionControl(LocomotionControlBase):
                     for i in range(self.pure_pursuit_traj_index):
                         self.trajectory.pop(0)
                     self.pure_pursuit_traj_index = 1
-                    return self.pure_pursuit_loop(delta_time)
+                    return self.pure_pursuit_loop(delta_time, speed_contraints)
+
+            # dist = self.trajectory[0].point.lin_distance_to_point(self.current_pose)
             else:
-                speed = self.pure_pursuit_loop(delta_time)
+                speed = self.pure_pursuit_loop(delta_time, speed_contraints)
                 if abs(speed.vx) <= 0.1:
                     for i in range(self.pure_pursuit_traj_index):
                         self.trajectory.pop(0)
@@ -146,7 +148,7 @@ class PositionControl(LocomotionControlBase):
         # print(omega)
         return Speed(0, 0, omega)
 
-    def pure_pursuit_loop(self, delta_time):
+    def pure_pursuit_loop(self, delta_time, speed_constraint):
         # Find the path point closest to the robot
         d = 99999999
         t_min = 1
@@ -210,18 +212,20 @@ class PositionControl(LocomotionControlBase):
         # Compute the curvature gamma
         gamma = 2 * goal_point_r[0] / (LOOKAHEAD_DISTANCE ** 2)
 
-        vx = self.compute_linear_speed(delta_time, self.trajectory[browse_traj_i + 1])
+        vx = self.compute_linear_speed(delta_time, self.trajectory[browse_traj_i + 1], speed_constraint)
         vtheta = vx * gamma
 
         return Speed(vx, 0, vtheta)
 
-    def compute_linear_speed(self, delta_time, next_point_traj):
+    def compute_linear_speed(self, delta_time, next_point_traj, speed_constraints):
         """
 
         :param delta_time:
         :type delta_time:
         :param next_point_traj:
         :type next_point_traj: TrajPoint
+        :param speed_constraints:
+        :type speed_constraints: SpeedConstraint
         :return:
         :rtype:
         """
@@ -260,4 +264,5 @@ class PositionControl(LocomotionControlBase):
                 # Do not accelerate if we already plan to stop close to the point
                 new_speed = current_linear_speed
 
+        new_speed = min(speed_constraints.max_vx, max(speed_constraints.min_vx, new_speed))
         return new_speed

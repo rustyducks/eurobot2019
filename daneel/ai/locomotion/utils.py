@@ -90,6 +90,8 @@ class Vector2:
 
 
 Speed = NamedTuple("Speed", [('vx', float), ('vy', float), ('vtheta', float)])
+SpeedConstraint = NamedTuple("SpeedConstraint", [('min_vx', float), ('max_vx', float), ('min_vy', float),
+                                                 ('max_vy', float), ('min_vtheta', float), ('max_vtheta', float)])
 TrajPoint = NamedTuple("GoalPoint", [('point', PointOrient), ('speed', float)])
 
 def center_radians(value):
@@ -104,7 +106,16 @@ class LocomotionControlBase:
     def __init__(self, robot):
         self.robot = robot
 
-    def compute_speed(self, delta_time):
+    def compute_speed(self, delta_time, speed_constraints):
+        """
+
+        :param delta_time:
+        :type delta_time:
+        :param speed_constraints:
+        :type speed_constraints: SpeedConstraint
+        :return:
+        :rtype:
+        """
         print("Warning: LocomotionControlBase compute_speed function must be overloaded. Setting speeds to 0")
         return Speed(0, 0, 0)
 

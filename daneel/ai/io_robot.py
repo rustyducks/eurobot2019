@@ -183,6 +183,39 @@ class IO(object):
     def _bit10_to_battery_voltage(self, bit10):
         return bit10 * BIT10_TO_BATTERY_FACTOR
 
+    def in_lidar_mask(self, pt):
+        x_t = self.robot.locomotion.x + pt.distance * math.cos(
+            math.radians(pt.azimut) + self.robot.locomotion.theta)
+        y_t = self.robot.locomotion.y + pt.distance * math.sin(
+            math.radians(pt.azimut) + self.robot.locomotion.theta)
+        if not self.robot.map.lidar_table_bb.contains(x_t, y_t):
+            return True
+        in_mask = False
+        for mask in self.robot.map.lidar_static_obstacles_bb:
+            if mask.contains(x_t, y_t):
+                self.robot.ivy.highlight_point(50, x_t, y_t)
+                in_mask = True
+                break
+        return in_mask
+
+    def distance_to_cone_ellipse(self, direction, cone_angle, semi_major, semi_minor):
+        lidar_points = self.lidar_points
+        start_index = round(math.degrees(direction - cone_angle / 2)) % len(lidar_points)
+        stop_index = round(math.degrees(direction + cone_angle / 2)) % len(lidar_points)
+        while stop_index < start_index:
+            start_index -= len(lidar_points)
+
+        min_dist = float('inf')
+        max_dist = float('-inf')
+        for i in range(start_index, stop_index):
+            pt = lidar_points[i]
+            if pt.valid and not pt.warning and not self.in_lidar_mask(pt):
+                r_ellipse = semi_major * semi_minor / math.sqrt((semi_minor**2 - semi_major**2) * math.cos(math.radians(pt.azimut))**2 + semi_major ** 2)
+                d = pt.distance - r_ellipse
+                min_dist = min(min_dist, d)
+                max_dist = max(max_dist, d)
+        return min_dist, max_dist
+
     def is_obstacle_in_cone(self, direction, cone_angle, distance):
         direction = round(math.degrees(direction))
         for i in range(len(self.lidar_points)):
@@ -195,20 +228,12 @@ class IO(object):
                 #print(pt.azimut)
                 #print(pt.distance)
                 if pt.valid and not pt.warning and pt.distance < distance:
+                    if self.in_lidar_mask(pt):
+                        continue
                     x_t = self.robot.locomotion.x + pt.distance * math.cos(
                         math.radians(pt.azimut) + self.robot.locomotion.theta)
                     y_t = self.robot.locomotion.y + pt.distance * math.sin(
                         math.radians(pt.azimut) + self.robot.locomotion.theta)
-                    if not self.robot.map.lidar_table_bb.contains(x_t, y_t):
-                        continue
-                    in_mask = False
-                    for mask in self.robot.map.lidar_static_obstacles_bb:
-                        if mask.contains(x_t, y_t):
-                            self.robot.ivy.highlight_point(50, x_t, y_t)
-                            in_mask = True
-                            break
-                    if in_mask:
-                        continue
                     self.robot.ivy.highlight_point(51, x_t, y_t)
                     # print(x_t, y_t)
                     # print(pt.azimut, pt.distance)
