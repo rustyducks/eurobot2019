@@ -52,6 +52,10 @@ class Locomotion:
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
 
+    @property
+    def trajectory_finished(self):
+        return self.position_control.state == self.position_control.state.IDLE
+
     def navigate_to(self, x, y, theta):
         # TODO: Probably detach a thread...
         traj = self.pathfinder.find_path((self.x, self.y), (float(x), float(y)))
