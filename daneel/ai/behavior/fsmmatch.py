@@ -11,8 +11,8 @@ WARNING_VOLTAGE_THRESHOLD = 11.5  # if signal or power voltage goes under this v
 
 
 class Color(Enum):
-    GREEN = "green"
-    ORANGE = "orange"
+    YELLOW = "yellow"
+    PURPLE = "purple"
 
 
 class FSMMatch(Behavior):
@@ -89,7 +89,7 @@ class StatePreStartChecks(FSMState):
                 if self.robot.io.battery_power_voltage <= WARNING_VOLTAGE_THRESHOLD and (time.time() - self.enter_time) % 2 < 1:
                     self.robot.io.set_led_color(self.robot.io.LedColor.RED)
                 else:
-                    self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
+                    self.robot.io.set_led_color(self.robot.io.LedColor.ORANGE)
                 self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
             else:
                 self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
@@ -112,31 +112,31 @@ class StateColorSelection(FSMState):
 
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.behavior.color = Color.GREEN
-        self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.GREEN)
-        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.GREEN:
-            self.behavior.color = Color.GREEN
-            self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.GREEN)
-        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.ORANGE:
-            self.behavior.color = Color.ORANGE
-            self.robot.io.set_led_color(self.robot.io.LedColor.YELLOW)
+        self.behavior.color = Color.YELLOW
+        self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
+        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
+            self.behavior.color = Color.YELLOW
+            self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
+        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
+            self.behavior.color = Color.PURPLE
+            self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
 
     def test(self):
-        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.GREEN:
-            self.behavior.color = Color.GREEN
-            self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.GREEN)
-        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.ORANGE:
-            self.behavior.color = Color.ORANGE
-            self.robot.io.set_led_color(self.robot.io.LedColor.YELLOW)
+        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
+            self.behavior.color = Color.YELLOW
+            self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
+        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
+            self.behavior.color = Color.PURPLE
+            self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
 
         if self.robot.io.cord_state == self.robot.io.CordState.OUT:
             return StatePreMatch
 
     def deinit(self):
-        if self.behavior.color == Color.ORANGE:
-            self.robot.locomotion.reposition_robot(2846, 1650, math.pi / 3)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.reposition_robot(154, 1550, 0)
         else:
-            self.robot.locomotion.reposition_robot(154, 1650, 2 * math.pi / 3)
+            self.robot.locomotion.reposition_robot(2846, 1550, math.pi)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
 
@@ -146,11 +146,151 @@ class StatePreMatch(FSMState):
 
     def test(self):
         if self.robot.io.cord_state == self.behavior.robot.io.CordState.IN:
-            return StateWaterCollectorTrajectory
+            return StateFrontRedPeriodic
 
     def deinit(self):
         self.behavior.start_match()
-        self.behavior.score = 10  # Pannal + bee present
+        self.behavior.score = 0
+        self.robot.io.score_display_number(self.behavior.score)
+
+class StateFrontRedPeriodic(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.follow_trajectory([(350, 1700, 0), (550, 1800, 0), (800, 1550, 0), (250, 1550, -math.pi)])
+        else:
+            self.robot.locomotion.follow_trajectory([(2650, 1700, 0), (2450, 1800, 0), (2200, 1550, 0), (2750, 1550, 0)])
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateRetractRed
+
+    def deinit(self):
+        self.behavior.score += 1
+        self.robot.io.score_display_number(self.behavior.score)
+
+class StateRetractRed(FSMState):
+    # Todo: Allows the robot to go backward in position control
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.start_time = time.time()
+        self.robot.locomotion.set_direct_speed(-50, 0, 0)
+
+    def test(self):
+        if time.time() - self.start_time >= 1.0:
+            return StateFrontGreenPeriodic
+
+    def deinit(self):
+        pass
+
+class StateFrontGreenPeriodic(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(800, 1250, math.pi)
+        else:
+            self.robot.locomotion.go_to_orient(2200, 1250, 0)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StatePushGreenPeriodic
+
+    def deinit(self):
+        pass
+
+class StatePushGreenPeriodic(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(250, 1250, math.pi)
+        else:
+            self.robot.locomotion.go_to_orient(2750, 1250, 0)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateRetractGreen
+
+    def deinit(self):
+        self.behavior.score += 1
+        self.robot.io.score_display_number(self.behavior.score)
+
+
+class StateRetractGreen(FSMState):
+    # Todo: Allows the robot to go backward in position control
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.start_time = time.time()
+        self.robot.locomotion.set_direct_speed(-50, 0, 0)
+
+    def test(self):
+        if time.time() - self.start_time >= 1.0:
+            return StateFrontBluePeriodic
+
+    def deinit(self):
+        pass
+
+
+class StateFrontBluePeriodic(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(600, 700, 3*math.pi/4)
+        else:
+            self.robot.locomotion.go_to_orient(2400, 700, math.pi/4)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StatePushBluePeriodic
+
+    def deinit(self):
+        pass
+
+
+class StatePushBluePeriodic(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(300, 1150, 3*math.pi/4)
+        else:
+            self.robot.locomotion.go_to_orient(2700, 1150, math.pi/4)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateAlignRamp
+
+    def deinit(self):
+        self.behavior.score += 1
+        self.robot.io.score_display_number(self.behavior.score)
+
+
+class StateAlignRamp(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(600, 200, 0)
+        else:
+            self.robot.locomotion.go_to_orient(2400, 200, math.pi)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StatePushInScale
+
+    def deinit(self):
+        pass
+
+
+class StatePushInScale(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.start_time = time.time()
+        self.robot.locomotion.set_direct_speed(10, 0, 0)
+
+    def test(self):
+        if time.time() - self.start_time >= 5:
+            return StateEnd
+
+    def deinit(self):
+        self.behavior.score += 8
         self.robot.io.score_display_number(self.behavior.score)
 
 
