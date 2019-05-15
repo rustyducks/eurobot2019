@@ -48,7 +48,7 @@ def main():
     # Arguments parsing
     robot.communication.mock_communication = parsed_args.no_teensy
     robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT,
-                                          lambda o, n, x, y, t: robot.ivy.send_robot_position())
+                                          lambda x, y, t: robot.ivy.send_robot_position())
     robot.communication.register_callback(communication.eTypeUp.HMI_STATE,
                                           lambda cord, b1, b2, lr, lg, lb: print("c: {}, b1: {}, b2: {}".format(
                                             robot.io.cord_state, robot.io.button1_state, robot.io.button2_state)))
@@ -58,13 +58,15 @@ def main():
     # robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
     #     "X : {}, Y : {}, Theta : {}".format(robot.locomotion.x, robot.locomotion.y, robot.locomotion.theta)))
     last_behavior_time = time.time()
+    last_locomotion_time = time.time()
     while True:
-        time.sleep(0.01)
         robot.communication.check_message()
-        robot.locomotion.locomotion_loop(obstacle_detection=True)
-        if time.time() - last_behavior_time >= 1:
+        if time.time() - last_locomotion_time >= 0.05:
+            robot.locomotion.locomotion_loop(obstacle_detection=True)
+        if time.time() - last_behavior_time >= 0.5:
             robot.behavior.loop()
             last_behavior_time = time.time()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("AI option parser", formatter_class=argparse.RawTextHelpFormatter)
