@@ -3,7 +3,7 @@ import threading
 import re
 from typing import NamedTuple
 
-DEFAULT_SERIAL_PATH = "/dev/ttyACM1"
+DEFAULT_SERIAL_PATH = "/dev/jevois_serial"
 DEFAULT_BAUDRATE = 115200
 
 
@@ -18,21 +18,30 @@ class JeVois:
         self._last_pucks = {"red": [], "green": [], "blue": []}
         self._puck_mutex.release()
         self.rt_thread = threading.Thread(target=self._get_pucks)
+#        self._serial.readline()
+        self._serial.flush()
+        self.rt_thread.start()
 
     def _get_pucks(self):
-        # Serial is formatted like so : 408,264:250,125;652,253:  (R:G:B)\n
+        # x y r mean color;x...
         colors = [[], [], []]
-        line = self._serial.readline()
-        for i, color in enumerate(line.split(":")):
-            if len(color) != 0:
-                for pt in color.split(";"):
-                    x, y = pt.split(",")
-                    colors[i].append((int(x), int(y)))
-        if self._puck_mutex.acquire(blocking=False):
-            self._last_pucks['red'] = colors[0]
-            self._last_pucks['green'] = colors[1]
-            self._last_pucks['blue'] = colors[2]
-            self._puck_mutex.release()
+        id_of_col = {"red":0, "green":1, "blue":2}
+        while True:
+            colors = [[], [], []]
+            line = self._serial.readline().decode().strip()
+            for puck_data in line.split(";"):
+                try:
+                    x,y,r,mean,col = puck_data.split(" ")
+                except ValueError:
+                    #print("ValueError", puck_data)
+                    continue  #probably partial line (at startup)
+                colors[id_of_col[col]].append((int(x),int(y)))
+            if self._puck_mutex.acquire(blocking=False):
+                self._last_pucks['red'] = colors[0]
+                self._last_pucks['green'] = colors[1]
+                self._last_pucks['blue'] = colors[2]
+                self._puck_mutex.release()
+
 
     @property
     def last_pucks(self):
