@@ -171,8 +171,11 @@ class IO(object):
     def _on_hmi_state_receive(self, cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state):
         self.cord_state = self.CordState.IN if cord_state else self.CordState.OUT
         self.button1_state = self.ButtonState.RELEASED if button1_state else self.ButtonState.PRESSED
-        self.button2_state = self.ButtonState.RELEASED if button2_state else self.ButtonState.PRESSED
-        self.led_color = self.LedColor((red_led_state, green_led_state, blue_led_state))
+        self.button2_state = self.ButtonState.RELEASED if not button2_state else self.ButtonState.PRESSED
+        if red_led_state == green_led_state == blue_led_state == 255:
+            self.led_color = self.LedColor.WHITE
+        else:
+            self.led_color = self.LedColor((red_led_state, green_led_state, blue_led_state))
 
     def _on_sensor_value_receive(self, sensor_id, sensor_value):
         if sensor_id == self.SensorId.BATTERY_SIGNAL.value:
