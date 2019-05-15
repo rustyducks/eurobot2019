@@ -89,11 +89,12 @@ int Communication::sendOdometryPosition(const double x, const double y, const do
 	return sendUpMessage(msg);
 }
 
-int Communication::sendSpeedReport(const double vx, const double vy, const double vtheta){
+int Communication::sendSpeedReport(const double vx, const double vy, const double vtheta, const bool drifting_left, const bool drifting_right){
 	sMessageUp msg;
 	int msgvx = round((vx + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
 	int msgvy = round((vy + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
 	int msgvtheta = round((vtheta + angularSpeedToMsgAdder) * angularSpeedToMsgFactor);
+	int msgdrifting = int(drifting_right) << 1 + int(drifting_left);
 
 	if (msgvx < 0 || msgvx > 65535){
 		return -10;
@@ -108,6 +109,7 @@ int Communication::sendSpeedReport(const double vx, const double vy, const doubl
 	msg.upData.speedReportMsg.vx = msgvx;
 	msg.upData.speedReportMsg.vy = msgvy;
 	msg.upData.speedReportMsg.vtheta = msgvtheta;
+	msg.upData.speedReportMsg.drifting = msgdrifting;
 
 	return sendUpMessage(msg);
 }

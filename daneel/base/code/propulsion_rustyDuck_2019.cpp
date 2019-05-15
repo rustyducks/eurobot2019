@@ -28,10 +28,10 @@ void handleRepositionningCallback(const Communication::Repositionning msg);
 void handleSensorCommandCallback(const Communication::SensorCommand cmd);
 
 
+Metro odomTime = Metro((unsigned long)(ODOMETRY_PERIOD*1000));
 Metro controlTime = Metro((unsigned long)(CONTROL_PERIOD*1000));
 Metro posReportTme = Metro((unsigned long)(POS_REPORT_PERIOD*1000));
 Metro IOsTime = Metro((unsigned long)(IO_REPORT_PERIOD*1000));
-Metro BallDetectorTime = Metro((unsigned long)(100));
 
 //Metro testTime = Metro(4000);
 
@@ -74,13 +74,16 @@ void loop()
 	}
 	communication.checkMessages();
 
+	if(odomTime.check()) {
+		odometry.periodic_position();
+	}
 
 	if(controlTime.check()) {
 #ifdef SIMULATOR
 		simulator.update();
 #endif
-		odometry.update();
-		odometry.periodic_position();
+		odometry.update_mot_odo();
+
 		extNavigation.update();
 		motorControl.control();
 
@@ -100,7 +103,7 @@ void loop()
 	if(posReportTme.check()) {
 		communication.sendOdometryPosition(odometry.get_pos_x(), odometry.get_pos_y(),
 				odometry.get_pos_theta());
-		communication.sendSpeedReport(odometry.get_speed(), 0.0, odometry.get_omega());
+		communication.sendSpeedReport(odometry.get_speed(), 0.0, odometry.get_omega(), odometry.is_left_wheel_drifting(), odometry.is_right_wheel_drifting());
 	}
 
 	if(IOsTime.check()) {

@@ -26,6 +26,10 @@ Odometry::Odometry() {
 	_incr1 = _incr2 = 0;
 	lastLeftCTN = COUNTER_ZERO_VALUE;
 	lastRightCTN = COUNTER_ZERO_VALUE;
+	drifting_speed_left = 0;
+	drifting_speed_right = 0;
+	odoSpeed = 0;
+	odoOmega = 0;
 }
 
 Odometry::~Odometry() {
@@ -70,6 +74,11 @@ void Odometry::periodic_position() {
 	float length = ((float)(deltaLeft + deltaRight)/2.0)/INC_PER_MM_CODING_WHEELS;
 	float angle = ((float)(deltaRight - deltaLeft)/INC_PER_MM_CODING_WHEELS)/WHEELBASE_CODING_WHEELS;
 
+	float32_t new_odoSpeed = length / ODOMETRY_PERIOD;
+	float32_t new_odoOmega = angle / ODOMETRY_PERIOD;
+	odoSpeed = 0.5*odoSpeed + 0.5*new_odoSpeed;
+	odoOmega = 0.5*odoOmega + 0.5*new_odoOmega;
+
 	_x = _x + length*cos(_theta + angle/2.0);
 	_y = _y + length*sin(_theta + angle/2.0);
 	_theta = center_radians(_theta + angle);
@@ -82,7 +91,7 @@ void Odometry::periodic_position() {
 	Serial.println(_theta);*/
 }
 
-void Odometry::update() {
+void Odometry::update_mot_odo() {
 	noInterrupts();
 	int incr1 = _incr1;
 	int incr2 = _incr2;
@@ -102,6 +111,20 @@ void Odometry::update() {
 //	_theta = center_radians(_theta + angle);
 	_speed = length / CONTROL_PERIOD;
 	_omega = angle / CONTROL_PERIOD;
+
+	float32_t theoric_speedRight = odoSpeed + odoOmega*WHEELBASE/2;
+	float32_t theoric_speedLeft  = odoSpeed - odoOmega*WHEELBASE/2;
+	float32_t speedRight = _speed  + _omega*WHEELBASE/2;
+	float32_t speedLeft  = _speed  - _omega*WHEELBASE/2;
+
+	drifting_speed_left = 0.8 * drifting_speed_left + 0.2 * (speedRight - theoric_speedRight);
+	drifting_speed_right = 0.8 * drifting_speed_right + 0.2 * (speedLeft - theoric_speedLeft);
+
+//	Serial.print("Drifting speed: ");
+//	Serial.print(drifting_speed_left);
+//	Serial.print("   ");
+//	Serial.println(drifting_speed_right);
+
 
 }
 

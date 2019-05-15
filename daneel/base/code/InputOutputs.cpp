@@ -43,7 +43,6 @@ void InputOutputs::init() {
 	HMISetLedColor(0, 0, 0);
 
 	pinMode(LIDAR_SPEED, OUTPUT);
-	//digitalWrite(LIDAR_SPEED, HIGH);
 	analogWrite(LIDAR_SPEED, LIDAR_BASE_PWM);
 
 	pinMode(VL6180X_LEFT, OUTPUT);
@@ -137,7 +136,7 @@ void InputOutputs::HMISetLedColor(int red, int green, int blue){
 	analogWrite(LED_RED, red);
 	analogWrite(LED_GREEN, green);
 	analogWrite(LED_BLUE, blue);
-	HMISendState();
+	//HMISendState();
 }
 
 void InputOutputs::HMISendState(){

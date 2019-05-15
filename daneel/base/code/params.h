@@ -14,6 +14,13 @@
 
 const int LED_PIN = 13;
 
+const float ODOMETRY_PERIOD = 0.01;
+const float CONTROL_PERIOD = 0.05;
+const float POS_REPORT_PERIOD = 0.05;
+const float IO_REPORT_PERIOD = 0.5;
+
+const float32_t DRIFTING_THRESHOLD = 20;
+
 /* BEGIN -----------------Motors & Odometry-------------------------- */
 
 const int MOT1_PWM = 5;
@@ -42,7 +49,7 @@ const float32_t WHEELBASE = 154.84329099722402;		//todo change this
 const float32_t INC_PER_MM_CODING_WHEELS = 27.653438736797984;
 const float32_t WHEELBASE_CODING_WHEELS = 289.88388523039015;
 
-const float CONTROL_PERIOD = 0.05;
+
 
 /* END ------------------- Motors & Odometry --------------------------*/
 
@@ -83,7 +90,6 @@ const int VL6180X_RIGHT = AUX3;
 /* BEGIN ----------------------- IOs ----------------------------------*/
 const int RASPI_COMMUNICATION_BAUDRATE = 115200;
 //const int DYNAMIXEL_CONTROL = 35;
-const float IO_REPORT_PERIOD = 0.5;
 const int SCORE_DISPLAY_DIO = 38;
 const int SCORE_DISPLAY_CLK = 39;
 const int BAT_SIG = A3;
@@ -92,7 +98,6 @@ const int BAT_POW = A22;
 
 const int LIDAR_BASE_PWM = 244;
 
-const float POS_REPORT_PERIOD = 0.05;
 const unsigned int TIME_SPEED_FAILSAFE = 1000;
 
 #endif /* PARAMS_H_ */

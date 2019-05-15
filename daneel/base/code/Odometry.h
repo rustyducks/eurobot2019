@@ -27,13 +27,21 @@ public:
 	 *
 	 * This function should be called at fixed frequency, before the motor control.
 	 */
-	void update();
+	void update_mot_odo();
 	void periodic_position();
 
 	void isr1();
 	void isr11();
 	void isr2();
 	void isr22();
+
+	bool is_left_wheel_drifting() {
+		return drifting_speed_left > DRIFTING_THRESHOLD;
+	}
+
+	bool is_right_wheel_drifting() {
+		return drifting_speed_right > DRIFTING_THRESHOLD;
+	}
 
 	void set_pos(float x, float y, float theta) {
 		_x = x;
@@ -75,6 +83,10 @@ protected:
 	int32_t lastLeftCTN;
 	int32_t lastRightCTN;
 
+	float32_t drifting_speed_right;
+	float32_t drifting_speed_left;
+	float32_t odoSpeed;
+	float32_t odoOmega;
 
 };
 

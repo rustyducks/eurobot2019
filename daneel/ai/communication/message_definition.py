@@ -134,6 +134,7 @@ class sSpeedReport:
         self._vx = None  #  uint:16
         self._vy = None  #  uint:16
         self._vtheta = None  #  uint:16
+        self._drifting = None #  uint:8
 
     @property
     def vx(self):
@@ -158,14 +159,18 @@ class sSpeedReport:
     @vtheta.setter
     def vtheta(self, value):
         self._vtheta = round((value + ANGULAR_SPEED_TO_MSG_ADDER) * ANGULAR_SPEED_TO_MSG_FACTOR)
+    
+    @property
+    def drifting(self):
+        return (bool(self._drifting & 0b01), bool(self._drifting & 0b10))
 
     def deserialize(self, bytes_packed):
         s = bitstring.BitStream(bytes_packed)
-        self._vx, self._vy, self._vtheta = s.unpack(
-            'uintle:16, uintle:16, uintle:16')
+        self._vx, self._vy, self._vtheta, self._drifting= s.unpack(
+                'uintle:16, uintle:16, uintle:16, uint:8')
 
     def serialize(self):
-        return bitstring.pack('uintle:16, uintle:16, uintle:16', self._vx, self._vy, self._vtheta)
+        return bitstring.pack('uintle:16, uintle:16, uintle:16, uint8:t', self._vx, self._vy, self._vtheta, self._drifting)
 
 
 class sSensorValue:
@@ -326,7 +331,7 @@ class sRepositioning:
 
     @x_repositioning.setter
     def x_repositioning(self, value):
-        self._x_repositioning = round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR)
+        self._x_repositioning = min(round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR), 65535)
 
     @property
     def y_repositioning(self):
@@ -334,7 +339,7 @@ class sRepositioning:
 
     @y_repositioning.setter
     def y_repositioning(self, value):
-        self._y_repositioning = round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR)
+        self._y_repositioning = min(round((value + LINEAR_POSITION_TO_MSG_ADDER) * LINEAR_POSITION_TO_MSG_FACTOR), 65535)
 
     @property
     def theta_repositioning(self):
@@ -342,7 +347,7 @@ class sRepositioning:
 
     @theta_repositioning.setter
     def theta_repositioning(self, value):
-        self._theta_repositioning = round((value + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR)
+        self._theta_repositioning = min(round((value + RADIAN_TO_MSG_ADDER) * RADIAN_TO_MSG_FACTOR), 65535)
 
     def serialize(self):
         return bitstring.pack('uintle:16, uintle:16, uintle:16',

@@ -76,7 +76,7 @@ public:
 	int sendActuatorState(const int actuatorId, const int actuatorState);
 	int sendOdometryPosition(const double x, const double y, const double theta);
 	int sendSensorValue(const int sensorId, const int sensorValue);
-	int sendSpeedReport(const double vx, const double vy, const double vtheta);
+	int sendSpeedReport(const double vx, const double vy, const double vtheta, const bool drifting_left, const bool drifting_right);
 
 	/*
 	 * Callback registering function. Fonctions registered will be called when the appropriate
@@ -113,7 +113,7 @@ private:
 	static constexpr int linearSpeedToMsgAdder = 1000;
 	static constexpr double angularSpeedToMsgFactor = 2607.5945876176133;  // [-1000
 	static constexpr double angularSpeedToMsgAdder = 4 * M_PI;
-	static constexpr int upMsgMaxSize = 10;
+	static constexpr int upMsgMaxSize = 11;
 	static constexpr int upMsgHeaderSize = 4;  // Number of bytes discarded for checksum computation
 	static constexpr int downMsgMaxSize = 16;
 	static constexpr int downMsgHeaderSize = 4; // Number of bytes discarded for checksum computation
@@ -148,6 +148,7 @@ private:
 		uint16_t vx;
 		uint16_t vy;
 		uint16_t vtheta;
+		uint8_t  drifting;
 	}sSpeedReportMsg;
 	typedef union __attribute__((packed)){
 		sAckDown ackMsg;
