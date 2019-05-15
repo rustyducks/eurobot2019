@@ -26,9 +26,9 @@ class FSMMatch(Behavior):
 
     def loop(self):
         time_now = time.time()
-        if self.shutdown_button_press_time == 0 and self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED:
+        if self.shutdown_button_press_time == 0 and self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED:
             self.shutdown_button_press_time = time.time()
-        elif self.shutdown_button_press_time != 0 and self.robot.io.button1_state == self.robot.io.ButtonState.RELEASED:
+        elif self.shutdown_button_press_time != 0 and self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED:
             self.shutdown_button_press_time = 0
         elif self.shutdown_button_press_time != 0 and time.time() - self.shutdown_button_press_time >= 5:
             self.robot.locomotion.stop()
@@ -74,6 +74,7 @@ class StatePreStartChecks(FSMState):
         super().__init__(behavior)
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.PERIODIC)
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.PERIODIC)
+        self.robot.io.set_lidar_pwm(244)
         self.enter_time = time.time()
         self.robot.locomotion.set_direct_speed(0, 0, 0)
 
@@ -95,7 +96,7 @@ class StatePreStartChecks(FSMState):
                 self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
                 self.robot.io.score_display_fat()
 
-        if self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED:
+        if self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED:
             return StateColorSelection
 
     def deinit(self):
@@ -114,29 +115,29 @@ class StateColorSelection(FSMState):
         super().__init__(behavior)
         self.behavior.color = Color.YELLOW
         self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
-        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
+        if self.robot.io.button1_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
             self.behavior.color = Color.YELLOW
             self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
-        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
+        elif self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
             self.behavior.color = Color.PURPLE
             self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
 
     def test(self):
-        if self.robot.io.button2_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
+        if self.robot.io.button1_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
             self.behavior.color = Color.YELLOW
             self.behavior.robot.io.set_led_color(self.behavior.robot.io.LedColor.YELLOW)
-        elif self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
+        elif self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
             self.behavior.color = Color.PURPLE
             self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
 
-        if self.robot.io.cord_state == self.robot.io.CordState.OUT:
+        if self.robot.io.cord_state == self.robot.io.CordState.IN:
             return StatePreMatch
 
     def deinit(self):
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.reposition_robot(154, 1550, 0)
+            self.robot.locomotion.reposition_robot(154, 1570, 0)
         else:
-            self.robot.locomotion.reposition_robot(2846, 1550, math.pi)
+            self.robot.locomotion.reposition_robot(2846, 1570, -math.pi)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
 
@@ -145,7 +146,7 @@ class StatePreMatch(FSMState):
         super().__init__(behavior)
 
     def test(self):
-        if self.robot.io.cord_state == self.behavior.robot.io.CordState.IN:
+        if self.robot.io.cord_state == self.behavior.robot.io.CordState.OUT:
             return StateFrontRedPeriodic
 
     def deinit(self):
@@ -157,13 +158,13 @@ class StateFrontRedPeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.follow_trajectory([(350, 1700, 0), (550, 1800, 0), (800, 1550, 0), (250, 1550, -math.pi)])
+            self.robot.locomotion.follow_trajectory([(800, 1550, 0)])
         else:
-            self.robot.locomotion.follow_trajectory([(2650, 1700, 0), (2450, 1800, 0), (2200, 1550, 0), (2750, 1550, 0)])
+            self.robot.locomotion.follow_trajectory([(2200, 1550, 0)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
-            return StateRetractRed
+            return StateFrontGreenPeriodic
 
     def deinit(self):
         self.behavior.score += 1
@@ -220,11 +221,11 @@ class StateRetractGreen(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.start_time = time.time()
-        self.robot.locomotion.set_direct_speed(-50, 0, 0)
+        self.robot.locomotion.set_direct_speed(-100, 0, 0)
 
     def test(self):
-        if time.time() - self.start_time >= 1.0:
-            return StateFrontBluePeriodic
+        if time.time() - self.start_time >= 2.0:
+            return StateEnd
 
     def deinit(self):
         pass
