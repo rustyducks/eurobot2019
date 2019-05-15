@@ -212,7 +212,7 @@ class IO(object):
         max_dist = float('-inf')
         for i in range(start_index, stop_index):
             pt = lidar_points[i]
-            if pt.valid and not pt.warning and not self.in_lidar_mask(pt):
+            if pt is not None and pt.valid and not pt.warning and not self.in_lidar_mask(pt):
                 r_ellipse = semi_major * semi_minor / math.sqrt((semi_minor**2 - semi_major**2) * math.cos(math.radians(pt.azimut))**2 + semi_major ** 2)
                 d = pt.distance - r_ellipse
                 min_dist = min(min_dist, d)
