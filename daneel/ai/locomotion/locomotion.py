@@ -166,6 +166,7 @@ class Locomotion:
         return math.sqrt((self.x - x) ** 2 + (self.y - y) ** 2)
 
     def reposition_robot(self, x, y, theta):
+        theta = center_radians(theta)
         if self.robot.communication.send_repositioning(x, y, theta) == 0:
             self.x = x
             self.y = y
