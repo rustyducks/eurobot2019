@@ -258,7 +258,6 @@ class Communication:
         for i in range(max_read):
             if not self._mailbox.empty():
                 msg = self._mailbox.get()
-                print("Received message:", msg.type)
                 self.handle_message(msg)
 
     def handle_message(self, message):
@@ -316,7 +315,6 @@ class TeensyReaderProcess:
             ret = self._send_message(msg_to_send)
             self._is_sent_flag.put(ret, True)
         msg = self._read_message()
-        print("Mailbox count :", self._receivebox.qsize())
         if msg is not None:
             self._receivebox.put(msg)
 
@@ -339,7 +337,6 @@ class TeensyReaderProcess:
         return -1  # failure
 
     def _read_message(self, max_read=1):
-        print("In waiting serial", self._serial_port.in_waiting)
         for i in range(max_read):
             if self._state == self.STATE_IDLE:
                 if self._last_start_byte is None and self._serial_port.in_waiting >= 1:
