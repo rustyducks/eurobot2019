@@ -315,7 +315,7 @@ class TeensyReaderProcess:
             ret = self._send_message(msg_to_send)
             self._is_sent_flag.put(ret, True)
         msg = self._read_message()
-        if msg is not None:
+        if msg is not None and msg.type != eTypeUp.ACK_DOWN:
             self._receivebox.put(msg)
 
     def _send_message(self, msg):
