@@ -26,6 +26,7 @@ class Robot(object):
                  teensy_serial_path=TEENSY_SERIAL_PATH_DEFAULT):
         self.map = map.Map(self, static_obstacles_file, lidar_mask_file)
         self.communication = communication.Communication(teensy_serial_path)
+        self.communication.start()
         self.io = IO(self)
         self.locomotion = Locomotion(self)
         self.ivy = ivy_robot.Ivy(self, ivy_address)

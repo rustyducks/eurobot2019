@@ -3,23 +3,30 @@ Created on 29 July 2012
 @author: Guilhem Buisan
 """
 
-import threading
-import serial
 import time
-from collections import deque
+from multiprocessing import Process, Queue
+
+import serial
+
 from communication.message_definition import *
 
 SERIAL_BAUDRATE = 115200
 SERIAL_PATH = "/dev/ttyAMA0"
 SERIAL_SEND_TIMEOUT = 500  # ms
+MAX_SEND_RETRIES = 100
+
+
+def serial_read_loop(serial_path, baudrate, mailbox, sendbox, is_sent_flag):
+    tr = TeensyReaderProcess(serial_path, baudrate, mailbox, sendbox, is_sent_flag)
+    while True:
+        tr.loop()
+        time.sleep(0.0001)
 
 
 class Communication:
     """
     Class handling communication between ai and the Teensy.
     """
-    STATE_IDLE = 0
-    STATE_HEADER_RECEIVED = 1
 
     def __init__(self, serial_path=SERIAL_PATH, baudrate=SERIAL_BAUDRATE):
         """
@@ -30,17 +37,22 @@ class Communication:
         :param baudrate: The baudrate of UART (must the same as the one on the other board)
         :type baudrate: int
         """
-        self._serial_port = serial.Serial(serial_path, baudrate)
-        self._current_msg_id = 0  # type: int
-        self._mailbox = deque()
-        self._tmp_msg = sMessageUp()
-        self._state = self.STATE_IDLE
-        self._last_start_byte = None
+        self._mailbox = Queue()
+        self._sendbox = Queue(1)  # We want to be blocked until the message is sent (or do we ?)
+        self._is_sent = Queue(1)  # Has to be empty when something needs to be sent, and will be filled when the message is sent
         self.mock_communication = False  # Set to True if Serial is not plugged to the Teensy
         self._callbacks = {msg_type: [] for msg_type in eTypeUp}
-        self._serial_lock = threading.Lock()
-        self.reset_soft_teensy()
+        if not self.mock_communication:
+            self.reader_process = Process(target=serial_read_loop, args=(serial_path, baudrate, self._mailbox,
+                                                                         self._sendbox, self._is_sent),
+                                          name="TeensyCommunication")
+            self.reader_process.daemon = True
         self.eTypeUp = eTypeUp  # For exposure purposes
+
+    def start(self):
+        if not self.mock_communication:
+            self.reader_process.start()
+            self.reset_soft_teensy()
 
     def register_callback(self, message_type, callback):
         """
@@ -172,15 +184,10 @@ class Communication:
             return 0
         msg = sMessageDown()
         msg.type = eTypeDown.RESET
-        self._serial_lock.acquire()
-        for i in range(100):
-            self._serial_port.read_all()
-            time.sleep(0.01)
-        self._serial_lock.release()
         ret = self.send_message(msg, max_retries)
         if ret == 0:
-            self._current_msg_id = 0
-            self._mailbox = deque()
+            while not self._mailbox.empty():
+                self._mailbox.get()
         return ret
 
     def send_repositioning(self, x, y, theta, max_retries=1000):
@@ -218,25 +225,106 @@ class Communication:
         msg.data.kd_angular = kd_angular
         return self.send_message(msg, max_retries)
 
-    def send_message(self, msg, max_retries=1000):
+    def send_message(self, msg, _):
         """
         Send message via Serial (defined during the instantiation of the class)
 
         :param msg: the message to send
         :type msg: sMessageDown
-        :param max_retries: the maximum number of resend (on timeout = SERIAL_SEND_TIMEOUT or on NON_ACK) before failing
-        :type max_retries: int
+        :param _: Not used only for legacy purpose
+        :type _:
         :return: 0 if the message is sent, -1 if max_retries has been reached
         :rtype: int
         """
-        if self.mock_communication:
-            max_retries = 0
+        if not self._is_sent.empty():
+            # This should not happen
+            self._is_sent.get()
 
-        self._serial_lock.acquire()
+        self._sendbox.put(msg)
+        while self._is_sent.empty():
+            time.sleep(0.00001)
+        ret = self._is_sent.get()
+        return ret
+
+    def check_message(self, max_read=1):
+        """
+        Check if there is any incoming message on the Serial (defined during the instantiation of the class)
+        and returns the oldest message.
+
+        :return: The oldest message non read
+        :rtype: sMessageUp
+        """
+
+        for i in range(max_read):
+            if not self._mailbox.empty():
+                msg = self._mailbox.get()
+                print("Received message:", msg.type)
+                self.handle_message(msg)
+
+    def handle_message(self, message):
+        """
+        Call registered callbacks with well formed arguments depending on message.type.
+
+        :param message: The message to be handled (containing the type and the arguments to be passed
+            to the callback.
+        :type message: sMessageUp
+        """
+        if message.type == eTypeUp.SENSOR_VALUE:
+            for cb in self._callbacks[eTypeUp.SENSOR_VALUE]:
+                cb(message.data.sensor_id, message.data.sensor_value)
+        elif message.type == eTypeUp.HMI_STATE:
+            cord_state = bool(message.data.hmi_state & (1 << 7))
+            button1_state = bool(message.data.hmi_state & (1 << 6))
+            button2_state = bool(message.data.hmi_state & (1 << 5))
+            red_led_state = 255 if bool(message.data.hmi_state & (1 << 4)) else 0
+            green_led_state = 255 if bool(message.data.hmi_state & (1 << 3)) else 0
+            blue_led_state = 255 if bool(message.data.hmi_state & (1 << 2)) else 0
+            for cb in self._callbacks[eTypeUp.HMI_STATE]:
+                cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
+        elif message.type == eTypeUp.ODOM_REPORT:
+            for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
+                cb(message.data.x, message.data.y, message.data.theta)
+        elif message.type == eTypeUp.SPEED_REPORT:
+            for cb in self._callbacks[eTypeUp.SPEED_REPORT]:
+                cb(message.data.vx, message.data.vy, message.data.vtheta)
+        elif message.type == eTypeUp.ACK_DOWN:
+            pass
+
+
+class TeensyReaderProcess:
+    STATE_IDLE = 0
+    STATE_HEADER_RECEIVED = 1
+
+    def __init__(self, serial_path, baudrate,  mailbox: Queue, sendbox: Queue, is_sent_flag: Queue):
+        self._receivebox = mailbox
+        self._sendbox = sendbox
+        self._is_sent_flag = is_sent_flag
+        self._serial_port = serial.Serial(serial_path, baudrate)
+        self._tmp_msg = sMessageUp()
+        self._state = self.STATE_IDLE
+        self._last_start_byte = None
+        self._current_msg_id = 0
+
+    def loop(self):
+        if not self._sendbox.empty() and self._is_sent_flag.empty():
+            msg_to_send = self._sendbox.get()
+            if msg_to_send.type == eTypeDown.RESET:
+                for i in range(10):
+                    time.sleep(0.01)
+                    self._serial_port.read_all()
+                    self._current_msg_id = 0
+            ret = self._send_message(msg_to_send)
+            self._is_sent_flag.put(ret, True)
+        msg = self._read_message()
+        print("Mailbox count :", self._receivebox.qsize())
+        if msg is not None:
+            self._receivebox.put(msg)
+
+    def _send_message(self, msg):
         msg.down_id = self._current_msg_id
         self._current_msg_id = (self._current_msg_id + 1) % 256
         serialized = msg.serialize().tobytes()
-        for i in range(max_retries):
+        for i in range(MAX_SEND_RETRIES):
             # print(serialized)
             self._serial_port.write(b'\xff\xff' + serialized)
             # print("Sending :", b'\xff\xff' + serialized)
@@ -245,34 +333,13 @@ class Communication:
                 msg = self._read_message()
                 if msg is not None:
                     if msg.type == eTypeUp.ACK_DOWN:
-                        self._serial_lock.release()
                         return 0  # success
                     else:
-                        self._mailbox.append(msg)  # if it is not an ACK or a NONACK, store it to deliver later
-        self._serial_lock.release()
+                        self._receivebox.put(msg)  # if it is not an ACK or a NONACK, store it to deliver later
         return -1  # failure
 
-    def _send_acknowledgment(self, id_to_acknowledge):
-        ack = sMessageDown()
-        ack.down_id = self._current_msg_id
-        self._current_msg_id = (self._current_msg_id + 1) % 256
-        ack.type = eTypeDown.ACK_UP
-        ack.data = sAckUp()
-        ack.data.ack_up_id = id_to_acknowledge
-        serialized = ack.serialize().tobytes()
-        self._serial_port.write(b'\xff\xff' + serialized)
-        # print("Sending :", b'\xff\xff' + serialized)
-
-    def _handle_acknowledgement(self, msg):
-        if msg.type == eTypeUp.ACK_DOWN:
-            return
-        else:
-            self._send_acknowledgment(msg.up_id)
-
     def _read_message(self, max_read=1):
-        if self.mock_communication:
-            return
-
+        print("In waiting serial", self._serial_port.in_waiting)
         for i in range(max_read):
             if self._state == self.STATE_IDLE:
                 if self._last_start_byte is None and self._serial_port.in_waiting >= 1:
@@ -309,52 +376,19 @@ class Communication:
                     self._handle_acknowledgement(msg)
                     return msg
 
-    def check_message(self, max_read=1):
-        """
-        Check if there is any incoming message on the Serial (defined during the instantiation of the class)
-        and returns the oldest message.
+    def _handle_acknowledgement(self, msg):
+        if msg.type == eTypeUp.ACK_DOWN:
+            return
+        else:
+            self._send_acknowledgment(msg.up_id)
 
-        :return: The oldest message non read
-        :rtype: sMessageUp
-        """
-
-        self._serial_lock.acquire()
-        msg = self._read_message(max_read)
-        self._serial_lock.release()
-        if msg is not None:
-            if msg.type != eTypeUp.ACK_DOWN:
-                self._mailbox.append(msg)
-
-        for i in range(max_read):
-            if len(self._mailbox) > 0:
-                msg = self._mailbox.popleft()
-                self.handle_message(msg)
-
-    def handle_message(self, message):
-        """
-        Call registered callbacks with well formed arguments depending on message.type.
-
-        :param message: The message to be handled (containing the type and the arguments to be passed
-            to the callback.
-        :type message: sMessageUp
-        """
-        if message.type == eTypeUp.SENSOR_VALUE:
-            for cb in self._callbacks[eTypeUp.SENSOR_VALUE]:
-                cb(message.data.sensor_id, message.data.sensor_value)
-        elif message.type == eTypeUp.HMI_STATE:
-            cord_state = bool(message.data.hmi_state & (1 << 7))
-            button1_state = bool(message.data.hmi_state & (1 << 6))
-            button2_state = bool(message.data.hmi_state & (1 << 5))
-            red_led_state = 255 if bool(message.data.hmi_state & (1 << 4)) else 0
-            green_led_state = 255 if bool(message.data.hmi_state & (1 << 3)) else 0
-            blue_led_state = 255 if bool(message.data.hmi_state & (1 << 2)) else 0
-            for cb in self._callbacks[eTypeUp.HMI_STATE]:
-                cb(cord_state, button1_state, button2_state, red_led_state, green_led_state, blue_led_state)
-        elif message.type == eTypeUp.ODOM_REPORT:
-            for cb in self._callbacks[eTypeUp.ODOM_REPORT]:
-                cb(message.data.x, message.data.y, message.data.theta)
-        elif message.type == eTypeUp.SPEED_REPORT:
-            for cb in self._callbacks[eTypeUp.SPEED_REPORT]:
-                cb(message.data.vx, message.data.vy, message.data.vtheta)
-        elif message.type == eTypeUp.ACK_DOWN:
-            pass
+    def _send_acknowledgment(self, id_to_acknowledge):
+        ack = sMessageDown()
+        ack.down_id = self._current_msg_id
+        self._current_msg_id = (self._current_msg_id + 1) % 256
+        ack.type = eTypeDown.ACK_UP
+        ack.data = sAckUp()
+        ack.data.ack_up_id = id_to_acknowledge
+        serialized = ack.serialize().tobytes()
+        self._serial_port.write(b'\xff\xff' + serialized)
+        # print("Sending :", b'\xff\xff' + serialized)
