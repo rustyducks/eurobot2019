@@ -61,7 +61,7 @@ def main():
     last_behavior_time = time.time()
     last_locomotion_time = time.time()
     while True:
-        robot.communication.check_message()
+        robot.communication.check_message(10)
         if time.time() - last_locomotion_time >= 0.05:
             robot.locomotion.locomotion_loop(obstacle_detection=True)
         if time.time() - last_behavior_time >= 0.5:
