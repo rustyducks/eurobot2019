@@ -11,6 +11,7 @@ import math
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 from drivers import vl6180x as v
 from drivers import jevois
+import armothy
 
 LIDAR_SERIAL_PATH = "/dev/ttyUSB0"
 LIDAR_SERIAL_BAUDRATE = 115200
@@ -41,6 +42,7 @@ class IO(object):
         self.range_left = v.VL6180X()
         self.range_center = v.VL6180X()
         self.range_right = v.VL6180X()
+        self.armothy = armothy.Armothy()
  #       self.lidar_serial = serial.Serial(LIDAR_SERIAL_PATH, LIDAR_SERIAL_BAUDRATE)
  #       self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
  #       self.lidar_thread.start()

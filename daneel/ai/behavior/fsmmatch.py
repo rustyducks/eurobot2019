@@ -1,7 +1,9 @@
 from enum import Enum
 import time
 import math
+from math import pi
 import os
+import armothy
 
 from behavior import Behavior
 
@@ -135,9 +137,9 @@ class StateColorSelection(FSMState):
 
     def deinit(self):
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.reposition_robot(154, 1570, 0)
+            self.robot.locomotion.reposition_robot(145, 1255, 0)
         else:
-            self.robot.locomotion.reposition_robot(2846, 1570, -math.pi)
+            self.robot.locomotion.reposition_robot(2855, 1570, -math.pi)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
 
@@ -147,159 +149,214 @@ class StatePreMatch(FSMState):
 
     def test(self):
         if self.robot.io.cord_state == self.behavior.robot.io.CordState.OUT:
-            return StateFrontRedPeriodic
+            return StateFrontGreenPeriodic
 
     def deinit(self):
         self.behavior.start_match()
         self.behavior.score = 0
         self.robot.io.score_display_number(self.behavior.score)
 
-class StateFrontRedPeriodic(FSMState):
-    def __init__(self, behavior):
-        super().__init__(behavior)
-        if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.follow_trajectory([(800, 1550, 0)])
-        else:
-            self.robot.locomotion.follow_trajectory([(2200, 1550, 0)])
-
-    def test(self):
-        if self.robot.locomotion.trajectory_finished:
-            return StateFrontGreenPeriodic
-
-    def deinit(self):
-        self.behavior.score += 1
-        self.robot.io.score_display_number(self.behavior.score)
-
-class StateRetractRed(FSMState):
-    # Todo: Allows the robot to go backward in position control
-    def __init__(self, behavior):
-        super().__init__(behavior)
-        self.start_time = time.time()
-        self.robot.locomotion.set_direct_speed(-50, 0, 0)
-
-    def test(self):
-        if time.time() - self.start_time >= 1.0:
-            return StateFrontGreenPeriodic
-
-    def deinit(self):
-        pass
 
 class StateFrontGreenPeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.armothy.rotate_z_axis(0)
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.go_to_orient(800, 1250, math.pi)
+            self.robot.locomotion.follow_trajectory([(305, 1250, 0)])
         else:
-            self.robot.locomotion.go_to_orient(2200, 1250, 0)
+            pass
+            #self.robot.locomotion.follow_trajectory([(2695, 1250, 0)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
-            return StatePushGreenPeriodic
-
-    def deinit(self):
-        pass
-
-class StatePushGreenPeriodic(FSMState):
-    def __init__(self, behavior):
-        super().__init__(behavior)
-        if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.go_to_orient(250, 1250, math.pi)
-        else:
-            self.robot.locomotion.go_to_orient(2750, 1250, 0)
-
-    def test(self):
-        if self.robot.locomotion.trajectory_finished:
-            return StateRetractGreen
+            return StateTakeFirstAtom
 
     def deinit(self):
         self.behavior.score += 1
         self.robot.io.score_display_number(self.behavior.score)
 
 
-class StateRetractGreen(FSMState):
-    # Todo: Allows the robot to go backward in position control
+class StateTakeFirstAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.start_time = time.time()
-        self.robot.locomotion.set_direct_speed(-100, 0, 0)
+        self.robot.io.armothy.take_and_store(75, armothy.eStack.RIGHT_STACK)
 
     def test(self):
-        if time.time() - self.start_time >= 2.0:
-            return StateEnd
+        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+            return StateTakeSecondAtom
 
     def deinit(self):
         pass
 
 
-class StateFrontBluePeriodic(FSMState):
+class StateTakeSecondAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.go_to_orient(600, 700, 3*math.pi/4)
-        else:
-            self.robot.locomotion.go_to_orient(2400, 700, math.pi/4)
+        self.traj_finished = False
+        self.robot.locomotion.follow_trajectory([(500, 1250, -pi/2), (500, 1155, -pi/2)])
+        # self.start_time = time.time()
+        # self.robot.locomotion.set_direct_speed(-50, 0, 0)
 
     def test(self):
-        if self.robot.locomotion.trajectory_finished:
-            return StatePushBluePeriodic
+        if not self.traj_finished:
+            if self.robot.locomotion.trajectory_finished:
+                self.traj_finished = True
+                self.robot.io.armothy.take_and_store(75, armothy.eStack.LEFT_STACK)
+        if self.traj_finished and self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+            return StateTakeThirdAtom
 
     def deinit(self):
         pass
 
 
-class StatePushBluePeriodic(FSMState):
+class StateTakeThirdAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.go_to_orient(300, 1150, 3*math.pi/4)
-        else:
-            self.robot.locomotion.go_to_orient(2700, 1150, math.pi/4)
+        self.traj_finished = False
+        self.robot.locomotion.follow_trajectory([(500, 1155, pi/2), (500, 1345, pi/2)])
+        # self.start_time = time.time()
+        # self.robot.locomotion.set_direct_speed(-50, 0, 0)
 
     def test(self):
-        if self.robot.locomotion.trajectory_finished:
-            return StateAlignRamp
-
-    def deinit(self):
-        self.behavior.score += 1
-        self.robot.io.score_display_number(self.behavior.score)
-
-
-class StateAlignRamp(FSMState):
-    def __init__(self, behavior):
-        super().__init__(behavior)
-        if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.go_to_orient(600, 200, 0)
-        else:
-            self.robot.locomotion.go_to_orient(2400, 200, math.pi)
-
-    def test(self):
-        if self.robot.locomotion.trajectory_finished:
-            return StatePushInScale
+        if not self.traj_finished:
+            if self.robot.locomotion.trajectory_finished:
+                self.traj_finished = True
+                self.robot.io.armothy.take_and_store(50, armothy.eStack.LEFT_STACK)
+        if self.traj_finished and self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+            return StateDropRediums
 
     def deinit(self):
         pass
 
 
-class StatePushInScale(FSMState):
+class StateDropRediums(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.start_time = time.time()
-        self.robot.locomotion.set_direct_speed(10, 0, 0)
+        self.traj_finished = False
+        self.atom1_dropped = False
+        self.atom2_droping = False
+        self.robot.locomotion.go_to_orient(500, 1550, -pi)
 
     def test(self):
-        if time.time() - self.start_time >= 5:
-            return StateEnd
+        if not self.traj_finished:
+            if self.robot.locomotion.trajectory_finished:
+                self.traj_finished = True
+                self.robot.io.armothy.put_down(50, armothy.eStack.LEFT_STACK, 100)
+        else:
+            if not self.atom1_dropped:
+                if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+                    self.atom1_dropped = True
+            else:
+                if not self.atom2_droping:
+                    self.robot.io.armothy.put_down(75, armothy.eStack.RIGHT_STACK, -100)
+                    self.atom2_droping = True
+                else:
+                    if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+                        return StateEnd
 
     def deinit(self):
-        self.behavior.score += 8
-        self.robot.io.score_display_number(self.behavior.score)
+        pass
+#
+# class StatePushGreenPeriodic(FSMState):
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         if self.behavior.color == Color.YELLOW:
+#             self.robot.locomotion.go_to_orient(250, 1250, math.pi)
+#         else:
+#             self.robot.locomotion.go_to_orient(2750, 1250, 0)
+#
+#     def test(self):
+#         if self.robot.locomotion.trajectory_finished:
+#             return StateRetractGreen
+#
+#     def deinit(self):
+#         self.behavior.score += 1
+#         self.robot.io.score_display_number(self.behavior.score)
+#
+#
+# class StateRetractGreen(FSMState):
+#     # Todo: Allows the robot to go backward in position control
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         self.start_time = time.time()
+#         self.robot.locomotion.set_direct_speed(-100, 0, 0)
+#
+#     def test(self):
+#         if time.time() - self.start_time >= 2.0:
+#             return StateEnd
+#
+#     def deinit(self):
+#         pass
+#
+#
+# class StateFrontBluePeriodic(FSMState):
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         if self.behavior.color == Color.YELLOW:
+#             self.robot.locomotion.go_to_orient(600, 700, 3*math.pi/4)
+#         else:
+#             self.robot.locomotion.go_to_orient(2400, 700, math.pi/4)
+#
+#     def test(self):
+#         if self.robot.locomotion.trajectory_finished:
+#             return StatePushBluePeriodic
+#
+#     def deinit(self):
+#         pass
+#
+#
+# class StatePushBluePeriodic(FSMState):
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         if self.behavior.color == Color.YELLOW:
+#             self.robot.locomotion.go_to_orient(300, 1150, 3*math.pi/4)
+#         else:
+#             self.robot.locomotion.go_to_orient(2700, 1150, math.pi/4)
+#
+#     def test(self):
+#         if self.robot.locomotion.trajectory_finished:
+#             return StateAlignRamp
+#
+#     def deinit(self):
+#         self.behavior.score += 1
+#         self.robot.io.score_display_number(self.behavior.score)
+#
+#
+# class StateAlignRamp(FSMState):
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         if self.behavior.color == Color.YELLOW:
+#             self.robot.locomotion.go_to_orient(600, 200, 0)
+#         else:
+#             self.robot.locomotion.go_to_orient(2400, 200, math.pi)
+#
+#     def test(self):
+#         if self.robot.locomotion.trajectory_finished:
+#             return StatePushInScale
+#
+#     def deinit(self):
+#         pass
+#
+#
+# class StatePushInScale(FSMState):
+#     def __init__(self, behavior):
+#         super().__init__(behavior)
+#         self.start_time = time.time()
+#         self.robot.locomotion.set_direct_speed(10, 0, 0)
+#
+#     def test(self):
+#         if time.time() - self.start_time >= 5:
+#             return StateEnd
+#
+#     def deinit(self):
+#         self.behavior.score += 8
+#         self.robot.io.score_display_number(self.behavior.score)
 
 
 class StateEnd(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.locomotion.set_direct_speed(0, 0, 0)
-        self.robot.locomotion.reposition_robot(0, 0, 0)  # To stop recalage if any
 
     def test(self):
         pass
