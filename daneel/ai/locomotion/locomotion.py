@@ -2,6 +2,7 @@ import time
 from enum import Enum
 
 from locomotion.position_control import PositionControl
+from locomotion.relative_control import RelativeControl
 from locomotion.utils import *
 from locomotion.params import *
 from locomotion.pathfinding import ThetaStar
@@ -12,6 +13,7 @@ class LocomotionState(Enum):
     DIRECT_SPEED_CONTROL = 1
     STOPPED = 2
     REPOSITIONING = 3
+    RELATIVE_CONTROL = 4
 
 
 class Locomotion:
@@ -30,6 +32,9 @@ class Locomotion:
 
         # Direct speed control
         self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
+
+        # Relative control
+        self.relative_control = RelativeControl(self.robot)
 
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
@@ -55,6 +60,10 @@ class Locomotion:
     @property
     def trajectory_finished(self):
         return self.position_control.state == self.position_control.state.IDLE
+
+    @property
+    def relative_command_finished(self):
+        return self.relative_control.state == self.relative_control.state.IDLE
 
     def navigate_to(self, x, y, theta):
         # TODO: Probably detach a thread...
@@ -122,6 +131,8 @@ class Locomotion:
                 self.reposition_loop()
             else:
                 speed = Speed(0, 0, 0)
+        elif self.mode == LocomotionState.RELATIVE_CONTROL:
+            speed = self.relative_control.compute_speed(delta_time, speed_constraints)
         else:
             # This should not happen
             speed = Speed(0, 0, 0)
@@ -147,6 +158,16 @@ class Locomotion:
         else:
             self.mode = LocomotionState.DIRECT_SPEED_CONTROL
         self.direct_speed_goal = Speed(x_speed, y_speed, theta_speed)
+
+    def go_straight(self, distance):
+        self.mode = LocomotionState.RELATIVE_CONTROL
+        self.relative_control.new_straight_goal(distance)
+        print("[Locomotion] New straight relative goal received")
+
+    def turn(self, relative_angle):
+        self.mode = LocomotionState.RELATIVE_CONTROL
+        self.relative_control.new_rotate_goal(relative_angle)
+        print("[Locomotion] New rotational relative goal received")
 
     def comply_speed_constraints(self, speed_cmd, dt):
         if dt == 0:
