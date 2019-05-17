@@ -23,13 +23,8 @@ class JeVois:
         self._serial.flush()
         self.rt_thread.start()
     
-    def send_pos_armothy_units(self, z, rotation):
-        height = ARMOTHY_BASE_HEIGHT - z
-        angle = 0.29 * rotation
-        self.send_pos(height, angle)
-    
-    def send_pos(self, height, angle):
-        command = "armothy_pos {} {}\n".format(int(height), int(angle))
+    def send_pos(self, z, y_rotation):
+        command = "armothy_pos {} {}\n".format(int(ARMOTHY_BASE_HEIGHT - z), int(y_rotation))
         self._serial.write(command.encode())
 
     def _get_pucks(self):
