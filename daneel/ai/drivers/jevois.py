@@ -6,6 +6,7 @@ from typing import NamedTuple
 DEFAULT_SERIAL_PATH = "/dev/jevois_serial"
 DEFAULT_BAUDRATE = 115200
 
+ARMOTHY_BASE_HEIGHT = 200
 
 class JeVois:
     JEVOIS_FOV = 60  # deg
@@ -21,6 +22,15 @@ class JeVois:
 #        self._serial.readline()
         self._serial.flush()
         self.rt_thread.start()
+    
+    def send_pos_armothy_units(self, z, rotation):
+        height = ARMOTHY_BASE_HEIGHT - z
+        angle = 0.29 * rotation
+        self.send_pos(height, angle)
+    
+    def send_pos(self, height, angle):
+        command = "armothy_pos {} {}\n".format(int(height), int(angle))
+        self._serial.write(command.encode())
 
     def _get_pucks(self):
         # x y r mean color;x...
