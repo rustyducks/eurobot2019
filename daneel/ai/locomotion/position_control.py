@@ -214,6 +214,9 @@ class PositionControl(LocomotionControlBase):
 
         vx = self.compute_linear_speed(delta_time, self.trajectory[browse_traj_i + 1], speed_constraint)
         vtheta = vx * gamma
+        if abs(vtheta) > ROTATION_SPEED_MAX:
+            vtheta = min(ROTATION_SPEED_MAX, max(-ROTATION_SPEED_MAX, vtheta))
+            vx = vtheta / gamma
 
         return Speed(vx, 0, vtheta)
 
