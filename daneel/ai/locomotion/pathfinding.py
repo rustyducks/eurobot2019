@@ -1,10 +1,9 @@
 import math
 import numpy as np
 
-GRAPH_FILE = "data/nav_graph.txt"
+GRAPH_FILE = "data/nav_graph.pbm"
 TABLE_HEIGHT = 2000
 TABLE_WIDTH = 3000
-GRAPH_TABLE_RATIO = 0.2  # 1 / 5 -> ratio between the graph size and the actual table size in the table frame
 
 
 class PathFinding:
@@ -41,8 +40,11 @@ class Node:
     def __hash__(self):
         return self.x.__hash__() + self.y.__hash__()
 
+    def __repr__(self):
+        return "x:{} y:{} value:{} h:{} g:{}".format(self.x, self.y, self.value, self.H, self.G)
+
     def __str__(self):
-        return "x:{} y:{} h:{} g:{}".format(self.x, self.y, self.H, self.G)
+        return "x:{} y:{} value:{} h:{} g:{}".format(self.x, self.y, self.value, self.H, self.G)
 
     def reset(self):
         self.parent = None
@@ -53,21 +55,39 @@ class ThetaStar(PathFinding):
     def __init__(self, robot):
         super().__init__(robot)
         self.graph = None
+        self.graph_table_ratio = 0
         self.load_graph(GRAPH_FILE)
         self.height = len(self.graph[0])
         self.width = len(self.graph)
 
     def load_graph(self, file):
-        self.graph = np.empty((int(TABLE_WIDTH * GRAPH_TABLE_RATIO), int(TABLE_HEIGHT * GRAPH_TABLE_RATIO)), dtype=object)
         with open(file, 'r') as f:
-            nb_line = 0
-            for j, line in enumerate(f):
-                nb_line += 1
+            magic_number = None
+            img_size = None
+            j = 0
+            for line in f:
+                if line.startswith('#'):
+                    continue
+
+                if line.strip() in ["P1", "P2", "P3", "P4", "P5"]:
+                    magic_number = line.strip()
+                    continue
+                elif magic_number is not None and img_size is None:
+                    img_size = list(map(int, line.strip().split()))
+                    print("Image size :", img_size)
+                    self.graph = np.empty((img_size[0], img_size[1]),
+                                          dtype=Node)
+                    self.graph_table_ratio = img_size[0] / TABLE_WIDTH
+                    print("Graph Table ratio :", self.graph_table_ratio)
+                    assert img_size[1] / TABLE_HEIGHT == self.graph_table_ratio
+                    continue
                 for i, pt in enumerate(line.strip()):
                     value = True if pt == '0' else False
                     self.graph[i,j] = Node(value, i, j)
+                j += 1
             # self.graph = list(reversed(self.graph))
             f.close()
+        print(self.graph)
 
     def find_path(self, start, goal):
         print("[Theta*] Resetting graph")
@@ -75,8 +95,8 @@ class ThetaStar(PathFinding):
         print("[Theta*] Searching for a path from {} to {}".format(start, goal))
         opened = set()
         closed = set()
-        start_node = self.graph[int(start[0] * GRAPH_TABLE_RATIO)][int(start[1] * GRAPH_TABLE_RATIO)]
-        goal_node = self.graph[int(goal[0] * GRAPH_TABLE_RATIO)][int(goal[1] * GRAPH_TABLE_RATIO)]
+        start_node = self.graph[int(start[0] * self.graph_table_ratio)][int(start[1] * self.graph_table_ratio)]
+        goal_node = self.graph[int(goal[0] * self.graph_table_ratio)][int(goal[1] * self.graph_table_ratio)]
         start_node.H = start_node.heuristic(goal_node)
         opened.add(start_node)
         while len(opened) != 0:
@@ -86,7 +106,7 @@ class ThetaStar(PathFinding):
                 path = []
                 s_path = s
                 while s_path.parent is not None:
-                    path.append((s_path.x // GRAPH_TABLE_RATIO, s_path.y // GRAPH_TABLE_RATIO))
+                    path.append((s_path.x // self.graph_table_ratio, s_path.y // self.graph_table_ratio))
                     s_path = s_path.parent
                 print("[Theta*] Path found from {} to {}. Trajectory length: {}".format(start, goal, len(path)))
                 return list(reversed(path))
