@@ -88,6 +88,9 @@ class Vector2:
     def __repr__(self):
         return "Vector2({}, {})".format(self.x, self.y)
 
+    def __neg__(self):
+        return Vector2(-self.x, -self.y)
+
 
 Speed = NamedTuple("Speed", [('vx', float), ('vy', float), ('vtheta', float)])
 SpeedConstraint = NamedTuple("SpeedConstraint", [('min_vx', float), ('max_vx', float), ('min_vy', float),

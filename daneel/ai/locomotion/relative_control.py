@@ -75,7 +75,11 @@ class RelativeControl(LocomotionControlBase):
         planned_stop_error = abs(reach_speed_length - dist_remaining)
         if planned_stop_error <= ADMITTED_POSITION_ERROR:
             # Deceleration time
-            new_speed = self.current_speed.vx - acceleration * dt
+            speed_diff = acceleration * dt
+            if abs(speed_diff) > abs(self.current_speed.vx):
+                new_speed = 0
+            else:
+                new_speed = self.current_speed.vx - acceleration * dt
         elif planned_stop_error <= 3 * ADMITTED_POSITION_ERROR and abs(self.current_speed.vx) > 10:
             # Do not accelerate if we already plan to stop close to the point
             new_speed = self.current_speed.vx
@@ -100,7 +104,11 @@ class RelativeControl(LocomotionControlBase):
         self.robot.ivy.highlight_robot_angle(1, planned_stop_angle)
         planned_angular_error = center_radians(self._rotation_goal - planned_stop_angle)
         if abs(planned_angular_error) <= ADMITTED_ANGLE_ERROR or diff * planned_angular_error < 0:
-            omega = self.current_speed.vtheta - acceleration * dt
+            speed_diff = acceleration * dt
+            if abs(speed_diff) > abs(self.current_speed.vtheta):
+                omega = 0
+            else:
+                omega = self.current_speed.vtheta - speed_diff
         elif abs(planned_angular_error) <= 3 * ADMITTED_ANGLE_ERROR and abs(self.current_speed.vtheta) > 0.3:
             omega = self.current_speed.vtheta
 
