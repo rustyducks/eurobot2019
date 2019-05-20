@@ -56,12 +56,14 @@ const uint8_t digitToSegment[] = {
   0b01110001     // F
   };
 
+static const uint8_t minusSegments = 0b01000000;
 
-TM1637Display::TM1637Display(uint8_t pinClk, uint8_t pinDIO)
+TM1637Display::TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay)
 {
 	// Copy the pin numbers
 	m_pinClk = pinClk;
 	m_pinDIO = pinDIO;
+	m_bitDelay = bitDelay;
 
 	// Set the pin direction and default value.
 	// Both pins are set as inputs, allowing the pull-up resistors to pull them up
@@ -99,6 +101,12 @@ void TM1637Display::setSegments(const uint8_t segments[], uint8_t length, uint8_
 	stop();
 }
 
+void TM1637Display::clear()
+{
+    uint8_t data[] = { 0, 0, 0, 0 };
+	setSegments(data);
+}
+
 void TM1637Display::showNumberDec(int num, bool leading_zero, uint8_t length, uint8_t pos)
 {
   showNumberDecEx(num, 0, leading_zero, length, pos);
@@ -107,41 +115,70 @@ void TM1637Display::showNumberDec(int num, bool leading_zero, uint8_t length, ui
 void TM1637Display::showNumberDecEx(int num, uint8_t dots, bool leading_zero,
                                     uint8_t length, uint8_t pos)
 {
-  uint8_t digits[4];
-	const static int divisors[] = { 1, 10, 100, 1000 };
-	bool leading = true;
-
-	for(int8_t k = 0; k < 4; k++) {
-	    int divisor = divisors[4 - 1 - k];
-		int d = num / divisor;
-    uint8_t digit = 0;
-
-		if (d == 0) {
-		  if (leading_zero || !leading || (k == 3))
-		      digit = encodeDigit(d);
-	      else
-		      digit = 0;
-		}
-		else {
-			digit = encodeDigit(d);
-			num -= d * divisor;
-			leading = false;
-		}
-    
-    // Add the decimal point/colon to the digit
-    digit |= (dots & 0x80); 
-    dots <<= 1;
-    
-    digits[k] = digit;
-	}
-
-	setSegments(digits + (4 - length), length, pos);
+  showNumberBaseEx(num < 0? -10 : 10, num < 0? -num : num, dots, leading_zero, length, pos);
 }
 
+void TM1637Display::showNumberHexEx(uint16_t num, uint8_t dots, bool leading_zero,
+                                    uint8_t length, uint8_t pos)
+{
+  showNumberBaseEx(16, num, dots, leading_zero, length, pos);
+}
+
+void TM1637Display::showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots, bool leading_zero,
+                                    uint8_t length, uint8_t pos)
+{
+    bool negative = false;
+	if (base < 0) {
+	    base = -base;
+		negative = true;
+	}
+
+
+    uint8_t digits[4];
+
+	if (num == 0 && !leading_zero) {
+		// Singular case - take care separately
+		for(uint8_t i = 0; i < (length-1); i++)
+			digits[i] = 0;
+		digits[length-1] = encodeDigit(0);
+	}
+	else {
+		//uint8_t i = length-1;
+		//if (negative) {
+		//	// Negative number, show the minus sign
+		//    digits[i] = minusSegments;
+		//	i--;
+		//}
+		
+		for(int i = length-1; i >= 0; --i)
+		{
+		    uint8_t digit = num % base;
+			
+			if (digit == 0 && num == 0 && leading_zero == false)
+			    // Leading zero is blank
+				digits[i] = 0;
+			else
+			    digits[i] = encodeDigit(digit);
+				
+			if (digit == 0 && num == 0 && negative) {
+			    digits[i] = minusSegments;
+				negative = false;
+			}
+
+			num /= base;
+		}
+
+		if(dots != 0)
+		{
+			showDots(dots, digits);
+		}
+    }
+    setSegments(digits, length, pos);
+}
 
 void TM1637Display::bitDelay()
 {
-	delayMicroseconds(50);
+	delayMicroseconds(m_bitDelay);
 }
 
 void TM1637Display::start()
@@ -203,6 +240,15 @@ bool TM1637Display::writeByte(uint8_t b)
   bitDelay();
 
   return ack;
+}
+
+void TM1637Display::showDots(uint8_t dots, uint8_t* digits)
+{
+    for(int i = 0; i < 4; ++i)
+    {
+        digits[i] |= (dots & 0x80);
+        dots <<= 1;
+    }
 }
 
 uint8_t TM1637Display::encodeDigit(uint8_t digit)

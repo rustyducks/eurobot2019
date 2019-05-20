@@ -27,6 +27,8 @@
 #define SEG_F   0b00100000
 #define SEG_G   0b01000000
 
+#define DEFAULT_BIT_DELAY  100
+
 class TM1637Display {
 
 public:
@@ -35,7 +37,9 @@ public:
   //!
   //! @param pinClk - The number of the digital pin connected to the clock pin of the module
   //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
-  TM1637Display(uint8_t pinClk, uint8_t pinDIO);
+  //! @param bitDelay - The delay, in microseconds, between bit transition on the serial
+  //!                   bus connected to the display
+  TM1637Display(uint8_t pinClk, uint8_t pinDIO, unsigned int bitDelay = DEFAULT_BIT_DELAY);
 
   //! Sets the brightness of the display.
   //!
@@ -60,37 +64,71 @@ public:
   //! @param pos The position from which to start the modification (0 - leftmost, 3 - rightmost)
   void setSegments(const uint8_t segments[], uint8_t length = 4, uint8_t pos = 0);
 
-  //! Displayes a decimal number
+  //! Clear the display
+  void clear();
+
+  //! Display a decimal number
   //!
-  //! Dispalyes the given argument as a decimal number
+  //! Dispaly the given argument as a decimal number.
   //!
   //! @param num The number to be shown
   //! @param leading_zero When true, leading zeros are displayed. Otherwise unnecessary digits are
-  //!        blank
+  //!        blank. NOTE: leading zero is not supported with negative numbers.
   //! @param length The number of digits to set. The user must ensure that the number to be shown
   //!        fits to the number of digits requested (for example, if two digits are to be displayed,
   //!        the number must be between 0 to 99)
-  //! @param pos The position most significant digit (0 - leftmost, 3 - rightmost)
+  //! @param pos The position of the most significant digit (0 - leftmost, 3 - rightmost)
   void showNumberDec(int num, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
 
-  //! Displayes a decimal number, with dot control
+  //! Display a decimal number, with dot control
   //!
-  //! Dispalyes the given argument as a decimal number. The dots between the digits (or colon)
-  //! can be individually controlled
+  //! Dispaly the given argument as a decimal number. The dots between the digits (or colon)
+  //! can be individually controlled.
   //!
   //! @param num The number to be shown
-  //! @param dots Dot enable. The argument is a bitmask, with each bit corresponding to a dot
-  //!        between the digits (or colon mark, as implemented by each module). The MSB is the 
-  //!        leftmost dot of the digit being update. For example, if pos is 1, the MSB of dots
-  //!        will correspond the dot near digit no. 2 from the left. Dots are updated only on
-  //!        those digits actually being update (that is, no more than len digits)
+  //! @param dots Dot/Colon enable. The argument is a bitmask, with each bit corresponding to a dot
+  //!        between the digits (or colon mark, as implemented by each module). i.e.
+  //!        For displays with dots between each digit:
+  //!        * 0.000 (0b10000000)
+  //!        * 00.00 (0b01000000)
+  //!        * 000.0 (0b00100000)
+  //!        * 0.0.0.0 (0b11100000)
+  //!        For displays with just a colon:
+  //!        * 00:00 (0b01000000)
+  //!        For displays with dots and colons colon:
+  //!        * 0.0:0.0 (0b11100000)
+  //! @param leading_zero When true, leading zeros are displayed. Otherwise unnecessary digits are
+  //!        blank. NOTE: leading zero is not supported with negative numbers.
+  //! @param length The number of digits to set. The user must ensure that the number to be shown
+  //!        fits to the number of digits requested (for example, if two digits are to be displayed,
+  //!        the number must be between 0 to 99)
+  //! @param pos The position of the most significant digit (0 - leftmost, 3 - rightmost)
+  void showNumberDecEx(int num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
+
+  //! Display a hexadecimal number, with dot control
+  //!
+  //! Dispaly the given argument as a hexadecimal number. The dots between the digits (or colon)
+  //! can be individually controlled.
+  //!
+  //! @param num The number to be shown
+  //! @param dots Dot/Colon enable. The argument is a bitmask, with each bit corresponding to a dot
+  //!        between the digits (or colon mark, as implemented by each module). i.e.
+  //!        For displays with dots between each digit:
+  //!        * 0.000 (0b10000000)
+  //!        * 00.00 (0b01000000)
+  //!        * 000.0 (0b00100000)
+  //!        * 0.0.0.0 (0b11100000)
+  //!        For displays with just a colon:
+  //!        * 00:00 (0b01000000)
+  //!        For displays with dots and colons colon:
+  //!        * 0.0:0.0 (0b11100000)
   //! @param leading_zero When true, leading zeros are displayed. Otherwise unnecessary digits are
   //!        blank
   //! @param length The number of digits to set. The user must ensure that the number to be shown
   //!        fits to the number of digits requested (for example, if two digits are to be displayed,
   //!        the number must be between 0 to 99)
-  //! @param pos The position least significant digit (0 - leftmost, 3 - rightmost)
-  void showNumberDecEx(int num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
+  //! @param pos The position of the most significant digit (0 - leftmost, 3 - rightmost)
+  void showNumberHexEx(uint16_t num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
 
   //! Translate a single digit into 7 segment code
   //!
@@ -112,10 +150,16 @@ protected:
 
    bool writeByte(uint8_t b);
 
+   void showDots(uint8_t dots, uint8_t* digits);
+   
+   void showNumberBaseEx(int8_t base, uint16_t num, uint8_t dots = 0, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
+
+
 private:
 	uint8_t m_pinClk;
 	uint8_t m_pinDIO;
 	uint8_t m_brightness;
+	unsigned int m_bitDelay;
 };
 
 #endif // __TM1637DISPLAY__
