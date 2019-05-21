@@ -9,6 +9,7 @@ import ivy_robot
 from io_robot import *
 from locomotion.locomotion import *
 from behavior import Behaviors
+from table.table import Table
 
 TRACE_FILE = "/home/pi/code/primary_robot/ai/log/log_"+str(datetime.datetime.now()).replace(' ', '_')
 
@@ -26,6 +27,7 @@ class Robot(object):
                  static_obstacles_file=STATIC_OBSTACLES_FILE, lidar_mask_file=LIDAR_MASK_FILE,
                  teensy_serial_path=TEENSY_SERIAL_PATH_DEFAULT):
         self.map = map.Map(self, static_obstacles_file, lidar_mask_file)
+        self.table = Table(self)
         self.communication = communication.Communication(teensy_serial_path)
         self.communication.start()
         self.io = IO(self)
