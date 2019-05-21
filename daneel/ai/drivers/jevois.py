@@ -69,7 +69,27 @@ class JeVois:
             return 'green'
         if len_red == 0 and len_green == 0 and len_blue > 0:
             return 'blue'
-        # at this point, there is more than one atom. Do you want the color of the closest atom?
+        # at this point, there is more than one atom. Do you want the color of the closest atom? Yes.
+
+        closest_sq_distance_to_center = float('inf')
+        closest_color = None
+        for r in self._last_pucks['red']:
+            d = (r[0] - JeVois.JEVOIS_RES[0]/2)**2 + (r[1] - JeVois.JEVOIS_RES[1]/2)
+            if d < closest_sq_distance_to_center:
+                closest_sq_distance_to_center = d
+                closest_color = "red"
+        for g in self._last_pucks['green']:
+            d = (g[0] - JeVois.JEVOIS_RES[0] / 2) ** 2 + (g[1] - JeVois.JEVOIS_RES[1] / 2)
+            if d < closest_sq_distance_to_center:
+                closest_sq_distance_to_center = d
+                closest_color = "green"
+        for b in self._last_pucks['blue']:
+            d = (b[0] - JeVois.JEVOIS_RES[0] / 2) ** 2 + (b[1] - JeVois.JEVOIS_RES[1] / 2)
+            if d < closest_sq_distance_to_center:
+                closest_sq_distance_to_center = d
+                closest_color = "blue"
+        return closest_color
+
 
 
 
