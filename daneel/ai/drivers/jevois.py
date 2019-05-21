@@ -55,6 +55,22 @@ class JeVois:
         self._puck_mutex.release()
         return tmp
 
+    @property
+    def uniq_last_puck_color(self):
+        len_red = len(self._last_pucks['red'])
+        len_green = len(self._last_pucks['green'])
+        len_blue = len(self._last_pucks['blue'])
+
+        if len_red == 0 and len_green == 0 and len_blue == 0:
+            return None
+        if len_red > 0 and len_green == 0 and len_blue == 0:
+            return 'red'
+        if len_red == 0 and len_green > 0 and len_blue == 0:
+            return 'green'
+        if len_red == 0 and len_green == 0 and len_blue > 0:
+            return 'blue'
+        # at this point, there is more than one atom. Do you want the color of the closest atom?
+
 
 
 
