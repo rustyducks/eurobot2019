@@ -4,6 +4,7 @@ import math
 from math import pi
 import os
 import armothy
+from table.table import SlotName, Atom
 
 from behavior import Behavior
 
@@ -75,7 +76,8 @@ class StatePreStartChecks(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.PERIODIC)
-        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.PERIODIC)
+        self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL,
+                                               self.robot.io.SensorState.PERIODIC)
         self.robot.io.set_lidar_pwm(244)
         self.enter_time = time.time()
         self.robot.locomotion.set_direct_speed(0, 0, 0)
@@ -83,17 +85,21 @@ class StatePreStartChecks(FSMState):
     def test(self):
         if self.robot.io.battery_power_voltage is not None and self.robot.io.battery_signal_voltage is not None:
             if (time.time() - self.enter_time) % 13 < 5:
-                if self.robot.io.battery_signal_voltage <= WARNING_VOLTAGE_THRESHOLD and (time.time() - self.enter_time) % 2 < 1:
+                if self.robot.io.battery_signal_voltage <= WARNING_VOLTAGE_THRESHOLD and (
+                    time.time() - self.enter_time) % 2 < 1:
                     self.robot.io.set_led_color(self.robot.io.LedColor.RED)
                 else:
                     self.robot.io.set_led_color(self.robot.io.LedColor.CYAN)
-                self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100), with_two_points=True)
+                self.robot.io.score_display_number(round(self.robot.io.battery_signal_voltage * 100),
+                                                   with_two_points=True)
             elif (time.time() - self.enter_time) % 13 < 10:
-                if self.robot.io.battery_power_voltage <= WARNING_VOLTAGE_THRESHOLD and (time.time() - self.enter_time) % 2 < 1:
+                if self.robot.io.battery_power_voltage <= WARNING_VOLTAGE_THRESHOLD and (
+                    time.time() - self.enter_time) % 2 < 1:
                     self.robot.io.set_led_color(self.robot.io.LedColor.RED)
                 else:
                     self.robot.io.set_led_color(self.robot.io.LedColor.ORANGE)
-                self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100), with_two_points=True)
+                self.robot.io.score_display_number(round(self.robot.io.battery_power_voltage * 100),
+                                                   with_two_points=True)
             else:
                 self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
                 self.robot.io.score_display_fat()
@@ -165,24 +171,70 @@ class StateFrontGreenPeriodic(FSMState):
             self.robot.locomotion.follow_trajectory([(305, 1250, 0)])
         else:
             pass
-            #self.robot.locomotion.follow_trajectory([(2695, 1250, 0)])
+            # self.robot.locomotion.follow_trajectory([(2695, 1250, 0)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
+            return StateGetColorFrontGreenPeriodicAtom
+
+    def deinit(self):
+        pass
+
+
+class StateGetColorFrontGreenPeriodicAtom(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.rotate_z_axis(0)
+        self.start_time = time.time()
+        self.time_out = 2  # sec
+
+    def test(self):
+        seen_color = self.robot.io.jevois.uniq_last_puck_color
+        if seen_color is not None:
+            if self.behavior.color == Color.YELLOW:
+                self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color = Atom.Color(seen_color)
+                if seen_color == "green":
+                    self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.RED
+                    self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom.color = Atom.Color.RED
+                return StateTakeFirstAtom
+            else:
+                self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color = Atom.Color(seen_color)
+                if seen_color == "green":
+                    self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.RED
+                    self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom.color = Atom.Color.RED
+                return StateTakeFirstAtom
+        if time.time() - self.start_time >= self.time_out:
             return StateTakeFirstAtom
 
     def deinit(self):
-        self.behavior.score += 1
-        self.robot.io.score_display_number(self.behavior.score)
+        pass
 
 
 class StateTakeFirstAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.io.armothy.take_and_store(75, armothy.eStack.RIGHT_STACK)
+        if self.behavior.color == Color.YELLOW:
+            if self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color == Atom.Color.RED:
+                #  We put the reds in the right stack, we probably do not want to put them in the scale
+                self.robot.io.armothy.take_and_store(75, armothy.eStack.RIGHT_STACK)
+            else:
+                #  If the atom is green or if we don't know, we put it in the left stack to put it on the scale
+                self.robot.io.armothy.take_and_store(75, armothy.eStack.LEFT_STACK)
+        else:
+            if self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color == Atom.Color.RED:
+                self.robot.io.armothy.take_and_store(75, armothy.eStack.LEFT_STACK)
+            else:
+                self.robot.io.armothy.take_and_store(75, armothy.eStack.RIGHT_STACK)
+        self.start_time = time.time()
+        self.timeout = 7  # sec
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+            # Probably want to check if it is green if this one was not...
+            return StateTakeSecondAtom
+
+        if time.time() - self.start_time >= self.timeout:
+            self.robot.io.armothy.home()
             return StateTakeSecondAtom
 
     def deinit(self):
@@ -193,7 +245,7 @@ class StateTakeSecondAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.traj_finished = False
-        self.robot.locomotion.follow_trajectory([(500, 1250, -pi/2), (500, 1155, -pi/2)])
+        self.robot.locomotion.follow_trajectory([(500, 1250, -pi / 2), (500, 1155, -pi / 2)])
         # self.start_time = time.time()
         # self.robot.locomotion.set_direct_speed(-50, 0, 0)
 
@@ -213,7 +265,7 @@ class StateTakeThirdAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.traj_finished = False
-        self.robot.locomotion.follow_trajectory([(500, 1155, pi/2), (500, 1345, pi/2)])
+        self.robot.locomotion.follow_trajectory([(500, 1155, pi / 2), (500, 1345, pi / 2)])
         # self.start_time = time.time()
         # self.robot.locomotion.set_direct_speed(-50, 0, 0)
 
@@ -256,6 +308,8 @@ class StateDropRediums(FSMState):
 
     def deinit(self):
         pass
+
+
 #
 # class StatePushGreenPeriodic(FSMState):
 #     def __init__(self, behavior):
@@ -363,4 +417,3 @@ class StateEnd(FSMState):
 
     def deinit(self):
         pass
-
