@@ -96,7 +96,13 @@ class ThetaStar(PathFinding):
         opened = set()
         closed = set()
         start_node = self.graph[int(start[0] * self.graph_table_ratio)][int(start[1] * self.graph_table_ratio)]
+        if not start_node.value:
+            print("[Theta*] Start position in obstacle. Aborting.")
+            return
         goal_node = self.graph[int(goal[0] * self.graph_table_ratio)][int(goal[1] * self.graph_table_ratio)]
+        if not goal_node.value:
+            print("[Theta*] Goal position in obstacle. Aborting.")
+            return
         start_node.H = start_node.heuristic(goal_node)
         opened.add(start_node)
         while len(opened) != 0:
