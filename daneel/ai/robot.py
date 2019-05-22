@@ -10,6 +10,7 @@ from io_robot import *
 from locomotion.locomotion import *
 from behavior import Behaviors
 from table.table import Table
+from robot_parts import AtomStorage
 
 TRACE_FILE = "/home/pi/code/primary_robot/ai/log/log_"+str(datetime.datetime.now()).replace(' ', '_')
 
@@ -28,6 +29,8 @@ class Robot(object):
                  teensy_serial_path=TEENSY_SERIAL_PATH_DEFAULT):
         self.map = map.Map(self, static_obstacles_file, lidar_mask_file)
         self.table = Table(self)
+        self.storages = {AtomStorage.Side.RIGHT: AtomStorage(robot, AtomStorage.Side.RIGHT),
+                         AtomStorage.Side.LEFT: AtomStorage(robot, AtomStorage.Side.LEFT)}
         self.communication = communication.Communication(teensy_serial_path)
         self.communication.start()
         self.io = IO(self)
@@ -43,6 +46,14 @@ class Robot(object):
             self.behavior = Slave(self)
         else:
             raise NotImplementedError("This behavior is not implemented yet !")
+
+    @property
+    def right_storage(self):
+        return self.storages[AtomStorage.Side.RIGHT]
+
+    @property
+    def left_storage(self):
+        return self.storages[AtomStorage.Side.LEFT]
 
 
 def main():
