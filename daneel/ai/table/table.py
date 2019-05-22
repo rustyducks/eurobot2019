@@ -92,4 +92,5 @@ class AtomSlot:
         self.name = name
         self.height = height
         self.position = (x, y)
-        self.atom = Atom(x, y, None, height)
+        self.atom = Atom(x, y, initial_color, height)
+        self.is_in_slot = True
