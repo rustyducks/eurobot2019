@@ -9,8 +9,11 @@
 #include "DynamixelSerial5.h"
 #include "params.h"
 #include "communication/Communication.h"
+#include "VirtualWire.h"
+
 
 using namespace fat;
+const char *EXPERIMENT_START_MSG = "coincoin";
 
 InputOutputs inputOutputs = InputOutputs();
 
@@ -48,6 +51,10 @@ void InputOutputs::init() {
 	pinMode(VL6180X_LEFT, OUTPUT);
 	pinMode(VL6180X_CENTER, OUTPUT);
 	pinMode(VL6180X_RIGHT, OUTPUT);
+
+    vw_set_tx_pin(DATA_433);
+    vw_set_ptt_inverted(true); // Required for DR3100
+    vw_setup(2000);	 // Bits per sec
 }
 
 void InputOutputs::initSensors(){
@@ -186,6 +193,10 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		break;
 	case eMsgActuatorId::ACT_LIDAR_PWM:
 		analogWrite(LIDAR_SPEED, actuatorCommand);
+		break;
+	case eMsgActuatorId::ACT_EXPERIMENT_LAUCHER:
+		vw_send((uint8_t *)EXPERIMENT_START_MSG, strlen(EXPERIMENT_START_MSG));
+		vw_wait_tx(); // Wait until the whole message is gone
 		break;
 	default:
 		break;

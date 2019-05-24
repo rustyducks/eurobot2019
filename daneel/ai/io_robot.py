@@ -27,6 +27,7 @@ class ActuatorID(Enum):
     VL6180X_RIGHT_RESET = 2
     LIDAR_SPEED = 3
     SCORE_COUNTER = 4
+    EXPERIMENT_LAUNCHER = 5
 
 
 class IO(object):
@@ -117,7 +118,12 @@ class IO(object):
             pass
             if __debug__:
                 print("[IO] set lidar pwm to {}".format(pwm))
-        
+    
+    def launch_experiment(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.EXPERIMENT_LAUNCHER.value, 1) == 0:
+            pass
+            if __debug__:
+                print("[IO] Experiment launched!")
 
     def set_led_color(self, color):
         if isinstance(color, self.LedColor):

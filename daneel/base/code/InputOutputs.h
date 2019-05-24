@@ -58,6 +58,7 @@ private:
 		ACT_VL6180X_RIGHT_RESET = 2,
 		ACT_LIDAR_PWM = 3,
 		ACT_SCORE_COUNTER = 4,
+		ACT_EXPERIMENT_LAUCHER = 5
 
 	}eMsgActuatorId;
 
