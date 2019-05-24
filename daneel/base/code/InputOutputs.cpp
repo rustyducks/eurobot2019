@@ -52,9 +52,7 @@ void InputOutputs::init() {
 	pinMode(VL6180X_CENTER, OUTPUT);
 	pinMode(VL6180X_RIGHT, OUTPUT);
 
-    vw_set_tx_pin(DATA_433);
-    vw_set_ptt_inverted(true); // Required for DR3100
-    vw_setup(2000);	 // Bits per sec
+    Serial5.begin(9600);
 }
 
 void InputOutputs::initSensors(){
@@ -195,8 +193,7 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 		analogWrite(LIDAR_SPEED, actuatorCommand);
 		break;
 	case eMsgActuatorId::ACT_EXPERIMENT_LAUCHER:
-		vw_send((uint8_t *)EXPERIMENT_START_MSG, strlen(EXPERIMENT_START_MSG));
-		vw_wait_tx(); // Wait until the whole message is gone
+		Serial5.write((uint8_t *)EXPERIMENT_START_MSG, strlen(EXPERIMENT_START_MSG));
 		break;
 	default:
 		break;
