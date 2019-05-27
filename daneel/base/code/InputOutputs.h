@@ -99,6 +99,8 @@ private:
 	
 	volatile bool _HMIhasChanged;
 
+	int _rusty_duck_pos;
+
 	TM1637Display scoreDisplay;
 };
 
@@ -114,6 +116,23 @@ const uint8_t SEG_FAT[] = {
 		SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G,  // A
 		SEG_A | SEG_B | SEG_C,  // Half T
 		SEG_A | SEG_F | SEG_E   // Half T
+};
+
+const uint8_t SEG_RUSTY_DUCKS[] = {
+		SEG_E | SEG_G,   // r
+		SEG_C | SEG_D | SEG_E,    //u
+		SEG_A | SEG_C | SEG_D | SEG_F | SEG_G,    //S
+		SEG_D | SEG_E | SEG_F | SEG_G,     //t
+		SEG_B | SEG_E | SEG_F | SEG_G,  //y
+		0,  //space
+		SEG_B | SEG_C |SEG_D | SEG_E | SEG_G,  //d
+		SEG_C | SEG_D | SEG_E,  //u
+		SEG_D | SEG_E | SEG_G,  //c
+		SEG_A | SEG_C | SEG_E | SEG_F | SEG_G,  // k
+		0,
+		0,
+		0,
+		0
 };
 
 extern InputOutputs inputOutputs;

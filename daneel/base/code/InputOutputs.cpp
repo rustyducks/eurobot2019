@@ -21,7 +21,7 @@ void ioHMIhasChanged();
 
 InputOutputs::InputOutputs(): registeredSensorsNumber(0),_button1Pressed(false),
 		_button2Pressed(false), _cordIn(false), _redLEDOn(false), _greenLEDOn(false),
-		_blueLEDOn(false), _HMIhasChanged(false),
+		_blueLEDOn(false), _HMIhasChanged(false), _rusty_duck_pos(-1),
 		scoreDisplay(SCORE_DISPLAY_CLK, SCORE_DISPLAY_DIO){
 
 }
@@ -116,6 +116,13 @@ void InputOutputs::run(){
 			break;
 		}
 	}
+	if (_rusty_duck_pos != -1){
+		int size = sizeof(SEG_RUSTY_DUCKS) / sizeof(SEG_RUSTY_DUCKS[0]);
+		_rusty_duck_pos = (_rusty_duck_pos + 1) % size;
+		uint8_t tmp[] = {SEG_RUSTY_DUCKS[_rusty_duck_pos], SEG_RUSTY_DUCKS[(_rusty_duck_pos + 1) % size],
+				SEG_RUSTY_DUCKS[(_rusty_duck_pos + 2) % size], SEG_RUSTY_DUCKS[(_rusty_duck_pos + 3) % size]};
+		scoreDisplay.setSegments(tmp);
+	}
 }
 
 int InputOutputs::readSensor(sSensor& sensor){
@@ -159,6 +166,7 @@ void ioHMIhasChanged(){
 void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 	switch(actuatorId){
 	case eMsgActuatorId::ACT_SCORE_COUNTER:
+		_rusty_duck_pos = -1;
 		scoreDisplay.setBrightness(7, true);
 		if (actuatorCommand <= 9999){
 			scoreDisplay.showNumberDecEx(actuatorCommand, 0);
@@ -170,6 +178,9 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 			scoreDisplay.setSegments(SEG_ENAC);
 		}else if (actuatorCommand == 20002){
 			scoreDisplay.setSegments(SEG_FAT);
+		}else if (actuatorCommand == 20003){
+			scoreDisplay.setSegments(SEG_RUSTY_DUCKS);
+			_rusty_duck_pos = 0;
 		}else{
 			scoreDisplay.setBrightness(0, false);
 		}

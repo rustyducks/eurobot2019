@@ -92,6 +92,7 @@ class IO(object):
     class ScoreDisplayTexts(Enum):  # As defined in base/InputOutputs.cpp/InputOutputs::handleActuatorMessage
         ENAC = 20001
         FAT = 20002
+        RUSTY_DUCKS = 20003
     
     def init_range_sensors(self):
         self.enable_VL6180X_LEFT(True)
@@ -141,6 +142,11 @@ class IO(object):
     def score_display_enac(self):
         if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.ENAC.value) == 0:
             self.score_display_text = "ENAC"
+            print("[IO] Score display displays " + self.score_display_text)
+
+    def score_display_rusty_ducks(self):
+        if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.RUSTY_DUCKS.value) == 0:
+            self.score_display_text = "Rusty Ducks"
             print("[IO] Score display displays " + self.score_display_text)
 
     def score_display_number(self, number, with_two_points=False):
