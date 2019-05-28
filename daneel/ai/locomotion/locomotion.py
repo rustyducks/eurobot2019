@@ -30,6 +30,7 @@ class Locomotion:
         # Pathfinding
         self.pathfinder = ThetaStar(self.robot)
 
+
         # Direct speed control
         self.direct_speed_goal = Speed(0, 0, 0)  # for DIRECT_SPEED_CONTROL_MODE
 
@@ -161,11 +162,20 @@ class Locomotion:
 
     def go_straight(self, distance):
         self.mode = LocomotionState.RELATIVE_CONTROL
+        if -ADMITTED_POSITION_ERROR < distance < 0:
+            distance = -ADMITTED_POSITION_ERROR - 1
+        elif 0 < distance < ADMITTED_POSITION_ERROR:
+            distance = ADMITTED_POSITION_ERROR + 1
         self.relative_control.new_straight_goal(distance)
         print("[Locomotion] New straight relative goal received")
 
     def turn(self, relative_angle):
         self.mode = LocomotionState.RELATIVE_CONTROL
+        if 0 > relative_angle > -ADMITTED_ANGLE_ERROR:
+            relative_angle = -ADMITTED_ANGLE_ERROR - 0.001
+        elif 0 < relative_angle < ADMITTED_ANGLE_ERROR:
+            relative_angle = ADMITTED_ANGLE_ERROR + 0.001
+
         self.relative_control.new_rotate_goal(relative_angle)
         print("[Locomotion] New rotational relative goal received")
 
