@@ -5,6 +5,10 @@ mask:
     x_stop: 2900
     y_stop: 1900
   static_obstacles: # Inside those rectangles, any lidar point will be discarded
+    - x_start: 1200  # Scale
+      y_start: -50
+      x_stop: 1800
+      y_stop: 500
 
 
 
