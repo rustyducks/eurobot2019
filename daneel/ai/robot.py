@@ -67,7 +67,7 @@ def main():
     robot.communication.register_callback(communication.eTypeUp.HMI_STATE,
                                           lambda cord, b1, b2, lr, lg, lb: print("c: {}, b1: {}, b2: {}".format(
                                             robot.io.cord_state, robot.io.button1_state, robot.io.button2_state)))
-    # robot.communication.register_callback(communication.eTypeUp.HMI_STATE, new_hmi_state_callback)
+    #robot.communication.register_callback(communication.eTypeUp.HMI_STATE, new_hmi_state_callback)
     # robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT,
     #                                       robot.locomotion.handle_new_odometry_report)
     # robot.communication.register_callback(communication.eTypeUp.ODOM_REPORT, lambda o, n, x, y, t: print(
@@ -78,7 +78,7 @@ def main():
         robot.communication.check_message(10)
         if time.time() - last_locomotion_time >= 0.05:
             robot.locomotion.locomotion_loop(obstacle_detection=True)
-        if time.time() - last_behavior_time >= 0.5:
+        if time.time() - last_behavior_time >= 0.2:
             robot.behavior.loop()
             last_behavior_time = time.time()
 
