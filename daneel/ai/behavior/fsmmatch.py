@@ -9,9 +9,12 @@ from robot_parts import AtomStorage
 
 from behavior import Behavior
 
-END_MATCH_TIME = 100  # in seconds
+from locomotion.utils import center_radians, Point
 
-WARNING_VOLTAGE_THRESHOLD = 11.5  # if signal or power voltage goes under this value, led will be flashing red.
+END_MATCH_TIME = 100  # in seconds
+START_EXPERIMENT_TIME = 10  # in seconds
+
+WARNING_VOLTAGE_THRESHOLD = 12.8  # if signal or power voltage goes under this value, led will be flashing red.
 
 
 class Color(Enum):
@@ -27,6 +30,7 @@ class FSMMatch(Behavior):
         self.score = 0
         self.state = StatePreStartChecks(self)
         self.shutdown_button_press_time = 0
+        self.last_start_experiment = 0
 
     def loop(self):
         time_now = time.time()
@@ -49,6 +53,13 @@ class FSMMatch(Behavior):
             next_state = StateEnd
         else:
             next_state = self.state.test()
+        if self.start_time is not None and time_now - self.start_time >= START_EXPERIMENT_TIME and self.state.__class__ != StateEnd:
+            if self.last_start_experiment == 0:
+                self.score += 30
+                self.robot.io.score_display_number(self.score)
+            if time_now - self.last_start_experiment >= 5:
+                self.robot.io.launch_experiment()
+                self.last_start_experiment = time_now
         if next_state is not None:
             if __debug__:
                 print("[FSMMatch] Leaving {}, entering {}".format(self.state.__class__.__name__, next_state.__name__))
@@ -103,7 +114,7 @@ class StatePreStartChecks(FSMState):
                                                    with_two_points=True)
             else:
                 self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
-                self.robot.io.score_display_fat()
+                self.robot.io.score_display_rusty_ducks()
 
         if self.robot.io.button2_state == self.robot.io.ButtonState.PRESSED:
             return StateColorSelection
@@ -112,7 +123,7 @@ class StatePreStartChecks(FSMState):
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_POWER, self.robot.io.SensorState.STOPPED)
         self.robot.io.change_sensor_read_state(self.robot.io.SensorId.BATTERY_SIGNAL, self.robot.io.SensorState.STOPPED)
         self.robot.io.set_led_color(self.robot.io.LedColor.BLACK)
-        self.robot.io.score_display_fat()
+        self.robot.io.score_display_rusty_ducks()
 
 
 class StateColorSelection(FSMState):
@@ -130,6 +141,8 @@ class StateColorSelection(FSMState):
         elif self.robot.io.button1_state == self.robot.io.ButtonState.PRESSED and not self.behavior.color == Color.PURPLE:
             self.behavior.color = Color.PURPLE
             self.robot.io.set_led_color(self.robot.io.LedColor.PURPLE)
+        self.robot.io.armothy.rotate_z_axis(300)
+        self.robot.io.armothy.rotate_y_axis(0)
 
     def test(self):
         if self.robot.io.button1_state == self.robot.io.ButtonState.RELEASED and not self.behavior.color == Color.YELLOW:
@@ -146,7 +159,7 @@ class StateColorSelection(FSMState):
         if self.behavior.color == Color.YELLOW:
             self.robot.locomotion.reposition_robot(145, 1255, 0)
         else:
-            self.robot.locomotion.reposition_robot(2855, 1570, -math.pi)
+            self.robot.locomotion.reposition_robot(2855, 1255, -math.pi)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
 
@@ -157,10 +170,11 @@ class StatePreMatch(FSMState):
     def test(self):
         if self.robot.io.cord_state == self.behavior.robot.io.CordState.OUT:
             return StateFrontGreenPeriodic
+            # return StateGoFrontSlopeParticleAccelerator
 
     def deinit(self):
         self.behavior.start_match()
-        self.behavior.score = 0
+        self.behavior.score = 5  # Experiment is present
         self.robot.io.score_display_number(self.behavior.score)
 
 
@@ -168,11 +182,11 @@ class StateFrontGreenPeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.rotate_z_axis(0)
+        self.robot.io.armothy.rotate_y_axis(0)
         if self.behavior.color == Color.YELLOW:
             self.robot.locomotion.follow_trajectory([(305, 1250, 0)])
         else:
-            pass
-            # self.robot.locomotion.follow_trajectory([(2695, 1250, 0)])
+            self.robot.locomotion.follow_trajectory([(2695, 1250, -math.pi)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -186,6 +200,7 @@ class StateGetColorFrontGreenPeriodicAtom(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.rotate_z_axis(0)
+        self.robot.io.armothy.rotate_y_axis(0)
         self.start_time = time.time()
         self.time_out = 2  # sec
 
@@ -235,7 +250,7 @@ class StateTakeFirstAtom(FSMState):
         self.timeout = 7  # sec
 
     def test(self):
-        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
             self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom)
             # return StateGoToFrontBluePeriodic
             return StateGoToFrontBluePeriodic
@@ -253,8 +268,10 @@ class StateTakeFirstAtom(FSMState):
 class StateGoToFrontBluePeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        # TODO(guilhem): Add for purple side as well
-        self.robot.locomotion.follow_trajectory([(500, 1250, -pi / 2), (500, 1145, -pi / 2)])
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.follow_trajectory([(500, 1250, -pi / 2), (500, 1145, -pi / 2)])
+        else:
+            self.robot.locomotion.follow_trajectory([(2500, 1250, -pi / 2), (2500, 1145, -pi / 2)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -285,6 +302,8 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.RED
                     # TODO(guilhem) Check if the periodic green is still there...
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color = Atom.Color.RED
+                elif seen_color == "red" and self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color == Atom.Color.RED:
+                    self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.GREEN
                 return StateTakeSecondAtom
             else:
                 self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom.color = Atom.Color(seen_color)
@@ -292,6 +311,8 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.RED
                     # TODO(guilhem) Check if the periodic green is still there...
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color = Atom.Color.RED
+                elif seen_color == "red" and self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color == Atom.Color.RED:
+                    self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.GREEN
                 return StateTakeSecondAtom
         if time.time() - self.start_time >= self.time_out:
             return StateTakeSecondAtom
@@ -327,7 +348,7 @@ class StateTakeSecondAtom(FSMState):
         self.timeout = 7  # sec
 
     def test(self):
-        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
             self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom)
             return StateGoToFrontRedPeriodic
 
@@ -343,8 +364,10 @@ class StateTakeSecondAtom(FSMState):
 class StateGoToFrontRedPeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        # TODO(guilhem): Add for purple side as well
-        self.robot.locomotion.follow_trajectory([(500, 1155, pi / 2), (500, 1345, pi / 2)])
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.follow_trajectory([(500, 1155, pi / 2), (500, 1345, pi / 2)])
+        else:
+            self.robot.locomotion.follow_trajectory([(2500, 1155, pi / 2), (2500, 1345, pi / 2)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -414,7 +437,7 @@ class StateTakeThirdAtom(FSMState):
         self.timeout = 7  # sec
 
     def test(self):
-        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+        if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
             self.robot.storages[self.store_side].add( self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom)
             return StateDropRediums
 
@@ -434,7 +457,10 @@ class StateDropRediums(FSMState):
         self.traj_finished = False
         self.atom1_dropped = False
         self.atom2_droping = False
-        self.robot.locomotion.go_to_orient(500, 1550, -pi)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(500, 1550, -pi)
+        else:
+            self.robot.locomotion.go_to_orient(2500, 1550, 0)
         self.start_time = time.time()
         self.drop_timeout = 5
         self.dropped = 0
@@ -446,7 +472,10 @@ class StateDropRediums(FSMState):
                 if self.behavior.color == Color.YELLOW:
                     self.robot.io.armothy.put_down(self.robot.right_storage.armothy_height(),
                                                    armothy.eStack.RIGHT_STACK, 100)
-                    self.start_time = time.time()
+                else:
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_height(),
+                                                   armothy.eStack.LEFT_STACK, 100)
+                self.start_time = time.time()
         else:
             if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
                 self.dropped += 1
@@ -456,6 +485,15 @@ class StateDropRediums(FSMState):
                         self.robot.io.armothy.put_down(self.robot.right_storage.armothy_height(),
                                                        armothy.eStack.RIGHT_STACK,
                                                        (-1)**len(self.robot.right_storage.atoms) * 100)
+                        self.start_time = time.time()
+                    else:
+                        return StateDisengageRedPeriodic
+                else:
+                    self.robot.left_storage.pop()
+                    if not self.robot.left_storage.is_empty:
+                        self.robot.io.armothy.put_down(self.robot.left_storage.armothy_height(),
+                                                       armothy.eStack.LEFT_STACK,
+                                                       (-1)**len(self.robot.left_storage.atoms) * 100)
                         self.start_time = time.time()
                     else:
                         return StateDisengageRedPeriodic
@@ -483,13 +521,13 @@ class StateGoFrontParticleAccelerator(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.navigate_to(1710, 1700, math.pi/2)
+            self.robot.locomotion.follow_trajectory([(1710, 1700, math.pi/2)])
             self.robot.io.armothy.rotate_z_axis(200)
         else:
-            self.robot.locomotion.navigate_to(1290, 1700, math.pi/2)
+            self.robot.locomotion.follow_trajectory([(1290, 1700, math.pi/2)])
             self.robot.io.armothy.rotate_z_axis(-200)
         self.robot.io.armothy.translate_z_axis(45)
-        self.robot.io.armothy.rotate_y_axis(330)
+        self.robot.io.armothy.rotate_y_axis(315)
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -502,7 +540,7 @@ class StateGoFrontParticleAccelerator(FSMState):
 class StateEngageParticleAccelerator(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.locomotion.go_straight(50)
+        self.robot.locomotion.go_straight(45)
 
     def test(self):
         if self.robot.locomotion.relative_command_finished:
@@ -517,21 +555,308 @@ class StateRollParticleAccelerator(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.YELLOW:
-            self.robot.io.armothy.rotate_z_axis(-50)
-            self.robot.locomotion.turn(math.radians(7))
+            #self.robot.io.armothy.rotate_z_axis(-60)
+            self.robot.io.armothy.rotate_z_axis(0)
+            self.robot.locomotion.turn(math.radians(-15))
         else:
-            # TODO set z axis for Purple
-            self.robot.io.armothy.rotate_z_axis(200)
+            self.robot.io.armothy.rotate_z_axis(0)
+            self.robot.locomotion.turn(math.radians(15))
         self.start_time = time.time()
 
     def test(self):
         if time.time() - self.start_time >= 1:
-            return StateEnd
+            return StateDisengageParticleAccelerator
 
     def deinit(self):
         self.behavior.score += 10  # One atom in the accelerator
         self.behavior.score += 10  # Goldenium revealed !
         self.robot.io.score_display_number(self.behavior.score)
+
+
+class StateDisengageParticleAccelerator(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.has_turned = False
+        self.robot.locomotion.turn(center_radians(math.pi / 2 - self.robot.locomotion.theta))
+
+    def test(self):
+        if not self.has_turned and self.robot.locomotion.relative_command_finished:
+            self.robot.locomotion.go_straight(-50)
+            self.has_turned = True
+
+        elif self.has_turned and self.robot.locomotion.relative_command_finished:
+            # return GoToChaosZone
+            return StateGoToGoldenium
+
+    def deinit(self):
+        pass
+
+
+class StateGoToGoldenium(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.follow_trajectory([(2250, 1600, math.pi/2)])
+        else:
+            self.robot.locomotion.follow_trajectory([(750, 1600, math.pi/2)])
+        self.robot.io.armothy.translate_z_axis(25)
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateEngageGoldenium
+
+    def deinit(self):
+        pass
+
+
+class StateEngageGoldenium(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.has_turned = False
+        self.robot.locomotion.turn(center_radians(math.pi / 2 - self.robot.locomotion.theta))
+
+
+    def test(self):
+        if self.robot.io.armothy.pressure <= 30:
+            self.behavior.score += 20
+            self.robot.locomotion.go_straight(-5)
+            return StateDisengageGoldenium
+        if self.robot.locomotion.relative_command_finished:
+            if not self.has_turned:
+                self.has_turned = True
+                self.robot.io.armothy.rotate_y_axis(315)
+                self.robot.io.armothy.rotate_z_axis(0)
+                self.robot.io.armothy.close_valve()
+                self.robot.io.armothy.start_pump()
+                self.robot.locomotion.go_straight(150)
+            else:
+                return StateDisengageGoldenium
+
+    def deinit(self):
+        self.robot.io.score_display_number(self.behavior.score)
+
+class StateDisengageGoldenium(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.locomotion.go_straight(1600 - self.robot.locomotion.current_pose.y)
+
+    def test(self):
+        if self.robot.locomotion.relative_command_finished:
+            return StateGoToScaleGoldenium
+
+    def deinit(self):
+        pass
+
+class StateGoToScaleGoldenium(FSMState):
+    # TODO Purple
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.rotate_y_axis(0)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.io.armothy.rotate_z_axis(315)
+            self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1400, 1400, 0), (1300, 1000, 0), (1272, 700, -math.pi/2)])
+        else:
+            self.robot.io.armothy.rotate_z_axis(-315)
+            self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1600, 1400, 0), (1700, 1000, 0), (1728, 700, -math.pi/2)])
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateEngageScaleGoldenium
+
+    def deinit(self):
+        pass
+
+class StateEngageScaleGoldenium(FSMState):
+    # TODO: purple
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.translate_z_axis(5)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.io.armothy.rotate_z_axis(100)
+        else:
+            self.robot.io.armothy.rotate_z_axis(-100)
+        self.robot.io.armothy.rotate_y_axis(315)
+        self.robot.locomotion.go_straight(150)
+        self.release_time = None
+
+    def test(self):
+        if self.robot.locomotion.relative_command_finished and self.release_time is None:
+            self.robot.io.armothy.open_valve()
+            self.robot.io.armothy.stop_pump()
+            self.behavior.score += 24
+            self.robot.io.score_display_number(self.behavior.score)
+            self.release_time = time.time()
+        if self.release_time is not None and time.time() - self.release_time >= 0.5:
+            return StateDropInScale
+
+    def deinit(self):
+        self.robot.io.armothy.close_valve()
+
+
+class GoToChaosZone(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.home()
+        self.robot.locomotion.follow_trajectory([(1228, 950, -math.pi)])  # TODO: purple trajectory
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateEmptyChaosZone
+
+    def deinit(self):
+        self.robot.io.armothy.rotate_y_axis(0)
+        self.robot.io.armothy.rotate_z_axis(0)
+        self.robot.io.armothy.translate_z_axis(2)
+
+
+class StateEmptyChaosZone(FSMState):
+    #TODO: purple
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.rotate_z_axis(0)
+        self.robot.io.armothy.rotate_y_axis(0)
+        self.robot.io.armothy.home()
+        self.start_time = time.time()
+        self.storing_side = None
+        self.is_storing = False
+        self.is_homing = False
+        self.search_state = 0
+
+    def test(self):
+        if time.time() - self.start_time >= 15:  #TODO or chaos zone is empty
+            return StateGoToScale
+
+        if not self.robot.locomotion.relative_command_finished:
+            print("Moving...")
+            return
+
+        if self.is_storing:
+            if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+                self.is_storing = False
+                self.robot.io.armothy.translate_z_axis(2)
+                self.is_homing = True
+                self.robot.storages[self.storing_side].add("plop")  # Todo: Fix
+            elif self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.ERROR:
+                self.is_storing = False
+                self.robot.io.armothy.translate_z_axis(2)
+                self.is_homing = True
+            else:
+                return
+        if self.is_homing:
+            if self.robot.io.armothy.prismatic_z_axis < 3:
+                self.is_homing = False
+
+        closest_puck = self.robot.io.jevois.closest_puck_to_robot
+        if closest_puck is not None:
+            d_to_center = 450 - closest_puck[0]
+            print("d_to_center : ", d_to_center)
+            if abs(d_to_center) > 30:
+                self.robot.locomotion.turn(math.radians(d_to_center / 8))
+            else:
+                d_to_grasp = 425 - closest_puck[1]
+                print("d_to_grasp : ", d_to_grasp)
+                if abs(d_to_grasp) > 20:
+                    self.robot.locomotion.go_straight(d_to_grasp / 2.2)
+                else:
+                    if closest_puck[2] == "red":
+                        self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                        self.storing_side = AtomStorage.Side.RIGHT
+                    else:
+                        self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                        self.storing_side = AtomStorage.Side.LEFT
+                    self.is_storing = True
+        elif not self.is_homing:
+            if self.search_state == 0:
+                self.robot.locomotion.turn(math.pi/6)
+                self.search_state += 1
+            elif self.search_state == 1:
+                self.robot.locomotion.turn(math.pi/6)
+                self.search_state += 1
+            elif self.search_state == 2:
+                self.robot.locomotion.turn(-math.pi/2)
+                self.search_state += 1
+            elif self.search_state == 3:
+                self.robot.locomotion.turn(-math.pi/6)
+                self.search_state += 1
+            elif self.search_state == 4:
+                r_to_c = Point(1000, 950) - self.robot.locomotion.current_pose
+                #angle = center_radians(math.atan2(r_to_c.x, r_to_c.y) - self.robot.locomotion.current_pose.theta)
+                self.robot.locomotion.turn(math.pi/3)
+                self.search_state += 1
+            elif self.search_state == 5:
+                self.robot.locomotion.go_straight(50)
+                self.search_state = 0
+
+    def deinit(self):
+        pass
+
+
+class StateGoToScale(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.follow_trajectory([(1278, 700, -math.pi/2)])
+        else:
+            self.robot.locomotion.follow_trajectory([(1722, 700, -math.pi/2)])
+
+    def test(self):
+        if self.robot.locomotion.trajectory_finished:
+            return StateEngageScale
+
+    def deinit(self):
+        pass
+
+class StateEngageScale(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.locomotion.go_straight(150)
+
+    def test(self):
+        if self.robot.locomotion.relative_command_finished:
+            return StateDropInScale
+
+    def deinit(self):
+        pass
+
+
+class StateDropInScale(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_height(),
+                                           armothy.eStack.LEFT_STACK,
+                                           100 - (-1) ** len(self.robot.left_storage.atoms) * 50, 0)
+        else:
+            self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
+                                               armothy.eStack.RIGHT_STACK,
+                                               -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
+
+
+    def test(self):
+        if self.behavior.color == Color.YELLOW:
+            if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+                self.robot.left_storage.pop() # TODO : add score
+                if not self.robot.left_storage.is_empty:
+                    self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_height(),
+                                                               armothy.eStack.LEFT_STACK,
+                                                               100 - (-1)**len(self.robot.left_storage.atoms) * 50, 0)
+                else:
+                    return StateEnd
+        else:
+            if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+                self.robot.right_storage.pop()  # TODO add score
+                if not self.robot.right_storage.is_empty:
+                    self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
+                                                       armothy.eStack.RIGHT_STACK,
+                                                       -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
+                else:
+                    return StateEnd
+
+
+
+    def deinit(self):
+        pass
+
 
 #
 # class StatePushGreenPeriodic(FSMState):
@@ -634,6 +959,8 @@ class StateEnd(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.locomotion.set_direct_speed(0, 0, 0)
+        self.robot.io.armothy.close_valve()
+        self.robot.io.armothy.stop_pump()
 
     def test(self):
         pass
