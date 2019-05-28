@@ -129,6 +129,7 @@ const uint8_t SEG_RUSTY_DUCKS[] = {
 		SEG_C | SEG_D | SEG_E,  //u
 		SEG_D | SEG_E | SEG_G,  //c
 		SEG_A | SEG_C | SEG_E | SEG_F | SEG_G,  // k
+		SEG_A | SEG_C | SEG_D | SEG_F | SEG_G,    //S
 		0,
 		0,
 		0,

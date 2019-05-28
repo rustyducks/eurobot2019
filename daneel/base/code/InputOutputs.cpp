@@ -172,7 +172,7 @@ void InputOutputs::handleActuatorMessage(int actuatorId, int actuatorCommand){
 			scoreDisplay.showNumberDecEx(actuatorCommand, 0);
 		}
 		else if(actuatorCommand <= 19999){
-			scoreDisplay.showNumberDecEx(actuatorCommand - 10000, 255, true);
+			scoreDisplay.showNumberDecEx(actuatorCommand - 10000, 0x40, true);
 		}
 		else if (actuatorCommand == 20001){
 			scoreDisplay.setSegments(SEG_ENAC);
