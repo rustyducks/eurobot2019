@@ -51,7 +51,7 @@ class IO(object):
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
-        self.score_display_fat()
+        self.score_display_rusty_ducks()
         self.set_lidar_pwm(0) # 244 for a good speed  #TODO put a good value in order to use the lidar!
 
     @property
@@ -145,6 +145,8 @@ class IO(object):
             print("[IO] Score display displays " + self.score_display_text)
 
     def score_display_rusty_ducks(self):
+        if self.score_display_text == "Rusty Ducks":
+            return
         if self.robot.communication.send_actuator_command(ActuatorID.SCORE_COUNTER.value, self.ScoreDisplayTexts.RUSTY_DUCKS.value) == 0:
             self.score_display_text = "Rusty Ducks"
             print("[IO] Score display displays " + self.score_display_text)
