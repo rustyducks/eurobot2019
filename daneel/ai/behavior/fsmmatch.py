@@ -989,7 +989,7 @@ class StateEmptyChaosZone(FSMState):
             elif self.search_state == 3:
                 self.robot.locomotion.turn(math.pi/6)
                 self.search_state += 1
-            elif self.search_state == 5:
+            elif self.search_state == 4:
                 self.robot.locomotion.go_straight(50)
                 self.search_state = 0
 
