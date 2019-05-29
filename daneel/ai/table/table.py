@@ -71,17 +71,17 @@ class SlotName(Enum):
 
 class ChaosZone:
     class Side(Enum):
-        YELLOW = (1000, 950)  # TODO: check
+        YELLOW = (1000, 950)
         PURPLE = (2000, 950)
 
     def __init__(self, side):
         self.side = side
         self.center = Point(side.value[0], side.value[1])
-        self.radius = 150  # TODO : To check
+        self.radius = 150
         self.atoms = [Atom(self.center.x, self.center.y, Atom.Color.RED, None),
                       Atom(self.center.x, self.center.y, Atom.Color.RED, None),
                       Atom(self.center.x, self.center.y, Atom.Color.GREEN, None),
-                      Atom(self.center.x, self.center.y, Atom.Color.BLUE, None)]  # TODO: check
+                      Atom(self.center.x, self.center.y, Atom.Color.BLUE, None)]
         self.is_in_chaos_zone = [True] * len(self.atoms)
 
     def get_atom_in_from_color(self, color):
@@ -134,6 +134,6 @@ class AtomSlot:
         self.is_in_slot = True
 
 
-ScoreInScale = {Atom.Color.RED: 8, Atom.Color.GREEN: 10, Atom.Color.BLUE: 12, Atom.Color.WHITE: 24}  # TODO: Check
+ScoreInScale = {Atom.Color.RED: 4, Atom.Color.GREEN: 8, Atom.Color.BLUE: 12, Atom.Color.WHITE: 24}
 
 
