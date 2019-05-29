@@ -259,8 +259,10 @@ class StateTakeFirstAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
-            self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom)
-            # return StateGoToFrontBluePeriodic
+            if self.behavior.color == Color.YELLOW:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom)
+            else:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom)
             return StateGoToFrontBluePeriodic
 
         if time.time() - self.start_time >= self.timeout:
@@ -355,7 +357,10 @@ class StateTakeSecondAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
-            self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom)
+            if self.behavior.color == Color.YELLOW:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom)
+            else:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom)
             return StateGoToFrontRedPeriodic
 
         if time.time() - self.start_time >= self.timeout:
@@ -445,8 +450,11 @@ class StateTakeThirdAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
-            self.robot.storages[self.store_side].add( self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom)
+            if self.behavior.color == Color.YELLOW:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom)
             return StateDropRediums
+            else:
+                self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom)
 
         if time.time() - self.start_time >= self.timeout:
             self.robot.io.armothy.home()
