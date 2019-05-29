@@ -42,6 +42,10 @@ class Locomotion:
         self.repositioning_end_position = (None, None, None)
         self.is_repositioning = False
 
+        # Blocked
+        self.is_blocked = False
+        self.block_start_time = None
+
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
@@ -85,6 +89,12 @@ class Locomotion:
     @property
     def is_one_drifting(self):
         return self.is_drifting[0] or self.is_drifting[1]
+
+    @property
+    def blocked_duration(self):
+        if self.is_blocked is False or self.block_start_time is None:
+            return 0
+        return time.time() - self.block_start_time
 
     def navigate_to(self, x, y, theta):
         # TODO: Probably detach a thread...
@@ -145,8 +155,11 @@ class Locomotion:
         speed_constraints = SpeedConstraint(-LINEAR_SPEED_MAX, LINEAR_SPEED_MAX, 0, 0,
                                             -ROTATION_SPEED_MAX, ROTATION_SPEED_MAX)
 
+        is_blocked = False
         if obstacle_detection:
             speed_constraints = self.speed_constraints_from_obstacles()
+            if speed_constraints.max_vx == 0 or speed_constraints.min_vx == 0:
+                is_blocked = True
 
         if self.mode == LocomotionState.STOPPED:
             speed = Speed(0, 0, 0)
@@ -182,9 +195,24 @@ class Locomotion:
         # print("Speed wanted : " + str(speed))
         # self.current_speed = self.comply_speed_constraints(speed, delta_time)
         # print("Speed after saturation : " + str(self.current_speed))
-        #speed = self.comply_speed_constraints(speed, delta_time)
+        # speed = self.comply_speed_constraints(speed, delta_time)
             
         # print("State : {}\tSending speed : {}".format(self.position_control.state, speed), end='\r', flush=True)
+        if (not self.relative_command_finished or not self.trajectory_finished) and speed.vx == 0 and speed.vtheta == 0 and is_blocked:
+            # If we are in a relative command or traj following, we are not moving and constraints are 0 linearly,
+            # we are blocked
+            if not self.is_blocked:
+                # If we don't know we are blocked
+                print("[Locomotion] Robot is blocked")
+                self.is_blocked = True
+                self.block_start_time = time.time()
+        else:
+            if self.is_blocked:
+                self.is_blocked = False
+                self.block_start_time = None
+
+
+
         self.current_speed = speed
         self.robot.communication.send_speed_command(*speed)
 
