@@ -17,6 +17,8 @@ START_EXPERIMENT_TIME = 10  # in seconds
 WARNING_VOLTAGE_THRESHOLD = 12.8  # if signal or power voltage goes under this value, led will be flashing red.
 
 
+
+
 class Color(Enum):
     YELLOW = "yellow"
     PURPLE = "purple"
@@ -157,9 +159,9 @@ class StateColorSelection(FSMState):
 
     def deinit(self):
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.reposition_robot(145, 1255, 0)
+            self.robot.locomotion.reposition_robot(145, 1255, 0.016305118295449166)
         else:
-            self.robot.locomotion.reposition_robot(2855, 1255, -math.pi)
+            self.robot.locomotion.reposition_robot(2855, 1255, -math.pi + 0.016305118295449166)
         self.robot.io.set_led_color(self.robot.io.LedColor.WHITE)
 
 
@@ -170,7 +172,6 @@ class StatePreMatch(FSMState):
     def test(self):
         if self.robot.io.cord_state == self.behavior.robot.io.CordState.OUT:
             return StateFrontGreenPeriodic
-            # return StateGoFrontSlopeParticleAccelerator
 
     def deinit(self):
         self.behavior.start_match()
@@ -365,9 +366,9 @@ class StateGoToFrontRedPeriodic(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.YELLOW:
-            self.robot.locomotion.follow_trajectory([(500, 1155, pi / 2), (500, 1345, pi / 2)])
+            self.robot.locomotion.follow_trajectory([(500, 1345, pi / 2)])
         else:
-            self.robot.locomotion.follow_trajectory([(2500, 1155, pi / 2), (2500, 1345, pi / 2)])
+            self.robot.locomotion.follow_trajectory([(2500, 1345, pi / 2)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -531,7 +532,47 @@ class StateGoFrontParticleAccelerator(FSMState):
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
-            return StateEngageParticleAccelerator
+            # return StateEngageParticleAccelerator
+            return StateRepositionningParticleAccelerator
+
+    def deinit(self):
+        pass
+
+class StateRepositionningParticleAccelerator(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.translate_z_axis(0)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.io.armothy.rotate_z_axis(200)
+        else:
+            self.robot.io.armothy.rotate_z_axis(-200)
+        self.robot.io.armothy.rotate_y_axis(315)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.start_repositioning(y_end=1835, theta_end = math.pi/2 - 0.022417768511335135)
+        else:
+            self.robot.locomotion.start_repositioning(y_end=1835, theta_end=math.pi/2 + 0.022417768511335135)
+
+    def test(self):
+        if self.robot.locomotion.repositionning_finished:
+            return StateEngageParticleAccelerator2
+
+    def deinit(self):
+        pass
+
+class StateEngageParticleAccelerator2(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.locomotion.go_straight(-60)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.io.armothy.rotate_z_axis(200)
+        else:
+            self.robot.io.armothy.rotate_z_axis(-200)
+        self.robot.io.armothy.translate_z_axis(45)
+        self.robot.io.armothy.rotate_y_axis(315)
+
+    def test(self):
+        if self.robot.locomotion.relative_command_finished and abs(45 - self.robot.io.armothy.prismatic_z_axis) < 3:
+            return StateRollParticleAccelerator
 
     def deinit(self):
         pass
@@ -657,7 +698,7 @@ class StateGoToScaleGoldenium(FSMState):
             self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1400, 1400, 0), (1300, 1000, 0), (1272, 700, -math.pi/2)])
         else:
             self.robot.io.armothy.rotate_z_axis(-315)
-            self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1600, 1400, 0), (1700, 1000, 0), (1728, 700, -math.pi/2)])
+            self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1600, 1400, 0), (1700, 1000, 0), (1692, 700, -math.pi/2)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -676,11 +717,11 @@ class StateEngageScaleGoldenium(FSMState):
         else:
             self.robot.io.armothy.rotate_z_axis(-100)
         self.robot.io.armothy.rotate_y_axis(315)
-        self.robot.locomotion.go_straight(150)
+        self.robot.locomotion.go_straight(130)
         self.release_time = None
 
     def test(self):
-        if self.robot.locomotion.relative_command_finished and self.release_time is None:
+        if (self.robot.locomotion.relative_command_finished or self.robot.locomotion.is_one_drifting) and self.release_time is None:
             self.robot.io.armothy.open_valve()
             self.robot.io.armothy.stop_pump()
             self.behavior.score += 24
