@@ -681,10 +681,11 @@ class StateEngageGoldenium(FSMState):
                 self.robot.io.armothy.start_pump()
                 self.robot.locomotion.go_straight(150)
             else:
-                return StateDisengageGoldenium
+                return StateDisengageWithoutGoldenium
 
     def deinit(self):
         self.robot.io.score_display_number(self.behavior.score)
+
 
 class StateDisengageGoldenium(FSMState):
     def __init__(self, behavior):
@@ -697,6 +698,22 @@ class StateDisengageGoldenium(FSMState):
 
     def deinit(self):
         pass
+
+
+class StateDisengageWithoutGoldenium(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        self.robot.io.armothy.rotate_y_axis(0)
+        self.robot.io.armothy.stop_pump()
+        self.robot.locomotion.go_straight(1600 - self.robot.locomotion.current_pose.y)
+
+    def test(self):
+        if self.robot.locomotion.relative_command_finished:
+            return StateGoToChaosZone
+
+    def deinit(self):
+        pass
+
 
 class StateGoToScaleGoldenium(FSMState):
     # TODO Purple
@@ -744,7 +761,7 @@ class StateEngageScaleGoldenium(FSMState):
         self.robot.io.armothy.close_valve()
 
 
-class GoToChaosZone(FSMState):
+class StateGoToChaosZone(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.home()
