@@ -649,6 +649,8 @@ class StateGoFrontParticleAccelerator(FSMState):
         self.robot.io.armothy.rotate_y_axis(315)
 
     def test(self):
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+            return StateGoToChaosZone
         if self.robot.locomotion.trajectory_finished:
             # return StateEngageParticleAccelerator
             return StateRepositionningParticleAccelerator
@@ -763,6 +765,8 @@ class StateGoToGoldenium(FSMState):
         self.robot.io.armothy.translate_z_axis(25)
 
     def test(self):
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+            return StateGoToChaosZone
         if self.robot.locomotion.trajectory_finished:
             return StateEngageGoldenium
 
@@ -825,7 +829,6 @@ class StateDisengageWithoutGoldenium(FSMState):
 
 
 class StateGoToScaleGoldenium(FSMState):
-    # TODO Purple
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.rotate_y_axis(0)
