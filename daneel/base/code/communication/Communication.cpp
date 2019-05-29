@@ -94,7 +94,7 @@ int Communication::sendSpeedReport(const double vx, const double vy, const doubl
 	int msgvx = round((vx + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
 	int msgvy = round((vy + linearSpeedToMsgAdder) * linearSpeedToMsgFactor);
 	int msgvtheta = round((vtheta + angularSpeedToMsgAdder) * angularSpeedToMsgFactor);
-	int msgdrifting = int(drifting_right) << 1 + int(drifting_left);
+	uint8_t msgdrifting = ((drifting_right ? 1 : 0) << 1) | (drifting_left ? 1 : 0);
 
 	if (msgvx < 0 || msgvx > 65535){
 		return -10;
