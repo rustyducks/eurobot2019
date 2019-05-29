@@ -38,7 +38,7 @@ class FSMMatch(Behavior):
     def score(self):
         return self._score
 
-    @score.getter
+    @score.setter
     def score(self, v):
         self._score = v
         self.robot.io.score_display_number(self._score)
