@@ -4,7 +4,7 @@ import math
 from math import pi
 import os
 import armothy
-from table.table import SlotName, Atom, ScoreInScale
+from table.table import SlotName, Atom, ScoreInScale, ChaosZone
 from robot_parts import AtomStorage
 
 from behavior import Behavior
@@ -666,7 +666,6 @@ class StateEngageGoldenium(FSMState):
         self.has_turned = False
         self.robot.locomotion.turn(center_radians(math.pi / 2 - self.robot.locomotion.theta))
 
-
     def test(self):
         if self.robot.io.armothy.pressure <= 30:
             self.behavior.score += 20
@@ -765,7 +764,16 @@ class StateGoToChaosZone(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.home()
-        self.robot.locomotion.follow_trajectory([(1228, 950, -math.pi)])  # TODO: purple trajectory
+        if self.behavior.color == Color.YELLOW:
+            chaos = self.robot.table.yellow_chaos_zone
+        else:
+            chaos = self.robot.table.purple_chaos_zone
+        c_to_r = self.robot.locomotion.current_pose - chaos.center
+        c_to_r_angle = math.atan2(c_to_r.y, c_to_r.x)
+        approach_point = Point(chaos.center.x + (chaos.radius + 100) * math.cos(c_to_r_angle),
+                               chaos.center.y + (chaos.radius + 100) * math.sin(c_to_r_angle))
+        self.robot.locomotion.follow_trajectory([(approach_point.x, approach_point.y,
+                                                  center_radians(math.pi + c_to_r_angle))])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -774,24 +782,28 @@ class StateGoToChaosZone(FSMState):
     def deinit(self):
         self.robot.io.armothy.rotate_y_axis(0)
         self.robot.io.armothy.rotate_z_axis(0)
-        self.robot.io.armothy.translate_z_axis(2)
+        self.robot.io.armothy.translate_z_axis(0)
 
 
 class StateEmptyChaosZone(FSMState):
-    #TODO: purple
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.rotate_z_axis(0)
         self.robot.io.armothy.rotate_y_axis(0)
         self.robot.io.armothy.home()
+        if self.behavior.color == Color.YELLOW:
+            self.chaos = self.robot.table.yellow_chaos_zone  # type: ChaosZone
+        else:
+            self.chaos = self.robot.table.purple_chaos_zone  # type: ChaosZone
         self.start_time = time.time()
         self.storing_side = None
+        self.grasping_atom = None
         self.is_storing = False
         self.is_homing = False
         self.search_state = 0
 
     def test(self):
-        if time.time() - self.start_time >= 15:  #TODO or chaos zone is empty
+        if time.time() - self.start_time >= 15 or self.chaos.atoms_remaining() == 0:
             return StateGoToScale
 
         if not self.robot.locomotion.relative_command_finished:
@@ -801,17 +813,25 @@ class StateEmptyChaosZone(FSMState):
         if self.is_storing:
             if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
                 self.is_storing = False
-                self.robot.io.armothy.translate_z_axis(2)
+                self.robot.io.armothy.translate_z_axis(0)
                 self.is_homing = True
-                self.robot.storages[self.storing_side].add("plop")  # Todo: Fix
+                if self.grasping_atom is None:
+                    print("[FSMMatch] Warning: Removing unknown atom from chaos zone, taking one at random in the zone")
+                    self.grasping_atom = self.chaos.random_atom()
+                    if self.grasping_atom is None:
+                        print("[FSMMatch] Warning: Grasped an atom from an empty Chaos Zone... Insering a new atom")
+                        self.grasping_atom = Atom(self.robot.locomotion.x, self.robot.locomotion.y, None, None)
+                self.robot.storages[self.storing_side].add(self.grasping_atom)
+                self.chaos.remove_atom(self.grasping_atom)
+                self.grasping_atom = None
             elif self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.ERROR:
                 self.is_storing = False
-                self.robot.io.armothy.translate_z_axis(2)
+                self.robot.io.armothy.translate_z_axis(0)
                 self.is_homing = True
             else:
                 return
         if self.is_homing:
-            if self.robot.io.armothy.prismatic_z_axis < 3:
+            if self.robot.io.armothy.prismatic_z_axis < 2:
                 self.is_homing = False
 
         closest_puck = self.robot.io.jevois.closest_puck_to_robot
@@ -826,30 +846,38 @@ class StateEmptyChaosZone(FSMState):
                 if abs(d_to_grasp) > 20:
                     self.robot.locomotion.go_straight(d_to_grasp / 2.2)
                 else:
+                    self.grasping_atom = self.chaos.get_atom_in_from_color(Atom.Color(closest_puck[2]))
+                    if self.grasping_atom is None:
+                        print("[FSMMatch] Could not find any atom with color: {} in {} chaos zone".format(closest_puck[2], self.behavior.color))
                     if closest_puck[2] == "red":
-                        self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
-                        self.storing_side = AtomStorage.Side.RIGHT
+                        if self.behavior.color == Color.YELLOW:
+                            self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                            self.storing_side = AtomStorage.Side.RIGHT
+                        else:
+                            self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                            self.storing_side = AtomStorage.Side.LEFT
                     else:
-                        self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
-                        self.storing_side = AtomStorage.Side.LEFT
+                        if self.behavior.color == Color.YELLOW:
+                            self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                            self.storing_side = AtomStorage.Side.LEFT
+                        else:
+                            self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                            self.storing_side = AtomStorage.Side.RIGHT
                     self.is_storing = True
         elif not self.is_homing:
             if self.search_state == 0:
-                self.robot.locomotion.turn(math.pi/6)
+                self.robot.locomotion.turn(center_radians(math.atan2(self.chaos.center.y - self.robot.locomotion.y,
+                                                                     self.chaos.center.x - self.robot.locomotion.x)
+                                                          - self.robot.locomotion.theta))
                 self.search_state += 1
             elif self.search_state == 1:
                 self.robot.locomotion.turn(math.pi/6)
                 self.search_state += 1
             elif self.search_state == 2:
-                self.robot.locomotion.turn(-math.pi/2)
+                self.robot.locomotion.turn(-math.pi/3)
                 self.search_state += 1
             elif self.search_state == 3:
-                self.robot.locomotion.turn(-math.pi/6)
-                self.search_state += 1
-            elif self.search_state == 4:
-                r_to_c = Point(1000, 950) - self.robot.locomotion.current_pose
-                #angle = center_radians(math.atan2(r_to_c.x, r_to_c.y) - self.robot.locomotion.current_pose.theta)
-                self.robot.locomotion.turn(math.pi/3)
+                self.robot.locomotion.turn(math.pi/6)
                 self.search_state += 1
             elif self.search_state == 5:
                 self.robot.locomotion.go_straight(50)
@@ -865,7 +893,7 @@ class StateGoToScale(FSMState):
         if self.behavior.color == Color.YELLOW:
             self.robot.locomotion.follow_trajectory([(1278, 700, -math.pi/2)])
         else:
-            self.robot.locomotion.follow_trajectory([(1722, 700, -math.pi/2)])
+            self.robot.locomotion.follow_trajectory([(1692, 700, -math.pi/2)])
 
     def test(self):
         if self.robot.locomotion.trajectory_finished:
@@ -873,6 +901,7 @@ class StateGoToScale(FSMState):
 
     def deinit(self):
         pass
+
 
 class StateEngageScale(FSMState):
     def __init__(self, behavior):
@@ -898,7 +927,6 @@ class StateDropInScale(FSMState):
             self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
                                                armothy.eStack.RIGHT_STACK,
                                                -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
-
 
     def test(self):
         if self.behavior.color == Color.YELLOW:
@@ -929,8 +957,6 @@ class StateDropInScale(FSMState):
                                                        -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
                 else:
                     return StateEnd
-
-
 
     def deinit(self):
         pass
