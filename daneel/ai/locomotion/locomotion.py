@@ -21,6 +21,7 @@ class Locomotion:
         self.robot = robot
         self.current_pose = PointOrient(0, 0, 0)
         self.previous_mode = None
+        self.is_drifting = [False, False]
         self.mode = LocomotionState.POSITION_CONTROL
 
         # Position Control
@@ -37,11 +38,15 @@ class Locomotion:
         # Relative control
         self.relative_control = RelativeControl(self.robot)
 
+        # Repositionning
+        self.repositioning_end_position = (None, None, None)
+        self.is_repositioning = False
+
         self.current_speed = Speed(0, 0, 0)  # type: Speed
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.ODOM_REPORT,
                                                    self.handle_new_odometry_report)
-        #self.robot.communication.register_callback(self.robot.communication.eTypeUp.SPEED_REPORT,
-        #                                           self.handle_new_speed_report)
+        self.robot.communication.register_callback(self.robot.communication.eTypeUp.SPEED_REPORT,
+                                                   self.handle_new_speed_report)
         self._last_position_control_time = None
 
     def handle_new_odometry_report(self, x, y, theta):
@@ -49,14 +54,21 @@ class Locomotion:
         self.current_pose.y = y
         self.current_pose.theta = center_radians(theta)
 
-    def handle_new_speed_report(self, vx, vy, vtheta):
-        self.current_speed = Speed(vx, vy, vtheta)
+    def handle_new_speed_report(self, vx, vy, vtheta, drifting_left, drifting_right):
+        self.is_drifting = [drifting_left, drifting_right]
+        #self.current_speed = Speed(vx, vy, vtheta)
 
     def go_to_orient(self, x, y, theta):
         self.follow_trajectory([(x, y, theta)])
 
     def go_to_orient_point(self, point):
         self.go_to_orient(point.x, point.y, point.theta)
+
+    def start_repositioning(self, x_end=None, y_end=None, theta_end=None):
+        print("[Locomotion] Repositioning started")
+        self.mode = LocomotionState.REPOSITIONING
+        self.is_repositioning = True
+        self.repositioning_end_position = (x_end, y_end, theta_end)
 
     @property
     def trajectory_finished(self):
@@ -65,6 +77,14 @@ class Locomotion:
     @property
     def relative_command_finished(self):
         return self.relative_control.state == self.relative_control.state.IDLE
+
+    @property
+    def repositionning_finished(self):
+        return not self.is_repositioning
+
+    @property
+    def is_one_drifting(self):
+        return self.is_drifting[0] or self.is_drifting[1]
 
     def navigate_to(self, x, y, theta):
         # TODO: Probably detach a thread...
@@ -127,11 +147,21 @@ class Locomotion:
             else:
                 speed = Speed(0, 0, 0)
         elif self.mode == LocomotionState.REPOSITIONING:
-            if self.repositioning_speed_goal is not None and not self.is_repositioning_ended:
-                speed = self.repositioning_speed_goal
-                self.reposition_loop()
-            else:
+            if not self.is_repositioning:
                 speed = Speed(0, 0, 0)
+            elif self.is_drifting[0] and self.is_drifting[1]:
+                speed = Speed(0, 0, 0)
+                new_x = self.repositioning_end_position[0] if self.repositioning_end_position[0] is not None else self.current_pose.x
+                new_y = self.repositioning_end_position[1] if self.repositioning_end_position[1] is not None else self.current_pose.y
+                new_theta = self.repositioning_end_position[2] if self.repositioning_end_position[2] is not None else self.current_pose.theta
+                self.reposition_robot(new_x, new_y, new_theta)
+                self.is_repositioning = False
+            elif self.is_drifting[0]:
+                speed = Speed(50, 0, 0.3)
+            elif self.is_drifting[1]:
+                speed = Speed(50, 0, -0.3)
+            else:
+                speed = Speed(50, 0, 0)
         elif self.mode == LocomotionState.RELATIVE_CONTROL:
             speed = self.relative_control.compute_speed(delta_time, speed_constraints)
         else:

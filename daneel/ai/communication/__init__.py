@@ -285,7 +285,7 @@ class Communication:
                 cb(message.data.x, message.data.y, message.data.theta)
         elif message.type == eTypeUp.SPEED_REPORT:
             for cb in self._callbacks[eTypeUp.SPEED_REPORT]:
-                cb(message.data.vx, message.data.vy, message.data.vtheta)
+                cb(message.data.vx, message.data.vy, message.data.vtheta, *message.data.drifting)
         elif message.type == eTypeUp.ACK_DOWN:
             pass
 
