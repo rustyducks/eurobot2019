@@ -21,9 +21,11 @@ class AtomStorage:
         return len(self.atoms) == 0
 
     def add(self, atom):
+        print("[Atom Storage] Adding atom : ", atom.color)
         self.atoms.append(atom)
 
     def pop(self):
+        print("[Atom Storage] Popping atom : ", self.atoms[-1].color)
         self.atoms.pop()
 
     def top(self):
@@ -31,5 +33,8 @@ class AtomStorage:
             return self.atoms[-1]
         return None
 
-    def armothy_height(self):
+    def armothy_take_height(self):
         return 75 - len(self.atoms) * 25
+
+    def armothy_drop_height(self):
+        return 100 - len(self.atoms) * 25

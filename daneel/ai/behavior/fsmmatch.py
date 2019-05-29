@@ -59,8 +59,7 @@ class FSMMatch(Behavior):
             os.system("sudo shutdown -h now")
             exit(0)
         if self.start_time is not None and time_now - self.start_time >= END_MATCH_TIME and self.state.__class__ != StateEnd:
-            if __debug__:
-                print("[FSMMatch] End match")
+            print("[FSMMatch] End match")
             next_state = StateEnd
         else:
             next_state = self.state.test()
@@ -72,14 +71,12 @@ class FSMMatch(Behavior):
                 self.robot.io.launch_experiment()
                 self.last_start_experiment = time_now
         if next_state is not None:
-            if __debug__:
-                print("[FSMMatch] Leaving {}, entering {}".format(self.state.__class__.__name__, next_state.__name__))
+            print("[FSMMatch] Leaving {}, entering {}".format(self.state.__class__.__name__, next_state.__name__))
             self.state.deinit()
             self.state = next_state(self)
 
     def start_match(self):
-        if __debug__:
-            print("[FSMMatch] Match Started")
+        print("[FSMMatch] Match Started")
         self.start_time = time.time()
 
 
@@ -217,6 +214,7 @@ class StateGetColorFrontGreenPeriodicAtom(FSMState):
     def test(self):
         seen_color = self.robot.io.jevois.uniq_last_puck_color
         if seen_color is not None:
+            print("[FSMMatch] Seen green atom is : ", seen_color)
             if self.behavior.color == Color.YELLOW:
                 self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
@@ -243,18 +241,18 @@ class StateTakeFirstAtom(FSMState):
         if self.behavior.color == Color.YELLOW:
             if self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color == Atom.Color.RED:
                 #  We put the reds in the right stack, we probably do not want to put them in the scale
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
                 self.store_side = AtomStorage.Side.RIGHT
             else:
                 #  If the atom is green or if we don't know, we put it in the left stack to put it on the scale
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
                 self.store_side = AtomStorage.Side.LEFT
         else:
             if self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color == Atom.Color.RED:
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
                 self.store_side = AtomStorage.Side.LEFT
             else:
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
                 self.store_side = AtomStorage.Side.RIGHT
         self.start_time = time.time()
         self.timeout = 7  # sec
@@ -306,6 +304,7 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
     def test(self):
         seen_color = self.robot.io.jevois.uniq_last_puck_color
         if seen_color is not None:
+            print("[FSMMatch] Seen blue atom is : ", seen_color)
             if self.behavior.color == Color.YELLOW:
                 self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
@@ -327,9 +326,6 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
         if time.time() - self.start_time >= self.time_out:
             return StateTakeSecondAtom
 
-        def deinit(self):
-            pass
-
     def deinit(self):
         pass
 
@@ -342,18 +338,18 @@ class StateTakeSecondAtom(FSMState):
             if self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom.color == Atom.Color.RED:
                 #  We put the reds in the right stack, we probably do not want to put them in the scale
                 self.store_side = AtomStorage.Side.RIGHT
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
             else:
                 #  If the atom is green or if we don't know, we put it in the left stack to put it on the scale
                 self.store_side = AtomStorage.Side.LEFT
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
         else:
             if self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom.color == Atom.Color.RED:
                 self.store_side = AtomStorage.Side.LEFT
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
             else:
                 self.store_side = AtomStorage.Side.RIGHT
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
         self.start_time = time.time()
         self.timeout = 7  # sec
 
@@ -402,6 +398,7 @@ class StateGetColorFrontRedPeriodicAtom(FSMState):
     def test(self):
         seen_color = self.robot.io.jevois.uniq_last_puck_color
         if seen_color is not None:
+            print("[FSMMatch] Seen red atom is : ", seen_color)
             if self.behavior.color == Color.YELLOW:
                 self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
@@ -431,18 +428,18 @@ class StateTakeThirdAtom(FSMState):
             if self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color == Atom.Color.RED:
                 #  We put the reds in the right stack, we probably do not want to put them in the scale
                 self.store_side = AtomStorage.Side.RIGHT
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
             else:
                 #  If the atom is green or if we don't know, we put it in the left stack to put it on the scale
                 self.store_side = AtomStorage.Side.LEFT
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
         else:
             if self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color == Atom.Color.RED:
                 self.store_side = AtomStorage.Side.LEFT
-                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
             else:
                 self.store_side = AtomStorage.Side.RIGHT
-                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
         self.start_time = time.time()
         self.timeout = 7  # sec
 
@@ -461,7 +458,6 @@ class StateTakeThirdAtom(FSMState):
 
 
 class StateDropRediums(FSMState):
-    # TODO Purple
     def __init__(self, behavior):
         super().__init__(behavior)
         self.traj_finished = False
@@ -479,19 +475,20 @@ class StateDropRediums(FSMState):
             if self.robot.locomotion.trajectory_finished:
                 self.traj_finished = True
                 if self.behavior.color == Color.YELLOW:
-                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_height(),
+                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(),
                                                    armothy.eStack.RIGHT_STACK, 100)
                 else:
-                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_height(),
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(),
                                                    armothy.eStack.LEFT_STACK, 100)
                 self.start_time = time.time()
         else:
-            if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
+            status = self.robot.io.armothy.get_macro_status()
+            if status == armothy.eMacroStatus.FINISHED:
                 self.behavior.score += 6  # 6 pts per Red in Red periodic zone
                 if self.behavior.color == Color.YELLOW:
                     self.robot.right_storage.pop()
                     if not self.robot.right_storage.is_empty:
-                        self.robot.io.armothy.put_down(self.robot.right_storage.armothy_height(),
+                        self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(),
                                                        armothy.eStack.RIGHT_STACK,
                                                        (-1)**len(self.robot.right_storage.atoms) * 100)
                         self.start_time = time.time()
@@ -500,12 +497,19 @@ class StateDropRediums(FSMState):
                 else:
                     self.robot.left_storage.pop()
                     if not self.robot.left_storage.is_empty:
-                        self.robot.io.armothy.put_down(self.robot.left_storage.armothy_height(),
+                        self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(),
                                                        armothy.eStack.LEFT_STACK,
                                                        (-1)**len(self.robot.left_storage.atoms) * 100)
                         self.start_time = time.time()
                     else:
                         return StateDisengageRedPeriodic
+            elif status == armothy.eMacroStatus.ERROR:
+                if self.behavior.color == Color.YELLOW:
+                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(),
+                                                   armothy.eStack.RIGHT_STACK, 100)
+                else:
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(),
+                                                   armothy.eStack.LEFT_STACK, 100)
             elif time.time() - self.start_time >= self.drop_timeout:
                 return StateDisengageRedPeriodic
 
@@ -810,10 +814,10 @@ class StateEmptyChaosZone(FSMState):
                     self.robot.locomotion.go_straight(d_to_grasp / 2.2)
                 else:
                     if closest_puck[2] == "red":
-                        self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_height(), armothy.eStack.RIGHT_STACK)
+                        self.robot.io.armothy.take_and_store(self.robot.right_storage.armothy_take_height(), armothy.eStack.RIGHT_STACK)
                         self.storing_side = AtomStorage.Side.RIGHT
                     else:
-                        self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_height(), armothy.eStack.LEFT_STACK)
+                        self.robot.io.armothy.take_and_store(self.robot.left_storage.armothy_take_height(), armothy.eStack.LEFT_STACK)
                         self.storing_side = AtomStorage.Side.LEFT
                     self.is_storing = True
         elif not self.is_homing:
@@ -874,11 +878,11 @@ class StateDropInScale(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
         if self.behavior.color == Color.YELLOW:
-            self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_height(),
+            self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_drop_height(),
                                            armothy.eStack.LEFT_STACK,
                                            100 - (-1) ** len(self.robot.left_storage.atoms) * 50, 0)
         else:
-            self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
+            self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_drop_height(),
                                                armothy.eStack.RIGHT_STACK,
                                                -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
 
@@ -893,7 +897,7 @@ class StateDropInScale(FSMState):
                     pass  # Dunno...
                 self.robot.left_storage.pop()
                 if not self.robot.left_storage.is_empty:
-                    self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_height(),
+                    self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_drop_height(),
                                                                armothy.eStack.LEFT_STACK,
                                                                100 - (-1)**len(self.robot.left_storage.atoms) * 50, 0)
                 else:
@@ -907,7 +911,7 @@ class StateDropInScale(FSMState):
                     pass  # Dunno...
                 self.robot.right_storage.pop()
                 if not self.robot.right_storage.is_empty:
-                    self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
+                    self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_drop_height(),
                                                        armothy.eStack.RIGHT_STACK,
                                                        -100 + (-1) ** len(self.robot.right_storage.atoms) * 50, 0)
                 else:
