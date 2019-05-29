@@ -54,6 +54,9 @@ class PointOrient(Point):
         else:
             return super(PointOrient, self).__setitem__(key, value)
 
+    def __repr__(self):
+        return "PointOrient({}, {}, {})".format(self.x, self.y, self.theta)
+
 
 class Vector2:
     def __init__(self, x, y):

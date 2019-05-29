@@ -53,6 +53,7 @@ class IO(object):
 
         self.score_display_rusty_ducks()
         self.set_lidar_pwm(0) # 244 for a good speed  #TODO put a good value in order to use the lidar!
+        self.init_range_sensors()
 
     @property
     def lidar_points(self):

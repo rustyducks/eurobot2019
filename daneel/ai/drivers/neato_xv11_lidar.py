@@ -31,6 +31,15 @@ class LidarPoint:
         return (self.distance * math.cos(math.radians(self.azimut)),
                 self.distance * math.sin(math.radians(self.azimut)))
 
+    def __str__(self):
+        if self.warning or not self.valid:
+            return "Invalid"
+        else:
+            return "{},{},{}".format(self.azimut, self.distance, self.quality)
+
+    def __repr__(self):
+        return str(self)
+
 
 def read_v_2_4(lidar_serial):
     global lidar_points

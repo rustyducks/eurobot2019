@@ -172,15 +172,15 @@ class VL6180X():
         self.write(0x0030, 0x00)
         
         # Recommended : Public registers - See data sheet for more detail
-        self.write(0x0011, 0x10); # Enables polling for ‘New Sample ready’ when measurement completes
-        self.write(0x010a, 0x30); # Set the averaging sample period (compromise between lower noise and increased execution time)
-        self.write(0x003f, 0x46); # Sets the light and dark gain (upper nibble). Dark gain should not be changed.
-        self.write(0x0031, 0xFF); # sets the # of range measurements after which auto calibration of system is performed 
-        self.write(0x0041, 0x63); # Set ALS integration time to 100ms
-        self.write(0x002e, 0x01); # perform a single temperature calibration of the ranging sensor Optional: Public registers - See data sheet for more detail
-        self.write(0x001b, 0x09); # Set default ranging inter-measurement period to 100ms
-        self.write(0x003e, 0x31); # Set default ALS inter-measurement period to 500ms
-        self.write(0x0014, 0x24); # Configures interrupt on ‘New Sample Ready threshold event’
+        self.write(0x0011, 0x10) # Enables polling for ‘New Sample ready’ when measurement completes
+        self.write(0x010a, 0x30) # Set the averaging sample period (compromise between lower noise and increased execution time)
+        self.write(0x003f, 0x46) # Sets the light and dark gain (upper nibble). Dark gain should not be changed.
+        self.write(0x0031, 0xFF) # sets the # of range measurements after which auto calibration of system is performed
+        self.write(0x0041, 0x63) # Set ALS integration time to 100ms
+        self.write(0x002e, 0x01) # perform a single temperature calibration of the ranging sensor Optional: Public registers - See data sheet for more detail
+        self.write(0x001b, 0x09) # Set default ranging inter-measurement period to 100ms
+        self.write(0x003e, 0x31) # Set default ALS inter-measurement period to 500ms
+        self.write(0x0014, 0x24) # Configures interrupt on ‘New Sample Ready threshold event’
 
     def init(self):
         """
@@ -228,7 +228,7 @@ class VL6180X():
         # Check device is ready to start a range measurement.
         val = self.read_from(RESULT_RANGE_STATUS)
         if not val & 0X01:
-            print("device {} not ready ! Try it anyway.".format(self.adress))
+            print("device {} not ready ! Try it anyway.".format(self.address))
         # Start a range measurement
         self.write(SYSRANGE_START, 0X01)
         # wait for range measurement to complete
