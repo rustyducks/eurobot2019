@@ -1,4 +1,8 @@
+import random
 from enum import Enum
+
+from locomotion.utils import Point
+
 
 class Table:
     def __init__(self, robot):
@@ -43,6 +47,8 @@ class Table:
             SlotName.PURPLE_PERIODIC_GREEN: AtomSlot(SlotName.PURPLE_PERIODIC_GREEN, 2500, 1250),
             SlotName.PURPLE_PERIODIC_RED: AtomSlot(SlotName.PURPLE_PERIODIC_RED, 2500, 1550)
         }
+        self.yellow_chaos_zone = ChaosZone(ChaosZone.Side.YELLOW)  # type: ChaosZone
+        self.purple_chaos_zone = ChaosZone(ChaosZone.Side.PURPLE)  # type: ChaosZone
 
 class SlotName(Enum):
     YELLOW_PERIODIC_RED = 0
@@ -64,8 +70,40 @@ class SlotName(Enum):
 
 
 class ChaosZone:
-    def __init__(self):
-        self.atoms = []
+    class Side(Enum):
+        YELLOW = (1000, 950)  # TODO: check
+        PURPLE = (2000, 950)
+
+    def __init__(self, side):
+        self.side = side
+        self.center = Point(side.value[0], side.value[1])
+        self.radius = 150  # TODO : To check
+        self.atoms = [Atom(self.center.x, self.center.y, Atom.Color.RED, None),
+                      Atom(self.center.x, self.center.y, Atom.Color.RED, None),
+                      Atom(self.center.x, self.center.y, Atom.Color.GREEN, None),
+                      Atom(self.center.x, self.center.y, Atom.Color.BLUE, None)]  # TODO: check
+        self.is_in_chaos_zone = [True] * len(self.atoms)
+
+    def get_atom_in_from_color(self, color):
+        for i, atom in enumerate(self.atoms):
+            if atom.color == color and self.is_in_chaos_zone[i]:
+                return atom
+        return None
+
+    def remove_atom(self, atom):
+        for i, a in enumerate(self.atoms):
+            if a is atom:
+                self.is_in_chaos_zone[i] = False
+                return
+        print('[Table] Chaos zone {} tried to remove an atom not inside it'.format(self.side))
+
+    def atoms_remaining(self):
+        return sum(self.is_in_chaos_zone)
+
+    def random_atom(self):
+        if self.atoms_remaining() == 0:
+            return None
+        return random.choice([a for i, a in enumerate(self.atoms) if self.is_in_chaos_zone[i]])
 
 
 class Atom:
