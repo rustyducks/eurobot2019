@@ -111,7 +111,19 @@ class Locomotion:
                 max_vx = 0
             else:
                 max_vx = LINEAR_SPEED_MAX * min_d_close_e / ELLIPSE_SCALE_FACTOR
-        return SpeedConstraint(-LINEAR_SPEED_MAX, max_vx, 0, 0, -ROTATION_SPEED_MAX, ROTATION_SPEED_MAX)
+
+        min_d_far_ellipse_b, max_d_far_ellipse_b = self.robot.io.distance_to_cone_ellipse(-math.pi, 1.4,
+                                                                                          FAR_ELLIPSE_MAJOR_AXIS,
+                                                                                          FAR_ELLIPSE_MINOR_AXIS)
+        if min_d_far_ellipse_b < 0:
+            min_d_close_e_b, max_d_close_e_b = self.robot.io.distance_to_cone_ellipse(-math.pi, 1.4,
+                                                                                      CLOSE_ELLIPSE_MAJOR_AXIS,
+                                                                                      CLOSE_ELLIPSE_MINOR_AXIS)
+            if min_d_close_e_b < 0:
+                min_vx = 0
+            else:
+                min_vx = -LINEAR_SPEED_MAX * min_d_close_e_b / ELLIPSE_SCALE_FACTOR
+        return SpeedConstraint(min_vx, max_vx, 0, 0, -ROTATION_SPEED_MAX, ROTATION_SPEED_MAX)
 
 
     def is_at_point_orient(self, point):
