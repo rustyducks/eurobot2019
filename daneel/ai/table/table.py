@@ -94,3 +94,8 @@ class AtomSlot:
         self.position = (x, y)
         self.atom = Atom(x, y, initial_color, height)
         self.is_in_slot = True
+
+
+ScoreInScale = {Atom.Color.RED: 8, Atom.Color.GREEN: 10, Atom.Color.BLUE: 12, Atom.Color.WHITE: 24}  # TODO: Check
+
+

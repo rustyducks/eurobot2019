@@ -4,7 +4,7 @@ import math
 from math import pi
 import os
 import armothy
-from table.table import SlotName, Atom
+from table.table import SlotName, Atom, ScoreInScale
 from robot_parts import AtomStorage
 
 from behavior import Behavior
@@ -29,10 +29,19 @@ class FSMMatch(Behavior):
         self.robot = robot
         self.color = None
         self.start_time = None
-        self.score = 0
+        self._score = 0
         self.state = StatePreStartChecks(self)
         self.shutdown_button_press_time = 0
         self.last_start_experiment = 0
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.getter
+    def score(self, v):
+        self._score = v
+        self.robot.io.score_display_number(self._score)
 
     def loop(self):
         time_now = time.time()
@@ -464,7 +473,6 @@ class StateDropRediums(FSMState):
             self.robot.locomotion.go_to_orient(2500, 1550, 0)
         self.start_time = time.time()
         self.drop_timeout = 5
-        self.dropped = 0
 
     def test(self):
         if not self.traj_finished:
@@ -479,7 +487,7 @@ class StateDropRediums(FSMState):
                 self.start_time = time.time()
         else:
             if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
-                self.dropped += 1
+                self.behavior.score += 6  # 6 pts per Red in Red periodic zone
                 if self.behavior.color == Color.YELLOW:
                     self.robot.right_storage.pop()
                     if not self.robot.right_storage.is_empty:
@@ -502,7 +510,7 @@ class StateDropRediums(FSMState):
                 return StateDisengageRedPeriodic
 
     def deinit(self):
-        self.behavior.score += self.dropped * 6  # 6 pts per Red in Red periodic zone
+        pass
 
 
 class StateDisengageRedPeriodic(FSMState):
@@ -538,6 +546,7 @@ class StateGoFrontParticleAccelerator(FSMState):
     def deinit(self):
         pass
 
+
 class StateRepositionningParticleAccelerator(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
@@ -558,6 +567,7 @@ class StateRepositionningParticleAccelerator(FSMState):
 
     def deinit(self):
         pass
+
 
 class StateEngageParticleAccelerator2(FSMState):
     def __init__(self, behavior):
@@ -707,8 +717,8 @@ class StateGoToScaleGoldenium(FSMState):
     def deinit(self):
         pass
 
+
 class StateEngageScaleGoldenium(FSMState):
-    # TODO: purple
     def __init__(self, behavior):
         super().__init__(behavior)
         self.robot.io.armothy.translate_z_axis(5)
@@ -876,7 +886,12 @@ class StateDropInScale(FSMState):
     def test(self):
         if self.behavior.color == Color.YELLOW:
             if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
-                self.robot.left_storage.pop() # TODO : add score
+                dropped = self.robot.left_storage.top()
+                if dropped.color is not None:
+                    self.behavior.score += ScoreInScale[dropped.color]
+                else:
+                    pass  # Dunno...
+                self.robot.left_storage.pop()
                 if not self.robot.left_storage.is_empty:
                     self.robot.io.armothy.put_in_scale(self.robot.left_storage.armothy_height(),
                                                                armothy.eStack.LEFT_STACK,
@@ -885,7 +900,12 @@ class StateDropInScale(FSMState):
                     return StateEnd
         else:
             if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.FINISHED:
-                self.robot.right_storage.pop()  # TODO add score
+                dropped = self.robot.right_storage.top()
+                if dropped.color is not None:
+                    self.behavior.score += ScoreInScale[dropped.color]
+                else:
+                    pass  # Dunno...
+                self.robot.right_storage.pop()
                 if not self.robot.right_storage.is_empty:
                     self.robot.io.armothy.put_in_scale(self.robot.right_storage.armothy_height(),
                                                        armothy.eStack.RIGHT_STACK,

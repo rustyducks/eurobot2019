@@ -26,5 +26,10 @@ class AtomStorage:
     def pop(self):
         self.atoms.pop()
 
+    def top(self):
+        if not self.is_empty:
+            return self.atoms[-1]
+        return None
+
     def armothy_height(self):
         return 75 - len(self.atoms) * 25
