@@ -650,7 +650,7 @@ class StateGoFrontParticleAccelerator(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
-            return StateGoToChaosZone
+            return StateGoToChaosZone  # TODO: Check if chaos zone is not empty
         if self.robot.locomotion.trajectory_finished:
             # return StateEngageParticleAccelerator
             return StateRepositionningParticleAccelerator
@@ -766,7 +766,7 @@ class StateGoToGoldenium(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
-            return StateGoToChaosZone
+            return StateGoToChaosZone  # TODO: Check if chaos zone is not empty
         if self.robot.locomotion.trajectory_finished:
             return StateEngageGoldenium
 
@@ -840,6 +840,8 @@ class StateGoToScaleGoldenium(FSMState):
             self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1600, 1400, 0), (1700, 1000, 0), (1692, 700, -math.pi/2)])
 
     def test(self):
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+            return StateGoToChaosZone  # TODO: Go to start to drop goldenium
         if self.robot.locomotion.trajectory_finished:
             return StateEngageScaleGoldenium
 
@@ -889,6 +891,8 @@ class StateGoToChaosZone(FSMState):
                                                   center_radians(math.pi + c_to_r_angle))])
 
     def test(self):
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+            return StateEmptyChaosZone  # TODO: Go to the other chaos zone ? Try the goldenium if not done ?
         if self.robot.locomotion.trajectory_finished:
             return StateEmptyChaosZone
 
@@ -1009,6 +1013,8 @@ class StateGoToScale(FSMState):
             self.robot.locomotion.follow_trajectory([(1692, 700, -math.pi/2)])
 
     def test(self):
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+            return StateEngageScale  # TODO: Go to the start to drop atoms ? If we have any ? Retry the goldenium ? Try the other Chaos zone ?
         if self.robot.locomotion.trajectory_finished:
             return StateEngageScale
 
@@ -1074,6 +1080,8 @@ class StateDropInScale(FSMState):
     def deinit(self):
         pass
 
+
+# TODO : drop remaining in start zone after scale or if scale fails
 
 #
 # class StatePushGreenPeriodic(FSMState):
