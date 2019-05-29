@@ -452,14 +452,30 @@ class StateTakeThirdAtom(FSMState):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
             if self.behavior.color == Color.YELLOW:
                 self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom)
-            return StateDropRediums
+                if len(self.robot.left_storage.atoms) > 1:
+                    return StateDropAllInRed
+                else:
+                    return StateDropRediums
             else:
                 self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom)
+                if len(self.robot.right_storage.atoms) > 1:
+                    return StateDropAllInRed
+                else:
+                    return StateDropRediums
 
         if time.time() - self.start_time >= self.timeout:
             self.robot.io.armothy.home()
             # Do not add the atom to the atom tank
-            return StateDropRediums
+            if self.behavior.color == Color.YELLOW:
+                if len(self.robot.left_storage.atoms) > 1:
+                    return StateDropAllInRed
+                else:
+                    return StateDropRediums
+            else:
+                if len(self.robot.right_storage.atoms) > 1:
+                    return StateDropAllInRed
+                else:
+                    return StateDropRediums
 
     def deinit(self):
         pass
@@ -523,6 +539,88 @@ class StateDropRediums(FSMState):
 
     def deinit(self):
         pass
+
+
+class StateDropAllInRed(FSMState):
+    def __init__(self, behavior):
+        super().__init__(behavior)
+        if self.behavior.color == Color.YELLOW:
+            self.robot.locomotion.go_to_orient(500, 1550, -pi)
+        else:
+            self.robot.locomotion.go_to_orient(2500, 1550, 0)
+        self.traj_finished = False
+        self.emptying_side = None
+        self.unknown_color = 0
+        self.dropped = 0
+
+    def test(self):
+        if not self.traj_finished:
+            if self.robot.locomotion.trajectory_finished:
+                self.traj_finished = True
+                if not self.robot.right_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.RIGHT
+                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(), armothy.eStack.RIGHT_STACK,
+                                                   (-1)**len(self.robot.right_storage.atoms) * 100)
+                elif not self.robot.left_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.LEFT
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(), armothy.eStack.LEFT_STACK,
+                                                   (-1)**len(self.robot.left_storage.atoms) * 100)
+                else:
+                    return StateDisengageRedPeriodic
+
+        else:
+            status = self.robot.io.armothy.get_macro_status()
+            print(status)
+            if status == armothy.eMacroStatus.FINISHED:
+                color = self.robot.storages[self.emptying_side].top().color
+                if color == Atom.Color.RED:
+                    self.behavior.score += 6
+                elif color == Atom.Color.GREEN:
+                    self.behavior.score += 1
+                else:
+                    self.unknown_color += 1
+                self.dropped += 1
+                self.robot.storages[self.emptying_side].pop()
+                if not self.robot.right_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.RIGHT
+                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(),
+                                                   armothy.eStack.RIGHT_STACK,
+                                                   (-1) ** len(self.robot.right_storage.atoms) * 100)
+                elif not self.robot.left_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.LEFT
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(), armothy.eStack.LEFT_STACK,
+                                                   (-1) ** len(self.robot.left_storage.atoms) * 100)
+                else:
+                    return StateDisengageRedPeriodic
+            elif status == armothy.eMacroStatus.ERROR:
+                if not self.robot.right_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.RIGHT
+                    self.robot.io.armothy.put_down(self.robot.right_storage.armothy_drop_height(), armothy.eStack.RIGHT_STACK,
+                                                   (-1)**len(self.robot.right_storage.atoms) * 100)
+                elif not self.robot.left_storage.is_empty:
+                    self.emptying_side = AtomStorage.Side.LEFT
+                    self.robot.io.armothy.put_down(self.robot.left_storage.armothy_drop_height(), armothy.eStack.LEFT_STACK,
+                                                   (-1)**len(self.robot.left_storage.atoms) * 100)
+                else:
+                    return StateDisengageRedPeriodic
+
+
+    def deinit(self):
+        if self.dropped == 3:
+            if self.unknown_color == 3:
+                self.behavior.score += 13  # Two reds and one green
+            elif self.unknown_color == 2:
+                self.behavior.score += 7   # One red and one green
+            elif self.unknown_color == 1:
+                self.behavior.score += 1  # This should not happen. It is probably a green
+        elif self.dropped == 2:
+            if self.unknown_color == 2:
+                self.behavior.score += 9
+            elif self.unknown_color == 1:
+                self.behavior.score += 4
+        elif self.dropped == 1:
+            if self.unknown_color == 1:
+                self.behavior.score += 5
 
 
 class StateDisengageRedPeriodic(FSMState):
