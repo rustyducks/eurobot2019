@@ -65,7 +65,7 @@ class FSMMatch(Behavior):
             next_state = self.state.test()
         if self.start_time is not None and time_now - self.start_time >= START_EXPERIMENT_TIME and self.state.__class__ != StateEnd:
             if self.last_start_experiment == 0:
-                self.score += 30
+                self.score += 35  # Experiment activated +15, Electron on top + 20
                 self.robot.io.score_display_number(self.score)
             if time_now - self.last_start_experiment >= 5:
                 self.robot.io.launch_experiment()
