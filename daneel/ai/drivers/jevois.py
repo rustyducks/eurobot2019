@@ -14,6 +14,8 @@ class JeVois:
     JEVOIS_RES = (640, 480)
 
     def __init__(self, serial_path=DEFAULT_SERIAL_PATH, baudrate=DEFAULT_BAUDRATE):
+        self._serial_path = serial_path
+        self._baudrate = baudrate
         self._serial = serial.Serial(serial_path, baudrate)
         self._puck_mutex = threading.Lock()
         self._puck_mutex.acquire()
@@ -35,7 +37,11 @@ class JeVois:
         id_of_col = {"red":0, "green":1, "blue":2}
         while True:
             colors = [[], [], []]
-            line = self._serial.readline().decode().strip()
+            try:
+                line = self._serial.readline().decode().strip()
+            except serial.SerialException as e:
+                self._serial = serial.Serial(self._serial_path, self._baudrate)
+                line = self._serial.readline().decode().strip()
             self._read_number += 1
             for puck_data in line.split(";"):
                 try:

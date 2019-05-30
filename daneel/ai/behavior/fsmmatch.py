@@ -570,7 +570,6 @@ class StateDropAllInRed(FSMState):
 
         else:
             status = self.robot.io.armothy.get_macro_status()
-            print(status)
             if status == armothy.eMacroStatus.FINISHED:
                 color = self.robot.storages[self.emptying_side].top().color
                 if color == Atom.Color.RED:
@@ -649,7 +648,7 @@ class StateGoFrontParticleAccelerator(FSMState):
         self.robot.io.armothy.rotate_y_axis(315)
 
     def test(self):
-        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 15:
             return StateGoToChaosZone  # TODO: Check if chaos zone is not empty
         if self.robot.locomotion.trajectory_finished:
             # return StateEngageParticleAccelerator
@@ -765,7 +764,7 @@ class StateGoToGoldenium(FSMState):
         self.robot.io.armothy.translate_z_axis(25)
 
     def test(self):
-        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 10:
             return StateGoToChaosZone  # TODO: Check if chaos zone is not empty
         if self.robot.locomotion.trajectory_finished:
             return StateEngageGoldenium
@@ -816,7 +815,7 @@ class StateDisengageGoldenium(FSMState):
 class StateDisengageWithoutGoldenium(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.io.armothy.rotate_y_axis(0)
+        self.robot.io.armothy.rotate_z_axis(0)
         self.robot.io.armothy.stop_pump()
         self.robot.locomotion.go_straight(1600 - self.robot.locomotion.current_pose.y)
 
@@ -825,7 +824,7 @@ class StateDisengageWithoutGoldenium(FSMState):
             return StateGoToChaosZone
 
     def deinit(self):
-        pass
+        self.robot.io.armothy.rotate_y_axis(0)
 
 
 class StateGoToScaleGoldenium(FSMState):
@@ -840,8 +839,9 @@ class StateGoToScaleGoldenium(FSMState):
             self.robot.locomotion.follow_trajectory([(1500, 1550, 0), (1600, 1400, 0), (1700, 1000, 0), (1692, 700, -math.pi/2)])
 
     def test(self):
-        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
-            return StateGoToChaosZone  # TODO: Go to start to drop goldenium
+        if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 5:
+            pass
+            #return StateGoToChaosZone  # TODO: Go to start to drop goldenium
         if self.robot.locomotion.trajectory_finished:
             return StateEngageScaleGoldenium
 
@@ -858,7 +858,7 @@ class StateEngageScaleGoldenium(FSMState):
         else:
             self.robot.io.armothy.rotate_z_axis(-100)
         self.robot.io.armothy.rotate_y_axis(315)
-        self.robot.locomotion.go_straight(130)
+        self.robot.locomotion.go_straight(200)
         self.release_time = None
 
     def test(self):
@@ -892,7 +892,8 @@ class StateGoToChaosZone(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
-            return StateEmptyChaosZone  # TODO: Go to the other chaos zone ? Try the goldenium if not done ?
+            pass
+            #return StateEmptyChaosZone  # TODO: Go to the other chaos zone ? Try the goldenium if not done ?
         if self.robot.locomotion.trajectory_finished:
             return StateEmptyChaosZone
 
@@ -1014,7 +1015,8 @@ class StateGoToScale(FSMState):
 
     def test(self):
         if self.robot.locomotion.is_blocked and self.robot.locomotion.blocked_duration >= 3:
-            return StateEngageScale  # TODO: Go to the start to drop atoms ? If we have any ? Retry the goldenium ? Try the other Chaos zone ?
+            pass
+            #return StateEngageScale  # TODO: Go to the start to drop atoms ? If we have any ? Retry the goldenium ? Try the other Chaos zone ?
         if self.robot.locomotion.trajectory_finished:
             return StateEngageScale
 
@@ -1025,10 +1027,10 @@ class StateGoToScale(FSMState):
 class StateEngageScale(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
-        self.robot.locomotion.go_straight(150)
+        self.robot.locomotion.go_straight(200)
 
     def test(self):
-        if self.robot.locomotion.relative_command_finished:
+        if self.robot.locomotion.relative_command_finished or self.robot.locomotion.is_one_drifting:
             return StateDropInScale
 
     def deinit(self):
