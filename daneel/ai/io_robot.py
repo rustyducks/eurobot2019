@@ -10,6 +10,7 @@ import math
 
 from drivers.neato_xv11_lidar import lidar_points, read_v_2_4
 from drivers import vl6180x as v
+from drivers import tweet
 from drivers import jevois
 import armothy
 
@@ -48,6 +49,9 @@ class IO(object):
         self.lidar_thread = threading.Thread(target=read_v_2_4, args=(self.lidar_serial,))
         self.lidar_thread.start()
         self.jevois = jevois.JeVois(JEVOIS_SERIAL_PATH, JEVOIS_SERIAL_BAUDRATE)
+
+        self.tweeter = tweet.Tweet("data/twitter_credentials.yaml")
+
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.HMI_STATE, self._on_hmi_state_receive)
         self.robot.communication.register_callback(self.robot.communication.eTypeUp.SENSOR_VALUE, self._on_sensor_value_receive)
 
@@ -259,6 +263,10 @@ class IO(object):
                     # print(pt.azimut, pt.distance)
                     return True
         return False
+
+    def tweet(self, text):
+        self.tweeter.tweet_in_thread(text)
+
 
 
 # class USReader(threading.Thread):

@@ -183,6 +183,8 @@ class StatePreMatch(FSMState):
         self.behavior.start_match()
         self.behavior.score = 5  # Experiment is present
         self.robot.io.score_display_number(self.behavior.score)
+        self.robot.io.tweet("C'est parti pour un nouveau match ! Fier de jouer {} !".format(
+            "jaune" if self.behavior.color == Color.YELLOW else "violet"))
 
 
 class StateFrontGreenPeriodic(FSMState):
@@ -215,15 +217,18 @@ class StateGetColorFrontGreenPeriodicAtom(FSMState):
         seen_color = self.robot.io.jevois.uniq_last_puck_color
         if seen_color is not None:
             print("[FSMMatch] Seen green atom is : ", seen_color)
+            self.robot.io.tweet("Le palet en face de la zone verte est {}.".format(seen_color))
             if self.behavior.color == Color.YELLOW:
                 self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
+                    self.robot.io.tweet("Du coup je sais que les autres sont rouges ;)")
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.RED
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom.color = Atom.Color.RED
                 return StateTakeFirstAtom
             else:
                 self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
+                    self.robot.io.tweet("Du coup je sais que les autres sont rouges ;)")
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.RED
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom.color = Atom.Color.RED
                 return StateTakeFirstAtom
@@ -259,6 +264,7 @@ class StateTakeFirstAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
+            self.robot.io.tweet("Et hop là ! Je viens de prendre le palet en face de la zone verte !")
             if self.behavior.color == Color.YELLOW:
                 self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom)
             else:
@@ -307,14 +313,18 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
         seen_color = self.robot.io.jevois.uniq_last_puck_color
         if seen_color is not None:
             print("[FSMMatch] Seen blue atom is : ", seen_color)
+            self.robot.io.tweet("Le palet en face de la zone bleue est {}".format(seen_color))
             if self.behavior.color == Color.YELLOW:
                 self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom.color = Atom.Color(seen_color)
                 if seen_color == "green":
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.RED
                     # TODO(guilhem) Check if the periodic green is still there...
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color = Atom.Color.RED
+                    self.robot.io.tweet("Du coup je sais que les autres sont rouges ;)")
                 elif seen_color == "red" and self.robot.table.slots[SlotName.YELLOW_PERIODIC_GREEN].atom.color == Atom.Color.RED:
                     self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom.color = Atom.Color.GREEN
+                    self.robot.io.tweet("Donc il ne doit plus me rester que le vert :D")
+
                 return StateTakeSecondAtom
             else:
                 self.robot.table.slots[SlotName.PURPLE_PERIODIC_BLUE].atom.color = Atom.Color(seen_color)
@@ -322,8 +332,12 @@ class StateGetColorFrontBluePeriodicAtom(FSMState):
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.RED
                     # TODO(guilhem) Check if the periodic green is still there...
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color = Atom.Color.RED
+                    self.robot.io.tweet("Du coup je sais que les autres sont rouges ;)")
+
                 elif seen_color == "red" and self.robot.table.slots[SlotName.PURPLE_PERIODIC_GREEN].atom.color == Atom.Color.RED:
                     self.robot.table.slots[SlotName.PURPLE_PERIODIC_RED].atom.color = Atom.Color.GREEN
+                    self.robot.io.tweet("Donc il ne doit plus me rester que le vert :D")
+
                 return StateTakeSecondAtom
         if time.time() - self.start_time >= self.time_out:
             return StateTakeSecondAtom
@@ -357,6 +371,7 @@ class StateTakeSecondAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
+            print("Je viens de prendre le palet en face de la zone bleue, je suis en feuuuuu (figurativement) !")
             if self.behavior.color == Color.YELLOW:
                 self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_BLUE].atom)
             else:
@@ -450,6 +465,7 @@ class StateTakeThirdAtom(FSMState):
 
     def test(self):
         if self.robot.io.armothy.get_macro_status() == armothy.eMacroStatus.RUNNING_SAFE:
+            self.robot.io.tweet("Et voilà le palet en face de la zone rouge est mien !")
             if self.behavior.color == Color.YELLOW:
                 self.robot.storages[self.store_side].add(self.robot.table.slots[SlotName.YELLOW_PERIODIC_RED].atom)
                 if len(self.robot.left_storage.atoms) > 1:
@@ -638,6 +654,7 @@ class StateDisengageRedPeriodic(FSMState):
 class StateGoFrontParticleAccelerator(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.tweet("Aller, on va se tenter l'accelerateur de particules !")
         if self.behavior.color == Color.YELLOW:
             self.robot.locomotion.follow_trajectory([(1710, 1700, math.pi/2)])
             self.robot.io.armothy.rotate_z_axis(200)
@@ -730,6 +747,7 @@ class StateRollParticleAccelerator(FSMState):
             return StateDisengageParticleAccelerator
 
     def deinit(self):
+        self.robot.io.tweet("You see me rollin'... Enfin j'espère, j'ai pas de retour...")
         self.behavior.score += 10  # One atom in the accelerator
         self.behavior.score += 10  # Goldenium revealed !
         self.robot.io.score_display_number(self.behavior.score)
@@ -757,6 +775,7 @@ class StateDisengageParticleAccelerator(FSMState):
 class StateGoToGoldenium(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.tweet("Goldenium, j'arrive !")
         if self.behavior.color == Color.YELLOW:
             self.robot.locomotion.follow_trajectory([(2250, 1600, math.pi/2)])
         else:
@@ -802,6 +821,7 @@ class StateEngageGoldenium(FSMState):
 class StateDisengageGoldenium(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.tweet("Boum ! J'ai eu le goldenium !")
         self.robot.locomotion.go_straight(1600 - self.robot.locomotion.current_pose.y)
 
     def test(self):
@@ -815,6 +835,7 @@ class StateDisengageGoldenium(FSMState):
 class StateDisengageWithoutGoldenium(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.tweet("Arf... Je l'ai raté... J'en suis loin ?")
         self.robot.io.armothy.rotate_z_axis(0)
         self.robot.io.armothy.stop_pump()
         self.robot.locomotion.go_straight(1600 - self.robot.locomotion.current_pose.y)
@@ -1185,6 +1206,7 @@ class StateDropInScale(FSMState):
 class StateEnd(FSMState):
     def __init__(self, behavior):
         super().__init__(behavior)
+        self.robot.io.tweet("C'est tout pour moi ! Merci beaucoup ! Score estimé : {}, pas mal non ?".format(self.behavior.score))
         self.robot.locomotion.set_direct_speed(0, 0, 0)
         self.robot.io.armothy.close_valve()
         self.robot.io.armothy.stop_pump()
